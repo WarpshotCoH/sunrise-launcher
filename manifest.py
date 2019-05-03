@@ -48,8 +48,8 @@ class Website:
         self.type = type
         self.address = address
 
-      @staticmethod
-      def fromXML(website):
+    @staticmethod
+    def fromXML(website):
         return Website(
             website.attrib.get("type", ""),
             website.text
@@ -94,8 +94,8 @@ class Application:
         self.news = news
         self.files = files
 
-      @staticmethod
-      def fromXML(app):
+    @staticmethod
+    def fromXML(app):
         return Application(
             app.attrib["id"],
             app.attrib["runtime"],
@@ -117,8 +117,8 @@ class Server:
         self.auth = auth
         self.db = db
 
-      @staticmethod
-      def fromXML(server):
+    @staticmethod
+    def fromXML(server):
         return Server(
             server.attrib.get("name", ""),
             server.attrib.get("application", ""),

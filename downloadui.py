@@ -19,8 +19,8 @@ class DownloadUI:
         self.files = files
         self.installPath = installPath
 
-    if os.path.isdir(installPath):
-        self.verifyDownload()
+        if os.path.isdir(installPath):
+            self.verifyDownload()
 
     def verifyDownload(self):
         self.shutdown()
@@ -82,12 +82,12 @@ class DownloadUI:
         self.downloader.pause()
 
     def shutdown(self):
-    if self.downloader:
-        self.downloader.pause()
+        if self.downloader:
+            self.downloader.pause()
 
-    if self.downloadThread:
-        self.downloadThread.quit()
-        self.downloadThread.wait()
+        if self.downloadThread:
+            self.downloadThread.quit()
+            self.downloadThread.wait()
 
     @Slot(int, int, int)
     def onStart(self, pMin, pStart, pMax):

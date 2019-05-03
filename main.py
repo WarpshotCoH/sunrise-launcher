@@ -78,7 +78,7 @@ def projectSelected():
 
     print("Selected Project: %s" % app.id)
 
-    if __name__ == "__main__":
+if __name__ == "__main__":
     application = QApplication(sys.argv)
 
     mainForm = Form("sunrise.ui")
