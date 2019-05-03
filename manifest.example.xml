@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<sunrise-manifest version="1.0">
+    <name>Project List Name</name>
+
+    <applications>
+        <application id="com.owner.application" runtime="com.publisher.game.version">
+            <name>App Name</name>
+            <publisher>App Publisher</publisher>
+            <icon>https://url.to.the.app.icon.png</icon>
+
+            <website type="home">https://url.to.the.website.com</website>
+            <website type="forums">https://url.to.the.forums.com</website>
+            <website type="wiki">https://url.to.the.wiki.com</website>
+
+            <launcher exec="app.exe" params="space separated params and -flags likethis" />
+
+            <news>
+                <post date="2019-04-01T17:04:00Z">
+                    <title>The best news post</title>
+                    <url>https://url.to.the.website.com/the-article</url>
+                    <image>https://url.to.the.website.com/really-cool-picture</image>
+                </post>
+            </news>
+
+            <files>
+                <file name="filetofetch.exe" size="375820" md5="357879b11c3a5753eff5df0d729c9271">
+                    <url>https://url.to.the/filetofetch.exe</url>
+                </file>
+            </files>
+        </application>
+    </applications>
+
+    <runtimes>
+        <runtime id="com.publisher.game.version">
+            <name>Runtime Name</name>
+            <publisher>Runtime Publisher</publisher>
+
+            <files>
+                <file name="filetofetch.exe" size="375820" md5="357879b11c3a5753eff5df0d729c9271">
+                    <url>https://url.to.the/filetofetch.exe</url>
+                </file>
+            </files>
+        </runtime>
+    </runtimes>
+</sunrise-manifest>
