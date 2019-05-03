@@ -1,3 +1,5 @@
+import os
+
 from PySide2.QtCore import QThread, Slot
 
 from downloader import Downloader, FileDownload, DownloaderState
@@ -16,8 +18,23 @@ class DownloadUI:
   def load(self, files, installPath):
     self.files = files
     self.installPath = installPath
+    
+    if os.path.isdir(installPath):
+      self.verifyDownload()
+
+  def verifyDownload(self):
+    self.shutdown()
+    self.downloader = Downloader(self.files, self.installPath)
+    self.runInBackground(self.downloader.verify)
 
   def startDownload(self):
+    # Before verifying or downloading, make sure existing downloaders and
+    # threads have been cleaned up
+    self.shutdown()
+    self.downloader = Downloader(self.files, self.installPath)
+    self.runInBackground(self.downloader.download)
+    
+  def runInBackground(self, fn):
     print("Start background download")
 
     # We do not want multiple downloads to start while waiting for the thread
@@ -29,11 +46,6 @@ class DownloadUI:
     #       continually reused by placing new work on to it. Seems like
     #       something that we should be able to do.
     self.downloadThread = QThread()
-
-    # Re-initializing the download manager for simplicity. It means we need to
-    # re-verify work that was previously done, but this seems to be the correct
-    # thing to do. Content could have changed between the pause / resume
-    self.downloader = Downloader(self.files, self.installPath)
 
     # Connect up to the files progress events
     self.downloader.start.connect(self.onStart)
@@ -55,7 +67,7 @@ class DownloadUI:
     self.downloadThread.started.connect(self.enableButton)
 
     # Schedule the downloader to start once the thread is active
-    self.downloadThread.started.connect(self.downloader.download)
+    self.downloadThread.started.connect(fn)
 
     # Boot the background thread
     self.downloadThread.start()

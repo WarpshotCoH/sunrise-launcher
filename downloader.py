@@ -37,6 +37,65 @@ class Downloader(QObject):
   def pause(self):
     self.changeState(DownloaderState.PAUSED)
     self.currentFile.stop()
+    self.currentFile = None
+
+  def verify(self):
+    self.changeState(DownloaderState.RUNNING)
+
+    try:
+      self.start.emit(0, 0, len(self.files))
+      print("Emit runtime size")
+      
+      for index, file in enumerate(self.files):
+        if self.state == DownloaderState.PAUSED:
+          print("Exit early from pause")
+          return
+
+        print("Download", index)
+        fileName = posixpath.basename(file.name)
+        fileSize = int(file.size)
+        filePath = file.name
+
+        path = os.path.normpath(os.path.join(self.installPath, filePath))
+
+        if not os.path.isdir(self.installPath):
+          print("Create install path", self.installPath)
+          os.makedirs(self.installPath)
+
+        print("Write to", path)
+
+        self.currentFile = FileDownload(
+          path,
+          file.urls,
+          fileName,
+          fileSize,
+          file.check,
+          file.algo
+        )
+
+        print("Constructed file", fileName)
+
+        if os.path.isfile(path):
+          print("File already exists. Verifying", path)
+          status = self.currentFile.verify(self.fileVerify, self.fileProgress)
+
+          if not status:
+            # Do not fail the file if the user has requested a pause
+            if not self.state == DownloaderState.PAUSED:
+              self.changeState(DownloaderState.VERIFICATION_FAILED, fileName)
+
+            return
+          else:
+            print("Verfification complete", fileName)
+            self.progress.emit(index + 1)
+        else:
+          self.changeState(DownloaderState.VERIFICATION_FAILED, fileName)
+          return
+
+      self.changeState(DownloaderState.COMPLETE)
+    except Exception:
+        print("Error!")
+        print(sys.exc_info())
 
   def download(self):
     self.changeState(DownloaderState.RUNNING)

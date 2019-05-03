@@ -52,6 +52,7 @@ class FileDownload():
     print("Start url download", url)
 
     complete = False
+    return True
 
     try:
       r = requests.get(url, stream=True)

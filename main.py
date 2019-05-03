@@ -38,6 +38,9 @@ class Form(QObject):
 def projectSelected():
 	app = manifest.applications[mainForm.window.projectsListWidget.currentRow()]
 	
+	runtime = manifest.runtimes.get(app.runtime)
+	downloadUI.load(runtime.files, './runtimes/' + runtime.id)
+
 	if len(app.websites) > 1:
 		home = next(w for w in app.websites if w.type == "home")
 
@@ -82,6 +85,13 @@ if __name__ == "__main__":
 	settingsForm = Form("settings-dialog.ui")
 	#runtimesForm = Form("runtimes-dialog.ui")
 
+	downloadUI = DownloadUI(
+		mainForm.window.overallProgressBar,
+		mainForm.window.fileProgressBar,
+		mainForm.window.progressLabel,
+		mainForm.window.playButton
+	)
+
 	# clear out the placeholder labels
 	placeholdersToClear = [
 		mainForm.window.progressLabel,
@@ -99,16 +109,6 @@ if __name__ == "__main__":
 
 	mainForm.window.projectsListWidget.setCurrentRow(0)
 	projectSelected()
-
-	downloadUI = DownloadUI(
-		mainForm.window.overallProgressBar,
-		mainForm.window.fileProgressBar,
-		mainForm.window.progressLabel,
-		mainForm.window.playButton
-	)
-
-	runtime = manifest.runtimes.get(manifest.applications[0].runtime)
-	downloadUI.load(runtime.files, './runtimes/' + runtime.id)
 
 	mainForm.window.projectsListWidget.itemSelectionChanged.connect(projectSelected)
 
