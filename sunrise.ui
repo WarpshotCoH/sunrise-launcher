@@ -113,9 +113,9 @@ border: 1px solid black;</string>
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>20</y>
+      <y>35</y>
       <width>212</width>
-      <height>100</height>
+      <height>53</height>
      </rect>
     </property>
     <property name="text">
@@ -148,7 +148,7 @@ border: 1px solid black;</string>
      </rect>
     </property>
     <property name="pixmap">
-     <pixmap>resources/project-icon-placeholder.png</pixmap>
+     <pixmap>resources/appicon.png</pixmap>
     </property>
     <property name="scaledContents">
      <bool>true</bool>
@@ -291,7 +291,7 @@ border: 1px solid black;</string>
     </property>
     <property name="icon">
      <iconset>
-      <normaloff>resources/website.svg</normaloff>resources/website.svg</iconset>
+      <normaloff>resources/icons/website.svg</normaloff>resources/icons/website.svg</iconset>
     </property>
     <property name="iconSize">
      <size>
@@ -314,7 +314,7 @@ border: 1px solid black;</string>
     </property>
     <property name="icon">
      <iconset>
-      <normaloff>resources/settings-app.svg</normaloff>resources/settings-app.svg</iconset>
+      <normaloff>resources/icons/settings-app.svg</normaloff>resources/icons/settings-app.svg</iconset>
     </property>
     <property name="iconSize">
      <size>
