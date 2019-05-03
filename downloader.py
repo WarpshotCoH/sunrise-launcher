@@ -112,58 +112,58 @@ class Downloader(QObject):
                     print("Exit early from pause")
                     return
 
-            print("Download", index)
-            fileName = posixpath.basename(file.name)
-            fileSize = int(file.size)
-            filePath = file.name
+                print("Download", index)
+                fileName = posixpath.basename(file.name)
+                fileSize = int(file.size)
+                filePath = file.name
 
-            path = os.path.normpath(os.path.join(self.installPath, filePath))
+                path = os.path.normpath(os.path.join(self.installPath, filePath))
 
-            if not os.path.isdir(self.installPath):
-                print("Create install path", self.installPath)
-                os.makedirs(self.installPath)
+                if not os.path.isdir(self.installPath):
+                    print("Create install path", self.installPath)
+                    os.makedirs(self.installPath)
 
-            print("Write to", path)
+                print("Write to", path)
 
-            self.currentFile = FileDownload(
-                path,
-                file.urls,
-                fileName,
-                fileSize,
-                file.check,
-                file.algo
-            )
+                self.currentFile = FileDownload(
+                    path,
+                    file.urls,
+                    fileName,
+                    fileSize,
+                    file.check,
+                    file.algo
+                )
 
-            print("Constructed file", fileName)
+                print("Constructed file", fileName)
 
-            if os.path.isfile(path):
-                print("File already exists. Verifying", path)
-                status = self.currentFile.verify(self.fileVerify, self.fileProgress)
-            else:
-                status = False
+                if os.path.isfile(path):
+                    print("File already exists. Verifying", path)
+                    status = self.currentFile.verify(self.fileVerify, self.fileProgress)
+                else:
+                    status = False
 
-            if not status:
-                status = self.currentFile.start(self.fileStart, self.fileProgress)
-
-            if not status:
-                # Do not fail the file if the user has requested a pause
-                if not self.state == DownloaderState.PAUSED:
-                    self.changeState(DownloaderState.DOWNLOAD_FAILED, fileName)
-
-                return
-            else:
-                print("Download complete", fileName)
-                status = self.currentFile.verify(self.fileVerify, self.fileProgress)
+                if not status:
+                    status = self.currentFile.start(self.fileStart, self.fileProgress)
 
                 if not status:
                     # Do not fail the file if the user has requested a pause
                     if not self.state == DownloaderState.PAUSED:
-                        self.changeState(DownloaderState.VERIFICATION_FAILED, fileName)
+                        self.changeState(DownloaderState.DOWNLOAD_FAILED, fileName)
 
                     return
                 else:
-                    print("Verfification complete", fileName)
-                    self.progress.emit(index + 1)
+                    print("Download complete", fileName)
+                    status = self.currentFile.verify(self.fileVerify, self.fileProgress)
+
+                    if not status:
+                        # Do not fail the file if the user has requested a pause
+                        if not self.state == DownloaderState.PAUSED:
+                            self.changeState(DownloaderState.VERIFICATION_FAILED, fileName)
+
+                        return
+                    else:
+                        print("Verfification complete", fileName)
+                        self.progress.emit(index + 1)
 
             self.changeState(DownloaderState.COMPLETE)
         except Exception:
