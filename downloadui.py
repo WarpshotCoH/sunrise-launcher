@@ -8,6 +8,8 @@ class DownloadUI:
     self.fileBar = fileBar
     self.label = label
     self.button = button
+    self.downloadThread = None
+    self.downloader = None
 
     self.button.clicked.connect(self.startDownload)
 
@@ -66,6 +68,14 @@ class DownloadUI:
 
   def pauseDownload(self):
     self.downloader.pause()
+
+  def shutdown(self):
+    if self.downloader:
+      self.downloader.pause()
+
+    if self.downloadThread:
+      self.downloadThread.quit()
+      self.downloadThread.wait()
 
   @Slot(int, int, int)
   def onStart(self, pMin, pStart, pMax):

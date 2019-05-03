@@ -92,7 +92,7 @@ if __name__ == "__main__":
 	for placeholder in placeholdersToClear:
 		placeholder.setText("")
 
-	manifest = fromXML("manifest.example.xml")
+	manifest = fromXML("manifest.xml")
 
 	for app in manifest.applications:
 		QListWidgetItem(app.name, mainForm.window.projectsListWidget)
@@ -117,5 +117,7 @@ if __name__ == "__main__":
 
 	# things are ready, show the main window
 	mainForm.window.show()
+
+	application.aboutToQuit.connect(downloadUI.shutdown)
 
 	sys.exit(application.exec_())
