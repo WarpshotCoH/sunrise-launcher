@@ -107,7 +107,8 @@ if __name__ == "__main__":
 		mainForm.window.playButton
 	)
 
-	downloadUI.load(manifest.runtimes[0].files, './runtimes')
+	runtime = manifest.runtimes.get(manifest.applications[0].runtime)
+	downloadUI.load(runtime.files, './runtimes')
 
 	mainForm.window.projectsListWidget.itemSelectionChanged.connect(projectSelected)
 

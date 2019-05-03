@@ -160,11 +160,13 @@ class Manifest:
       Application.fromXML,
       manifest.findall(".//applications/application")
     ))
-    runtimes = list(map(
+    runtimeList = list(map(
       Runtime.fromXML,
       manifest.findall(".//runtimes/runtime")
     ))
-    
+
+    runtimes = dict((runtime.id,runtime) for runtime in runtimeList)
+
     return Manifest(name, servers, applications, runtimes)
 
 def fromXML(file):
