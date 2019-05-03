@@ -28,7 +28,7 @@ class FileDownload():
     urlNumToTry = random.randint(0, len(self.urls) - 1)
     downloaded = False
     tries = 0
-    
+
     while (not downloaded and tries < len(self.urls)):
 
       # Allow downloads to be interrupted
@@ -52,7 +52,6 @@ class FileDownload():
     print("Start url download", url)
 
     complete = False
-    return True
 
     try:
       r = requests.get(url, stream=True)
@@ -60,17 +59,17 @@ class FileDownload():
       remoteFilename = posixpath.basename(urllib.parse.urlparse(url).path)
       # TODO: Handle Transfer-Encoding: chunked; unable to know the remote filesize there.
       remoteFilesize = int(r.headers['Content-Length'])
-      
+
       init.emit(0, 0, remoteFilesize, remoteFilename)
 
       print("Downloading %s from: %s" % (remoteFilename, url))
 
       fileProgress = 0
-      
+
       with r:
         r.raise_for_status()
         with open(self.path, 'wb') as f:
-          for chunk in r.iter_content(chunk_size=8192): 
+          for chunk in r.iter_content(chunk_size=8192):
             # Allow downloads to be interrupted
             if self.interrupt:
               return complete
@@ -95,7 +94,7 @@ class FileDownload():
     chunks = math.ceil(self.size/4096)
 
     verify.emit(0, 0, chunks, self.name)
-      
+
     hashProgress = 0
 
     try:
