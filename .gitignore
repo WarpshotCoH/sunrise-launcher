@@ -1,5 +1,15 @@
-__pycache__
-apps
-manifest.xml
-docs
+# App data
+applications
 runtimes
+
+# Python
+__pycache__
+venv
+
+# Temporary, deal with later
+docs
+manifest.xml
+
+# Debris
+[Tt]humbs.db
+.DS_Store
