@@ -108,7 +108,7 @@ if __name__ == "__main__":
 	)
 
 	runtime = manifest.runtimes.get(manifest.applications[0].runtime)
-	downloadUI.load(runtime.files, './runtimes')
+	downloadUI.load(runtime.files, './runtimes/' + runtime.id)
 
 	mainForm.window.projectsListWidget.itemSelectionChanged.connect(projectSelected)
 
