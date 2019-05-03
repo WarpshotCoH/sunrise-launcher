@@ -22,103 +22,103 @@ from downloadui import DownloadUI
 from manifest import fromXML
 
 class Form(QObject):
-	def __init__(self, ui_file, parent=None):
-		super(Form, self).__init__(parent)
+    def __init__(self, ui_file, parent=None):
+        super(Form, self).__init__(parent)
 
-		# Init the download background thread
-		self.downloadThread = QThread()
+        # Init the download background thread
+        self.downloadThread = QThread()
 
-		ui_file = QFile(ui_file)
-		ui_file.open(QFile.ReadOnly)
+        ui_file = QFile(ui_file)
+        ui_file.open(QFile.ReadOnly)
 
-		loader = QUiLoader()
-		self.window = loader.load(ui_file)
-		ui_file.close()
-	
+        loader = QUiLoader()
+        self.window = loader.load(ui_file)
+        ui_file.close()
+
 def projectSelected():
-	app = manifest.applications[mainForm.window.projectsListWidget.currentRow()]
-	
-	runtime = manifest.runtimes.get(app.runtime)
-	downloadUI.load(runtime.files, './runtimes/' + runtime.id)
+    app = manifest.applications[mainForm.window.projectsListWidget.currentRow()]
 
-	if len(app.websites) > 1:
-		home = next(w for w in app.websites if w.type == "home")
+    runtime = manifest.runtimes.get(app.runtime)
+    downloadUI.load(runtime.files, './runtimes/' + runtime.id)
 
-		if home:
-			buttonUrl = home.address
-		else:
-			buttonUrl = app.websites[0].address
-	elif len(app.websites) == 1:
-		buttonUrl = app.websites[0].address
+    if len(app.websites) > 1:
+        home = next(w for w in app.websites if w.type == "home")
 
-	if app.name:
-		mainForm.window.projectNameLabel.setText(app.name)
+        if home:
+            buttonUrl = home.address
+        else:
+           buttonUrl = app.websites[0].address
+    elif len(app.websites) == 1:
+        buttonUrl = app.websites[0].address
 
-	if app.publisher:
-		mainForm.window.projectPublisherLabel.setText(app.publisher)
+    if app.name:
+        mainForm.window.projectNameLabel.setText(app.name)
 
-	mainForm.window.projectUptimeLabel.setText("Uptime Unknown") # TODO: handle this... servers will have to provide a query service, specified in the manifest?
-	
-	# TODO: How do we disconnect if we don't have apriori knowledge of connections
-	try:
-		mainForm.window.projectWebsiteButton.clicked.disconnect()
-	except Exception:
-		pass
+    if app.publisher:
+        mainForm.window.projectPublisherLabel.setText(app.publisher)
 
-	if buttonUrl:
-		mainForm.window.projectWebsiteButton.clicked.connect(lambda: webbrowser.open(buttonUrl))
+    mainForm.window.projectUptimeLabel.setText("Uptime Unknown") # TODO: handle this... servers will have to provide a query service, specified in the manifest?
 
-	try:
-		if app.icon:
-			projectIconData = requests.get(app.icon, stream=True, allow_redirects=True).content # TODO: handle 404/missing icon?
-			projectIconImage = QImage.fromData(projectIconData)
-			mainForm.window.projectIconLabel.setPixmap(QPixmap.fromImage(projectIconImage))
-	except Exception:
-		pass
+    # TODO: How do we disconnect if we don't have apriori knowledge of connections
+    try:
+        mainForm.window.projectWebsiteButton.clicked.disconnect()
+    except Exception:
+        pass
 
-	print("Selected Project: %s" % app.id)
+    if buttonUrl:
+        mainForm.window.projectWebsiteButton.clicked.connect(lambda: webbrowser.open(buttonUrl))
 
-if __name__ == "__main__":
-	application = QApplication(sys.argv)
+    try:
+        if app.icon:
+           projectIconData = requests.get(app.icon, stream=True, allow_redirects=True).content # TODO: handle 404/missing icon?
+           projectIconImage = QImage.fromData(projectIconData)
+           mainForm.window.projectIconLabel.setPixmap(QPixmap.fromImage(projectIconImage))
+    except Exception:
+        pass
 
-	mainForm = Form("sunrise.ui")
-	settingsForm = Form("settings-dialog.ui")
-	#runtimesForm = Form("runtimes-dialog.ui")
+    print("Selected Project: %s" % app.id)
 
-	downloadUI = DownloadUI(
-		mainForm.window.overallProgressBar,
-		mainForm.window.fileProgressBar,
-		mainForm.window.progressLabel,
-		mainForm.window.playButton
-	)
+    if __name__ == "__main__":
+    application = QApplication(sys.argv)
 
-	# clear out the placeholder labels
-	placeholdersToClear = [
-		mainForm.window.progressLabel,
-		mainForm.window.projectNameLabel,
-		mainForm.window.projectPublisherLabel,
-		mainForm.window.projectUptimeLabel
-	]
-	for placeholder in placeholdersToClear:
-		placeholder.setText("")
+    mainForm = Form("sunrise.ui")
+    settingsForm = Form("settings-dialog.ui")
+    #runtimesForm = Form("runtimes-dialog.ui")
 
-	manifest = fromXML("manifest.xml")
+    downloadUI = DownloadUI(
+        mainForm.window.overallProgressBar,
+        mainForm.window.fileProgressBar,
+        mainForm.window.progressLabel,
+        mainForm.window.playButton
+    )
 
-	for app in manifest.applications:
-		QListWidgetItem(app.name, mainForm.window.projectsListWidget)
+    # clear out the placeholder labels
+    placeholdersToClear = [
+        mainForm.window.progressLabel,
+        mainForm.window.projectNameLabel,
+        mainForm.window.projectPublisherLabel,
+        mainForm.window.projectUptimeLabel
+    ]
+    for placeholder in placeholdersToClear:
+        placeholder.setText("")
 
-	mainForm.window.projectsListWidget.setCurrentRow(0)
-	projectSelected()
+    manifest = fromXML("manifest.xml")
 
-	mainForm.window.projectsListWidget.itemSelectionChanged.connect(projectSelected)
+    for app in manifest.applications:
+        QListWidgetItem(app.name, mainForm.window.projectsListWidget)
 
-	# bind button clicks
-	mainForm.window.settingsButton.clicked.connect(settingsForm.window.show)
-	# mainForm.window.runtimesButton.clicked.connect(runtimesForm.window.show)
+    mainForm.window.projectsListWidget.setCurrentRow(0)
+    projectSelected()
 
-	# things are ready, show the main window
-	mainForm.window.show()
+    mainForm.window.projectsListWidget.itemSelectionChanged.connect(projectSelected)
 
-	application.aboutToQuit.connect(downloadUI.shutdown)
+    # bind button clicks
+    mainForm.window.settingsButton.clicked.connect(settingsForm.window.show)
+    # mainForm.window.runtimesButton.clicked.connect(runtimesForm.window.show)
 
-	sys.exit(application.exec_())
+    # things are ready, show the main window
+    mainForm.window.show()
+
+    application.aboutToQuit.connect(downloadUI.shutdown)
+
+    sys.exit(application.exec_())
