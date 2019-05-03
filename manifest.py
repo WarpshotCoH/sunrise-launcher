@@ -21,12 +21,13 @@ class File:
 
   @staticmethod
   def fromXML(file):
+    algo = "sha512" if "sha512" in file.attrib else "md5"
+
     return File(
       file.attrib.get("name", ""),
       file.attrib.get("size", ""),
-      file.attrib.get("check", ""),
-      # TODO: Fixme
-      "md5",
+      file.attrib.get(algo, ""),
+      algo,
       list(map(lambda e: e.text, file.findall(".//url")))
     )
 
