@@ -53,7 +53,7 @@ class FileDownload():
         complete = False
 
         try:
-            r = requests.get(url, stream=True)
+            r = requests.get(url, stream=True, timeout=5)
 
             remoteFilename = posixpath.basename(urllib.parse.urlparse(url).path)
             # TODO: Handle Transfer-Encoding: chunked; unable to know the remote filesize there.
