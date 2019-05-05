@@ -12,40 +12,35 @@ import requests
 
 from manifest import algoMap
 
-# TODO: Refactor to take a File from manifest and a writePath as constructor args
 class FileDownload():
-    def __init__(self, writePath, urls, name, size, check, algo):
+    def __init__(self, file, writePath):
+        self.file = file
         self.path = writePath
-        self.urls = urls
-        self.name = name
-        self.size = size
-        self.check = check
-        self.algo = algoMap[algo]
         self.interrupt = False
 
     def start(self, init, progress):
         print("Start file download")
-        urlNumToTry = random.randint(0, len(self.urls) - 1)
+        urlNumToTry = random.randint(0, len(self.file.urls) - 1)
         downloaded = False
         tries = 0
 
-        while (not downloaded and tries < len(self.urls)):
+        while (not downloaded and tries < len(self.file.urls)):
 
             # Allow downloads to be interrupted
             if self.interrupt:
                 return downloaded
 
-            print(downloaded, urlNumToTry, tries, self.urls[urlNumToTry])
+            print(downloaded, urlNumToTry, tries, self.file.urls[urlNumToTry])
 
-            if (tries > len(self.urls) - 1):
+            if (tries > len(self.file.urls) - 1):
                 print("Ran out of tries")
                 return downloaded
 
-            url = self.urls[urlNumToTry]
+            url = self.file.urls[urlNumToTry]
             downloaded = self.downloadUrl(url, init, progress)
             urlNumToTry += 1
 
-            if (urlNumToTry > len(self.urls) - 1):
+            if (urlNumToTry > len(self.file.urls) - 1):
                 urlNumToTry = 0
 
             tries += 1
@@ -72,7 +67,7 @@ class FileDownload():
 
             with r:
                 r.raise_for_status()
-                with open(self.path, 'wb') as f:
+                with open(self.path, 'wb+') as f:
                     for chunk in r.iter_content(chunk_size=8192):
                         # Allow downloads to be interrupted
                         if self.interrupt:
@@ -88,7 +83,8 @@ class FileDownload():
                 complete = True
 
         except:
-          print(sys.exc_info())
+            print("Download error", self.file.name)
+            print(sys.exc_info())
 
         return complete
 
@@ -96,17 +92,17 @@ class FileDownload():
     def verify(self, verify, progress):
         verified = False
 
-        chunks = math.ceil(self.size/4096)
+        chunks = math.ceil(self.file.size/4096)
 
-        verify.emit(0, 0, chunks, self.name)
+        verify.emit(0, 0, chunks, self.file.name)
 
         hashProgress = 0
 
         try:
-            if (os.path.getsize(self.path) == self.size):
+            if (os.path.getsize(self.path) == self.file.size):
                 # filesize matches, so check the hash; size + hash is more secure than hash alone
                 with open(self.path, 'rb+') as f:
-                    hasher = self.algo()
+                    hasher = algoMap[self.file.algo]()
                     for chunk in iter(lambda: f.read(4096), b''):
                         # Allow downloads to be interrupted
                         if self.interrupt:
@@ -117,7 +113,7 @@ class FileDownload():
                         progress.emit(hashProgress)
                     check = hasher.hexdigest()
 
-                if (check == self.check):
+                if (check == self.file.check):
                     verified = True
                 else:
                     print("Hash mismatch")

@@ -9,6 +9,7 @@ venv
 # Temporary, deal with later
 docs
 manifest.xml
+manifests
 
 # Debris
 [Tt]humbs.db

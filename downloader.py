@@ -55,25 +55,13 @@ class Downloader(QObject):
 
                 print("Verify", index)
                 fileName = posixpath.basename(file.name)
-                fileSize = int(file.size)
                 filePath = file.name
 
                 path = os.path.normpath(os.path.join(self.installPath, filePath))
 
-                if not os.path.isdir(self.installPath):
-                    self.changeState(DownloaderState.VERIFICATION_FAILED, fileName)
-                    return
-
                 print("Verify from", path)
 
-                self.currentFile = FileDownload(
-                    path,
-                    file.urls,
-                    fileName,
-                    fileSize,
-                    file.check,
-                    file.algo
-                )
+                self.currentFile = FileDownload(file, path)
 
                 print("Constructed file", fileName)
 
@@ -113,26 +101,19 @@ class Downloader(QObject):
                     return
 
                 print("Download", index)
-                fileName = posixpath.basename(file.name)
-                fileSize = int(file.size)
-                filePath = file.name
+                fileName = os.path.basename(file.name)
+                filePath = os.path.dirname(file.name)
 
-                path = os.path.normpath(os.path.join(self.installPath, filePath))
+                path = os.path.normpath(os.path.join(self.installPath, file.name))
+                dirPath = os.path.normpath(os.path.join(self.installPath, filePath))
 
-                if not os.path.isdir(self.installPath):
-                    print("Create install path", self.installPath)
-                    os.makedirs(self.installPath)
+                if not os.path.isdir(dirPath):
+                    print("Create download path", dirPath)
+                    os.makedirs(dirPath)
 
                 print("Write to", path)
 
-                self.currentFile = FileDownload(
-                    path,
-                    file.urls,
-                    fileName,
-                    fileSize,
-                    file.check,
-                    file.algo
-                )
+                self.currentFile = FileDownload(file, path)
 
                 print("Constructed file", fileName)
 

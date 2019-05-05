@@ -18,6 +18,7 @@ from PySide2.QtWebEngineWidgets import QWebEngineView
 from PySide2.QtWidgets import QApplication, QMainWindow, QPushButton, QListWidget, QListWidgetItem
 
 from downloadui import DownloadUI
+from launcher import Launcher
 
 from manifest import fromXML
 
@@ -38,8 +39,18 @@ class Form(QObject):
 def projectSelected():
     app = manifest.applications[mainForm.window.projectsListWidget.currentRow()]
 
+    servers = list(filter(lambda server: server.application == app.id, manifest.servers))
+
     runtime = manifest.runtimes.get(app.runtime)
-    downloadUI.load(runtime.files, './runtimes/' + runtime.id)
+
+    if runtime:
+        downloadUI.load(runtime.files, './runtimes/' + runtime.id)
+        launcher.load(app, './runtimes/' + runtime.id, servers[0] if servers else None)
+        downloadUI.show()
+    else:
+        downloadUI.hide()
+        # TODO: The manifest specified a runtime that the user does not have and
+        #       did not provide a way for it to be retrieved. Show an error message
 
     if len(app.websites) > 1:
         home = next(w for w in app.websites if w.type == "home")
@@ -85,12 +96,18 @@ if __name__ == "__main__":
     settingsForm = Form("settings-dialog.ui")
     #runtimesForm = Form("runtimes-dialog.ui")
 
+    servers = []
+
     downloadUI = DownloadUI(
         mainForm.window.overallProgressBar,
         mainForm.window.fileProgressBar,
         mainForm.window.progressLabel,
         mainForm.window.playButton
     )
+
+    launcher = Launcher()
+
+    downloadUI.launch.connect(launcher.launch)
 
     # clear out the placeholder labels
     placeholdersToClear = [
@@ -102,7 +119,7 @@ if __name__ == "__main__":
     for placeholder in placeholdersToClear:
         placeholder.setText("")
 
-    manifest = fromXML("manifest.xml")
+    manifest = fromXML("manifests/manifest.xml")
 
     for app in manifest.applications:
         QListWidgetItem(app.name, mainForm.window.projectsListWidget)

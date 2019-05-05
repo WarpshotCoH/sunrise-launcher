@@ -1,11 +1,15 @@
 import os
 
-from PySide2.QtCore import QThread, Slot
+from PySide2.QtCore import QObject, QThread, Slot, Signal
 
 from downloader import Downloader, FileDownload, DownloaderState
 
-class DownloadUI:
-    def __init__(self, progressBar, fileBar, label, button):
+class DownloadUI(QObject):
+    launch = Signal()
+
+    def __init__(self, progressBar, fileBar, label, button, parent=None):
+        super(DownloadUI, self).__init__(parent)
+
         self.progressBar = progressBar
         self.fileBar = fileBar
         self.label = label
@@ -15,12 +19,27 @@ class DownloadUI:
 
         self.button.clicked.connect(self.startDownload)
 
+    def hide(self):
+        self.progressBar.hide()
+        self.fileBar.hide()
+        self.label.hide()
+        self.button.hide()
+
+    def show(self):
+        self.progressBar.show()
+        self.fileBar.show()
+        self.label.show()
+        self.button.show()
+
     def load(self, files, installPath):
         self.files = files
         self.installPath = installPath
 
         if os.path.isdir(installPath):
             self.verifyDownload()
+
+    def run(self):
+        self.launch.emit()
 
     def verifyDownload(self):
         self.shutdown()
@@ -34,6 +53,9 @@ class DownloadUI:
         self.downloader = Downloader(self.files, self.installPath)
         self.runInBackground(self.downloader.download)
 
+    # TODO: Startup on this feels slow (due to thread spawn maybe?). Can we
+    #       reuse the thread / downloader and instead use a custom slot + signal
+    #       for triggering instead of thread start?
     def runInBackground(self, fn):
         print("Start background download")
 
@@ -119,7 +141,7 @@ class DownloadUI:
             DownloaderState.NEW: self.startDownload,
             DownloaderState.RUNNING: self.pauseDownload,
             DownloaderState.PAUSED: self.startDownload,
-            DownloaderState.COMPLETE: self.startDownload,
+            DownloaderState.COMPLETE: self.run,
             DownloaderState.DOWNLOAD_FAILED: self.startDownload,
             DownloaderState.VERIFICATION_FAILED: self.startDownload,
         }
@@ -147,8 +169,8 @@ class DownloadUI:
         if state == DownloaderState.VERIFICATION_FAILED and filename:
             self.label.setText("Failed to verify " + filename)
 
-        # On a pause request we clear out any progress text
-        if state == DownloaderState.PAUSED:
+        # On a pause request or a complete we clear out any progress text
+        if state == DownloaderState.PAUSED or state == DownloaderState.COMPLETE:
             self.label.setText("")
 
     @Slot(int, int, int, str)
