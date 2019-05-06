@@ -305,6 +305,9 @@ class Manifest:
 def fromXML(file):
     return Manifest.fromXML(ET.parse(file).getroot())
 
+def fromXMLString(file):
+    return Manifest.fromXML(ET.fromstring(file))
+
 # TODO: Implement me
 def fromYML(file):
     return False

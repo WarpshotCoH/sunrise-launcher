@@ -19,6 +19,7 @@ from PySide2.QtWidgets import QApplication, QMainWindow, QPushButton, QListWidge
 
 from downloadui import DownloadUI
 from launcher import Launcher
+from patcher import PatcherPool
 from state import Store
 
 from manifest import fromXML
@@ -38,65 +39,82 @@ class Form(QObject):
         ui_file.close()
 
 def projectSelected():
-    app = list(store.applications.values())[mainForm.window.projectsListWidget.currentRow()]
+    apps = list(store.applications.values())
 
-    containers = store.resolveDownload(app.id)
-    print("Containers required", list(map(lambda x: x.id, containers)))
+    if len(apps) > 0:
+        app = apps[mainForm.window.projectsListWidget.currentRow()]
 
-    servers = list(filter(lambda server: server.application == app.id, store.servers))
+        containers = store.resolveDownload(app.id)
+        print("Containers required", list(map(lambda x: x.id, containers)))
 
-    runtime = store.runtimes.get(app.runtime)
+        servers = list(filter(lambda server: server.application == app.id, store.servers))
 
-    if runtime:
-        downloadUI.load(containers, './bin/')
-        launcher.load(app, './bin/' + app.id, servers[0] if servers else None)
-        downloadUI.show()
-    else:
-        downloadUI.hide()
-        # TODO: The manifest specified a runtime that the user does not have and
-        #       did not provide a way for it to be retrieved. Show an error message
+        runtime = store.runtimes.get(app.runtime)
 
-    if len(app.websites) > 1:
-        home = next(w for w in app.websites if w.type == "home")
-
-        if home:
-            buttonUrl = home.address
+        if runtime:
+            downloadUI.load(containers, './bin/')
+            launcher.load(app, './bin/' + app.id, servers[0] if servers else None)
+            downloadUI.show()
+            if autoDownload:
+                downloadUI.startDownload()
         else:
-           buttonUrl = app.websites[0].address
-    elif len(app.websites) == 1:
-        buttonUrl = app.websites[0].address
+            downloadUI.hide()
+            # TODO: The manifest specified a runtime that the user does not have and
+            #       did not provide a way for it to be retrieved. Show an error message
 
-    if app.name:
-        mainForm.window.projectNameLabel.setText(app.name)
+        if len(app.websites) > 1:
+            home = next(w for w in app.websites if w.type == "home")
 
-    if app.publisher:
-        mainForm.window.projectPublisherLabel.setText(app.publisher)
+            if home:
+                buttonUrl = home.address
+            else:
+               buttonUrl = app.websites[0].address
+        elif len(app.websites) == 1:
+            buttonUrl = app.websites[0].address
 
-    mainForm.window.projectUptimeLabel.setText("Uptime Unknown") # TODO: handle this... servers will have to provide a query service, specified in the manifest?
+        if app.name:
+            mainForm.window.projectNameLabel.setText(app.name)
 
-    # TODO: How do we disconnect if we don't have apriori knowledge of connections
-    try:
-        mainForm.window.projectWebsiteButton.clicked.disconnect()
-    except Exception:
-        pass
+        if app.publisher:
+            mainForm.window.projectPublisherLabel.setText(app.publisher)
 
-    if buttonUrl:
-        mainForm.window.projectWebsiteButton.clicked.connect(lambda: webbrowser.open(buttonUrl))
+        mainForm.window.projectUptimeLabel.setText("Uptime Unknown") # TODO: handle this... servers will have to provide a query service, specified in the manifest?
 
-    try:
-        # TODO: Move this off the ui thread
-        if app.icon:
-            if not store.cache.get(app.icon):
-                projectIconData = requests.get(app.icon, stream=True, allow_redirects=True).content # TODO: handle 404/missing icon?
-                projectIconImage = QImage.fromData(projectIconData)
-                store.cache[app.icon] = QPixmap.fromImage(projectIconImage)
+        # TODO: How do we disconnect if we don't have apriori knowledge of connections
+        try:
+            mainForm.window.projectWebsiteButton.clicked.disconnect()
+        except Exception:
+            pass
 
-            mainForm.window.projectIconLabel.setPixmap(store.cache.get(app.icon))
-    except Exception:
-        print(sys.exc_info())
-        pass
+        if buttonUrl:
+            mainForm.window.projectWebsiteButton.clicked.connect(lambda: webbrowser.open(buttonUrl))
 
-    print("Selected Project: %s" % app.id)
+        try:
+            # TODO: Move this off the ui thread
+            if app.icon:
+                if not store.cache.get(app.icon):
+                    projectIconData = requests.get(app.icon, stream=True, allow_redirects=True).content # TODO: handle 404/missing icon?
+                    projectIconImage = QImage.fromData(projectIconData)
+                    store.cache[app.icon] = QPixmap.fromImage(projectIconImage)
+
+                mainForm.window.projectIconLabel.setPixmap(store.cache.get(app.icon))
+        except Exception:
+            print(sys.exc_info())
+            pass
+
+        print("Selected Project: %s" % app.id)
+
+@Slot()
+def updateUIFromStore():
+    current = max(0, mainForm.window.projectsListWidget.currentRow())
+    mainForm.window.projectsListWidget.clear()
+
+    if len(store.applications.values()) > 0:
+        for app in store.applications.values():
+            QListWidgetItem(app.name, mainForm.window.projectsListWidget)
+
+        mainForm.window.projectsListWidget.setCurrentRow(current)
+        projectSelected()
 
 if __name__ == "__main__":
     application = QApplication(sys.argv)
@@ -106,9 +124,11 @@ if __name__ == "__main__":
     #runtimesForm = Form("runtimes-dialog.ui")
 
     store = Store()
-    # store.load("manifests/manifest1.xml")
-    # store.load("manifests/manifest2.xml")
-    store.save()
+    pool = PatcherPool()
+    pool.update.connect(store.load)
+    pool.add("manifests/manifest1.xml")
+    pool.add("manifests/manifest2.xml")
+    pool.update.connect(updateUIFromStore)
 
     servers = []
 
@@ -122,6 +142,7 @@ if __name__ == "__main__":
     launcher = Launcher()
 
     downloadUI.launch.connect(launcher.launch)
+    autoDownload = True
 
     # clear out the placeholder labels
     placeholdersToClear = [
@@ -151,5 +172,6 @@ if __name__ == "__main__":
     mainForm.window.show()
 
     application.aboutToQuit.connect(downloadUI.shutdown)
+    application.aboutToQuit.connect(pool.shutdown)
 
     sys.exit(application.exec_())

@@ -1,11 +1,18 @@
+import os
 import xml.etree.ElementTree as ET
 import sys
+
+from PySide2.QtCore import QObject, Slot, Signal
 
 from manifest import fromXML, Manifest
 
 # Storage of metadata about the users current install
-class Store():
-    def __init__(self):
+class Store(QObject):
+    update = Signal()
+
+    def __init__(self, parent=None):
+        super(Store, self).__init__(parent)
+
         self.applications = {}
         self.runtimes = {}
         self.servers = []
@@ -16,18 +23,17 @@ class Store():
             self.applications = stored.applications
             self.runtimes = stored.runtimes
             self.servers = stored.servers
-
-            print(self.runtimes)
         except Exception:
             print(sys.exc_info())
             pass
 
-    def load(self, manifestFile):
-        manifest = fromXML(manifestFile)
-
+    @Slot(str, Manifest)
+    def load(self, url, manifest):
+        print("Updating manifest from", url, "in store")
         self.applications.update(manifest.applications)
         self.runtimes.update(manifest.runtimes)
         self.servers = list(set().union(self.servers, manifest.servers))
+        self.update.emit()
 
     def resolveDownload(self, id):
         # TODO: Do we need to handle collisions between app and runtime ids
@@ -45,6 +51,11 @@ class Store():
     def save(self):
         m = Manifest("store", self.servers, self.applications, self.runtimes)
         output = ET.tostring(m.toXML(), encoding='utf8', method='xml')
+
+        path = os.path.normpath(os.path.join('.', 'store'))
+
+        if not os.path.isdir(path):
+            os.makedirs(path)
 
         f = open("store/manifests.xml", "wb+")
         f.write(output)
