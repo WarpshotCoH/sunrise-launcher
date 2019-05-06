@@ -279,13 +279,13 @@ class Manifest:
 
         ET.SubElement(manifest, "name").text = self.name
 
-        if self.runtimes:
+        if self.servers:
             servers = ET.SubElement(manifest, "servers")
 
             for server in map(lambda s: s.toXML(), self.servers):
                 servers.append(server)
 
-        if self.runtimes:
+        if self.applications:
             applications = ET.SubElement(manifest, "applications")
 
             for application in map(lambda s: s.toXML(), self.applications):
