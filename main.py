@@ -19,6 +19,7 @@ from PySide2.QtWidgets import QApplication, QMainWindow, QPushButton, QListWidge
 
 from downloadui import DownloadUI
 from launcher import Launcher
+from state import Store
 
 from manifest import fromXML
 
@@ -80,11 +81,16 @@ def projectSelected():
         mainForm.window.projectWebsiteButton.clicked.connect(lambda: webbrowser.open(buttonUrl))
 
     try:
+        # TODO: Move this off the ui thread
         if app.icon:
-           projectIconData = requests.get(app.icon, stream=True, allow_redirects=True).content # TODO: handle 404/missing icon?
-           projectIconImage = QImage.fromData(projectIconData)
-           mainForm.window.projectIconLabel.setPixmap(QPixmap.fromImage(projectIconImage))
+            if not state.cache.get(app.icon):
+                projectIconData = requests.get(app.icon, stream=True, allow_redirects=True).content # TODO: handle 404/missing icon?
+                projectIconImage = QImage.fromData(projectIconData)
+                state.cache[app.icon] = QPixmap.fromImage(projectIconImage)
+
+            mainForm.window.projectIconLabel.setPixmap(state.cache.get(app.icon))
     except Exception:
+        print(sys.exc_info())
         pass
 
     print("Selected Project: %s" % app.id)
@@ -95,6 +101,8 @@ if __name__ == "__main__":
     mainForm = Form("sunrise.ui")
     settingsForm = Form("settings-dialog.ui")
     #runtimesForm = Form("runtimes-dialog.ui")
+
+    state = Store()
 
     servers = []
 
