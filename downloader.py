@@ -22,13 +22,14 @@ class Downloader(QObject):
     progress = Signal(int)
     stateChange = Signal(DownloaderState, str)
 
-    def __init__(self, files, installPath, parent=None):
+    def __init__(self, files, installPath, fastCheck = False, parent=None):
         super(Downloader, self).__init__(parent)
 
         self.state = DownloaderState.NEW
         self.files = files
         self.installPath = installPath
         self.currentFile = None
+        self.fastCheck = False
 
     def changeState(self, state, msg = None):
         self.state = state
@@ -62,6 +63,7 @@ class Downloader(QObject):
                 print("Verify from", path)
 
                 self.currentFile = FileDownload(file, path)
+                self.currentFile.toggleHashCheck(self.fastCheck)
 
                 print("Constructed file", fileName)
 

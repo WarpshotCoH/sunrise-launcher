@@ -43,7 +43,7 @@ class DownloadUI(QObject):
 
     def verifyDownload(self):
         self.shutdown()
-        self.downloader = Downloader(self.files, self.installPath)
+        self.downloader = Downloader(self.files, self.installPath, True)
         self.runInBackground(self.downloader.verify)
 
     def startDownload(self):

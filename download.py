@@ -17,6 +17,13 @@ class FileDownload():
         self.file = file
         self.path = writePath
         self.interrupt = False
+        self.skipHashCheck = False
+
+    def toggleHashCheck(self, state = None):
+        if state:
+            self.skipHashCheck = state
+        else:
+            self.skipHashCheck = not self.skipHashCheck
 
     def start(self, init, progress):
         print("Start file download")
@@ -100,6 +107,9 @@ class FileDownload():
 
         try:
             if (os.path.getsize(self.path) == self.file.size):
+                if self.skipHashCheck:
+                    return True
+
                 # filesize matches, so check the hash; size + hash is more secure than hash alone
                 with open(self.path, 'rb+') as f:
                     hasher = algoMap[self.file.algo]()
