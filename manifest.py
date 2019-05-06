@@ -235,8 +235,10 @@ class Runtime:
 
     def toXML(self):
         runtime = ET.Element("runtime")
-        runtime.attrib["name"] = self.name
-        runtime.attrib["publisher"] = self.publisher
+        runtime.attrib["id"] = self.id
+
+        ET.SubElement(runtime, "name").text = self.name
+        ET.SubElement(runtime, "publisher").text = self.name
 
         files = ET.Element("files")
         for f in map(lambda f: f.toXML(), self.files):
@@ -260,7 +262,7 @@ class Manifest:
             Server.fromXML,
             manifest.findall(".//servers/server")
         ))
-        applications = list(map(
+        applicationList = list(map(
             Application.fromXML,
             manifest.findall(".//applications/application")
         ))
@@ -269,6 +271,7 @@ class Manifest:
             manifest.findall(".//runtimes/runtime")
         ))
 
+        applications = dict((application.id,application) for application in applicationList)
         runtimes = dict((runtime.id,runtime) for runtime in runtimeList)
 
         return Manifest(name, servers, applications, runtimes)
@@ -279,16 +282,16 @@ class Manifest:
 
         ET.SubElement(manifest, "name").text = self.name
 
-        if self.runtimes:
+        if self.servers:
             servers = ET.SubElement(manifest, "servers")
 
             for server in map(lambda s: s.toXML(), self.servers):
                 servers.append(server)
 
-        if self.runtimes:
+        if self.applications:
             applications = ET.SubElement(manifest, "applications")
 
-            for application in map(lambda s: s.toXML(), self.applications):
+            for application in map(lambda r: r.toXML(), self.applications.values()):
                 applications.append(application)
 
         if self.runtimes:

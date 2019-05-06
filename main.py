@@ -38,15 +38,18 @@ class Form(QObject):
         ui_file.close()
 
 def projectSelected():
-    app = manifest.applications[mainForm.window.projectsListWidget.currentRow()]
+    app = list(store.applications.values())[mainForm.window.projectsListWidget.currentRow()]
 
-    servers = list(filter(lambda server: server.application == app.id, manifest.servers))
+    containers = store.resolveDownload(app.id)
+    print("Containers required", list(map(lambda x: x.id, containers)))
 
-    runtime = manifest.runtimes.get(app.runtime)
+    servers = list(filter(lambda server: server.application == app.id, store.servers))
+
+    runtime = store.runtimes.get(app.runtime)
 
     if runtime:
-        downloadUI.load(runtime.files, './runtimes/' + runtime.id)
-        launcher.load(app, './runtimes/' + runtime.id, servers[0] if servers else None)
+        downloadUI.load(containers, './bin/')
+        launcher.load(app, './bin/' + app.id, servers[0] if servers else None)
         downloadUI.show()
     else:
         downloadUI.hide()
@@ -83,12 +86,12 @@ def projectSelected():
     try:
         # TODO: Move this off the ui thread
         if app.icon:
-            if not state.cache.get(app.icon):
+            if not store.cache.get(app.icon):
                 projectIconData = requests.get(app.icon, stream=True, allow_redirects=True).content # TODO: handle 404/missing icon?
                 projectIconImage = QImage.fromData(projectIconData)
-                state.cache[app.icon] = QPixmap.fromImage(projectIconImage)
+                store.cache[app.icon] = QPixmap.fromImage(projectIconImage)
 
-            mainForm.window.projectIconLabel.setPixmap(state.cache.get(app.icon))
+            mainForm.window.projectIconLabel.setPixmap(store.cache.get(app.icon))
     except Exception:
         print(sys.exc_info())
         pass
@@ -102,7 +105,10 @@ if __name__ == "__main__":
     settingsForm = Form("settings-dialog.ui")
     #runtimesForm = Form("runtimes-dialog.ui")
 
-    state = Store()
+    store = Store()
+    # store.load("manifests/manifest1.xml")
+    # store.load("manifests/manifest2.xml")
+    store.save()
 
     servers = []
 
@@ -127,9 +133,9 @@ if __name__ == "__main__":
     for placeholder in placeholdersToClear:
         placeholder.setText("")
 
-    manifest = fromXML("manifests/manifest.xml")
+    # manifest = fromXML("manifests/manifest.xml")
 
-    for app in manifest.applications:
+    for app in store.applications.values():
         QListWidgetItem(app.name, mainForm.window.projectsListWidget)
 
     mainForm.window.projectsListWidget.setCurrentRow(0)

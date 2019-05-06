@@ -31,8 +31,8 @@ class DownloadUI(QObject):
         self.label.show()
         self.button.show()
 
-    def load(self, files, installPath):
-        self.files = files
+    def load(self, containers, installPath):
+        self.containers = containers
         self.installPath = installPath
 
         if os.path.isdir(installPath):
@@ -43,14 +43,14 @@ class DownloadUI(QObject):
 
     def verifyDownload(self):
         self.shutdown()
-        self.downloader = Downloader(self.files, self.installPath, True)
+        self.downloader = Downloader(self.containers, self.installPath, True)
         self.runInBackground(self.downloader.verify)
 
     def startDownload(self):
         # Before verifying or downloading, make sure existing downloaders and
         # threads have been cleaned up
         self.shutdown()
-        self.downloader = Downloader(self.files, self.installPath)
+        self.downloader = Downloader(self.containers, self.installPath)
         self.runInBackground(self.downloader.download)
 
     # TODO: Startup on this feels slow (due to thread spawn maybe?). Can we

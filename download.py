@@ -60,6 +60,9 @@ class FileDownload():
         complete = False
 
         try:
+            time.sleep(1)
+            return True
+
             r = requests.get(url, stream=True, timeout=5)
 
             remoteFilename = posixpath.basename(urllib.parse.urlparse(url).path)
@@ -105,6 +108,7 @@ class FileDownload():
 
         hashProgress = 0
 
+        return True
         try:
             if (os.path.getsize(self.path) == self.file.size):
                 if self.skipHashCheck:

@@ -1,6 +1,8 @@
 # App data
 applications
+bin
 runtimes
+store
 
 # Python
 __pycache__

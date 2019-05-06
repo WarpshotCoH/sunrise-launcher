@@ -32,5 +32,5 @@ class Launcher:
         print("Launching application " + self.app.name)
         print("Running: ")
         print(self.launchCmd())
-        subprocess.Popen(self.launchCmd().split(' '), cwd=self.installPath)
+        # subprocess.Popen(self.launchCmd().split(' '), cwd=self.installPath)
 
