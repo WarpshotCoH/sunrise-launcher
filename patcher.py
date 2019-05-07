@@ -10,6 +10,8 @@ from manifest import fromXMLString, Manifest
 
 class PatcherPool(QObject):
     update = Signal(str, Manifest)
+    startTrigger = Signal()
+    stopTrigger = Signal()
 
     def __init__(self, parent=None):
         super(PatcherPool, self).__init__(parent)
@@ -23,15 +25,24 @@ class PatcherPool(QObject):
 
         self.patchers[manifestUrl] = Patcher(manifestUrl, self.update)
         self.patchers[manifestUrl].moveToThread(self.thread)
+        self.stopTrigger.connect(self.patchers[manifestUrl].shutdown)
 
         if self.thread.isRunning():
-            self.patchers[manifestUrl].start()
+            print("Patch thread already running. Starting", manifestUrl)
+            # TODO: There should be a better way to write this
+            try:
+                self.startTrigger.disconnect()
+            except Exception:
+                pass
+
+            self.startTrigger.connect(self.patchers[manifestUrl].start)
+            self.startTrigger.emit()
         else:
+            print("Patch thread not running. Scheduling", manifestUrl)
             self.thread.started.connect(self.patchers[manifestUrl].start)
 
     def shutdown(self):
-        for patcher in self.patchers.values():
-            patcher.shutdown()
+        self.stopTrigger.emit()
 
         self.thread.quit()
         self.thread.wait()
@@ -49,6 +60,7 @@ class Patcher(QObject):
 
     @Slot()
     def start(self):
+        print("Start manifest patcher", self.manifestUrl)
         self.timer = QTimer()
         self.timer.setInterval(60000)
         self.timer.timeout.connect(self.run)
