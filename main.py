@@ -52,10 +52,11 @@ def projectSelected():
         runtime = store.runtimes.get(app.runtime)
 
         if runtime:
-            downloadUI.load(containers, './bin/')
-            launcher.load(app, './bin/' + app.id, servers[0] if servers else None)
+            downloadUI.load(containers, store.settings["paths"].binPath)
+            launcher.load(store.settings["paths"], app, runtime, servers[0] if servers else None)
             downloadUI.show()
-            if autoDownload:
+
+            if app.id in store.settings["autoDownload"]:
                 downloadUI.startDownload()
         else:
             downloadUI.hide()
@@ -142,7 +143,6 @@ if __name__ == "__main__":
     launcher = Launcher()
 
     downloadUI.launch.connect(launcher.launch)
-    autoDownload = True
 
     # clear out the placeholder labels
     placeholdersToClear = [

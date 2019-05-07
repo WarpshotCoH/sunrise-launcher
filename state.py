@@ -6,6 +6,12 @@ from PySide2.QtCore import QObject, Slot, Signal
 
 from manifest import fromXML, Manifest
 
+class PathConfig:
+    def __init__(self, binPath, runPath):
+        self.binPath = binPath
+        self.runPath = runPath
+
+
 # Storage of metadata about the users current install
 class Store(QObject):
     update = Signal()
@@ -17,6 +23,10 @@ class Store(QObject):
         self.runtimes = {}
         self.servers = []
         self.cache = {}
+        self.settings = {}
+
+        self.settings["autoDownload"] = []
+        self.settings["paths"] = PathConfig("./bin", "./run")
 
         try:
             stored = Manifest.fromXML(ET.parse("store/manifests.xml").getroot())
