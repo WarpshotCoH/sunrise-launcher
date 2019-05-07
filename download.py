@@ -20,10 +20,10 @@ class FileDownload():
         self.skipHashCheck = False
 
     def toggleHashCheck(self, state = None):
-        if state:
-            self.skipHashCheck = state
-        else:
+        if state == None:
             self.skipHashCheck = not self.skipHashCheck
+        else:
+            self.skipHashCheck = state
 
     def start(self, init, progress):
         print("Start file download")
@@ -60,9 +60,6 @@ class FileDownload():
         complete = False
 
         try:
-            time.sleep(1)
-            return True
-
             r = requests.get(url, stream=True, timeout=5)
 
             remoteFilename = posixpath.basename(urllib.parse.urlparse(url).path)
@@ -108,10 +105,11 @@ class FileDownload():
 
         hashProgress = 0
 
-        return True
         try:
             if (os.path.getsize(self.path) == self.file.size):
                 if self.skipHashCheck:
+                    print("Skip hash check")
+                    progress.emit(chunks)
                     return True
 
                 # filesize matches, so check the hash; size + hash is more secure than hash alone

@@ -55,8 +55,8 @@ def projectSelected():
             downloadUI.load(containers, './bin/')
             launcher.load(app, './bin/' + app.id, servers[0] if servers else None)
             downloadUI.show()
-            if autoDownload:
-                downloadUI.startDownload()
+            # if autoDownload:
+                # downloadUI.startDownload()
         else:
             downloadUI.hide()
             # TODO: The manifest specified a runtime that the user does not have and

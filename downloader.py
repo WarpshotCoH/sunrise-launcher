@@ -29,7 +29,7 @@ class Downloader(QObject):
         self.containers = containers
         self.installPath = installPath
         self.currentFile = None
-        self.fastCheck = False
+        self.fastCheck = fastCheck
 
     def changeState(self, state, msg = None):
         self.state = state
