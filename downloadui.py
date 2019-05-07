@@ -111,10 +111,11 @@ class DownloadUI(QObject):
             self.downloadThread.quit()
             self.downloadThread.wait()
 
-    @Slot(int, int, int)
-    def onStart(self, pMin, pStart, pMax):
+    @Slot(str, int, int, int)
+    def onStart(self, name, pMin, pStart, pMax):
         print("Downloader Start")
-        print(pMin, pStart, pMax)
+        print(name, pMin, pStart, pMax)
+        self.progressBar.setFormat("[{}] - %v / %m - %p".format(name))
         self.progressBar.setMinimum(pMin)
         self.progressBar.setValue(pStart)
         self.progressBar.setMaximum(pMax)

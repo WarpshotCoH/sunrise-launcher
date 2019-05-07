@@ -18,7 +18,7 @@ class Downloader(QObject):
     fileStart = Signal(int, int, int, str)
     fileProgress = Signal(int)
     fileVerify = Signal(int, int, int, str)
-    start = Signal(int, int, int)
+    start = Signal(str, int, int, int)
     progress = Signal(int)
     stateChange = Signal(DownloaderState, str)
 
@@ -49,7 +49,7 @@ class Downloader(QObject):
             for container in self.containers:
                 print("Verifying container", container.name)
 
-                self.start.emit(0, 0, len(container.files))
+                self.start.emit(container.name, 0, 0, len(container.files))
                 print("Emit runtime size")
 
                 for index, file in enumerate(container.files):
@@ -100,7 +100,7 @@ class Downloader(QObject):
             for container in self.containers:
                 print("Downloading container", container.name)
 
-                self.start.emit(0, 0, len(container.files))
+                self.start.emit(container.name, 0, 0, len(container.files))
                 print("Emit runtime size")
 
                 for index, file in enumerate(container.files):
