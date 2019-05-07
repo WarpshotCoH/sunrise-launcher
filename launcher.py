@@ -7,13 +7,35 @@ class Launcher:
     def __init__(self):
         self.app = None
 
-    def load(self, application, installPath, server = None):
+    def load(self, application, installPath, runtime = None, server = None):
         self.app = application
         self.installPath = installPath
+        self.runtime = runtime
         self.server = server
 
+    def buildRunner(self):
+        if self.runtime:
+            for file in self.runtime.files:
+                self.createRunnerSymlink(file)
+
+        for file in self.app.files:
+            self.createRunnerSymlink(file)
+
+    def createRunnerSymlink(self, file):
+        path = os.path.join('./run', self.app.id, os.path.dirname(file.name))
+
+        if not os.path.isdir(path):
+            os.makedirs(path)
+
+        os.symlink(
+            os.path.join(self.installPath, file.name),
+            os.path.join('./run', self.app.id, file.name)
+        )
+
     def launchCmd(self):
-        cmd = os.path.join(self.installPath, self.app.launcher.exec)
+        self.buildRunner()
+
+        cmd = os.path.join('./run', self.app.id, self.app.launcher.exec)
 
         if self.app.launcher.params:
             cmd = cmd + " " + self.app.launcher.params
