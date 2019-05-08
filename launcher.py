@@ -14,26 +14,28 @@ class Launcher:
         self.runPath = os.path.join(paths.binPath, self.runtime.id if runtime else self.app.id)
 
     def launchCmd(self):
-        cmd = os.path.abspath(os.path.join('.', self.runPath, self.app.launcher.exec))
+        if self.server and self.server.launcher and self.server.launcher.exec:
+            ex = self.server.launcher.exec
+        else:
+            ex = self.app.launcher.exec
+
+        cmd = os.path.abspath(os.path.join(".", self.runPath, ex))
 
         if self.app.launcher.params:
             cmd = cmd + " " + self.app.launcher.params
 
-        if self.server:
-            if self.server.auth:
-                cmd = cmd + " -auth " + self.server.auth
-
-            if self.server.db:
-                cmd = cmd + " -db " + self.server.db
+        if self.server and self.server.launcher and self.server.launcher.params:
+            cmd = cmd + " " + self.server.launcher.params
 
         return cmd
 
     @Slot()
     def launch(self):
-        print("Launching application " + self.app.name)
-        print("Running: ")
-        print(self.launchCmd(), self.runPath)
-        subprocess.Popen(self.launchCmd().split(' '), cwd=os.path.abspath(self.runPath))
+        print("Launching application" + self.app.name)
+        print("Running")
+        print(self.launchCmd())
+        print("From", self.runPath)
+        subprocess.Popen(self.launchCmd().split(" "), cwd=os.path.abspath(self.runPath))
 
     # TODO: Implement symlinked runner directory for actually launching the app at
     #       runtime. This is just a prototype and needs a lot of work

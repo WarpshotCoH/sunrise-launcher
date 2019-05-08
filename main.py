@@ -47,7 +47,7 @@ def projectSelected():
         containers = store.resolveDownload(app.id)
         print("Containers required", list(map(lambda x: x.id, containers)))
 
-        servers = list(filter(lambda server: server.application == app.id, store.servers))
+        servers = list(filter(lambda server: server.application == app.id, store.servers.values()))
 
         runtime = store.runtimes.get(app.runtime)
 

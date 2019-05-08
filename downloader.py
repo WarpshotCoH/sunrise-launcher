@@ -2,6 +2,7 @@ import os
 import posixpath
 from shutil import copyfile
 import sys
+import time
 
 from PySide2.QtCore import QThread, QObject, Signal
 
@@ -154,9 +155,9 @@ class Downloader(QObject):
                         else:
                             print("Verfification complete", fileName)
 
-                            if hasattr(container, "runtime") and container.runtime:
-                                print("Copy", path, "to", os.path.normpath(os.path.join(self.installPath, container.runtime.id, filePath)))
-                                copyfile(path, os.path.normpath(os.path.join(self.installPath, container.runtime.id, filePath)))
+                            if hasattr(container, "runtime"):
+                                print("Copy", path, "to", os.path.normpath(os.path.join(self.installPath, container.runtime, file.name)))
+                                copyfile(path, os.path.normpath(os.path.join(self.installPath, container.runtime, file.name)))
 
                             self.progress.emit(index + 1)
 
