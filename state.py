@@ -26,7 +26,7 @@ class Store(QObject):
         self.settings = {}
 
         self.settings["autoDownload"] = []
-        self.settings["paths"] = PathConfig("./bin", "./run")
+        self.settings["paths"] = PathConfig("bin", "run")
 
         try:
             stored = Manifest.fromXML(ET.parse("store/manifests.xml").getroot())
