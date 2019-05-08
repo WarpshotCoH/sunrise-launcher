@@ -1,66 +1,78 @@
-import os, errno
+import os
 import subprocess
+import sys
+import threading
 
 from PySide2.QtCore import QObject, QThread, Slot, Signal
 
-class Launcher:
-    def __init__(self):
-        self.app = None
+class Launcher(QObject):
+    started = Signal(str)
+    exited = Signal(str)
 
-    def load(self, paths, application, runtime = None, server = None):
-        self.app = application
-        self.runtime = runtime
-        self.server = server
-        self.runPath = os.path.join(paths.binPath, self.runtime.id if runtime else self.app.id)
+    def __init__(self, store, parent = None):
+        super(Launcher, self).__init__(parent)
 
-    def launchCmd(self):
-        if self.server and self.server.launcher and self.server.launcher.exec:
-            ex = self.server.launcher.exec
+        self.store = store
+
+    def launchCmd(self, id):
+        server = self.store.servers.get(id)
+
+        if server and server.application:
+            app = self.store.applications.get(server.application)
         else:
-            ex = self.app.launcher.exec
+            app = self.store.applications.get(id)
 
-        cmd = os.path.abspath(os.path.join(".", self.runPath, ex))
+        if server and server.launcher and server.launcher.exec:
+            ex = server.launcher.exec
+        else:
+            ex = app.launcher.exec
 
-        if self.app.launcher.params:
-            cmd = cmd + " " + self.app.launcher.params
+        runPath = os.path.abspath(os.path.join(self.store.settings["paths"].binPath, app.runtime if app.runtime else app.id))
 
-        if self.server and self.server.launcher and self.server.launcher.params:
-            cmd = cmd + " " + self.server.launcher.params
+        cmd = os.path.join(runPath, ex)
 
-        return cmd
+        if app.launcher.params:
+            cmd = cmd + " " + app.launcher.params
 
-    @Slot()
-    def launch(self):
-        print("Launching application" + self.app.name)
+        if server and server.launcher and server.launcher.params:
+            cmd = cmd + " " + server.launcher.params
+
+        return (cmd, runPath)
+
+    @Slot(str)
+    def launch(self, id):
+        print("Launching application" + id)
         print("Running")
-        print(self.launchCmd())
-        print("From", self.runPath)
-        subprocess.Popen(self.launchCmd().split(" "), cwd=os.path.abspath(self.runPath))
+        print(self.launchCmd(id))
 
-    # TODO: Implement symlinked runner directory for actually launching the app at
-    #       runtime. This is just a prototype and needs a lot of work
-    # def buildRunner(self):
-    #     if self.runtime:
-    #         for file in self.runtime.files:
-    #             self.createRunnerSymlink(self.runtime.id, file)
+        (cmd, path) = self.launchCmd(id)
 
-    #     for file in self.app.files:
-    #         self.createRunnerSymlink(self.app.id, file)
+        popenAndCall(lambda: self.started.emit(id), lambda: self.exited.emit(id), cmd.split(" "), cwd=path)
 
-    # def createRunnerSymlink(self, id, file):
-    #     path = os.path.join(self.runPath, os.path.dirname(file.name))
+# https://stackoverflow.com/questions/2581817/python-subprocess-callback-when-cmd-exits
+def popenAndCall(onStart, onExit, *popenArgs, **popenKWArgs):
+    """
+    Runs a subprocess.Popen, and then calls the function onExit when the
+    subprocess completes.
 
-    #     if not os.path.isdir(path):
-    #         os.makedirs(path)
+    Use it exactly the way you'd normally use subprocess.Popen, except include a
+    callable to execute as the first argument. onExit is a callable object, and
+    *popenArgs and **popenKWArgs are simply passed up to subprocess.Popen.
+    """
+    def runInThread(onExit, popenArgs, popenKWArgs):
+        onStart()
+        try:
+            proc = subprocess.Popen(*popenArgs, **popenKWArgs)
+            proc.wait()
+        except Exception:
+            print(sys.exc_info())
+            pass
 
-    #     src = os.path.abspath(os.path.join(self.paths.binPath, id, file.name))
-    #     dst = os.path.abspath(os.path.join(self.runPath, file.name))
+        onExit()
+        return
 
-    #     try:
-    #         os.symlink(src, dst)
-    #     except OSError as e:
-    #         if e.errno == errno.EEXIST:
-    #             os.remove(dst)
-    #             os.symlink(src, dst)
-    #         else:
-    #             raise e
+    thread = threading.Thread(target=runInThread,
+                              args=(onExit, popenArgs, popenKWArgs))
+    thread.start()
+
+    return thread # returns immediately after the thread starts

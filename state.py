@@ -24,6 +24,7 @@ class Store(QObject):
         self.servers = {}
         self.cache = {}
         self.settings = {}
+        self.running = []
 
         self.settings["autoDownload"] = []
         self.settings["paths"] = PathConfig("bin", "run")
@@ -44,6 +45,16 @@ class Store(QObject):
         self.runtimes.update(manifest.runtimes)
         self.servers.update(manifest.servers)
         self.update.emit()
+
+    @Slot(str)
+    def addRunning(self, id):
+        print("Adding", id, "to running list")
+        self.running.append(id)
+
+    @Slot(str)
+    def removeRunning(self, id):
+        print("Removing", id, "to running list")
+        self.running.remove(id)
 
     def resolveDownload(self, id):
         # TODO: Do we need to handle collisions between app and runtime ids

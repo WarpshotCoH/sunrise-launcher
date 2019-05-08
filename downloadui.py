@@ -5,7 +5,7 @@ from PySide2.QtCore import QObject, QThread, Slot, Signal
 from downloader import Downloader, FileDownload, DownloaderState
 
 class DownloadUI(QObject):
-    launch = Signal()
+    launch = Signal(str)
 
     def __init__(self, progressBar, fileBar, label, button, parent=None):
         super(DownloadUI, self).__init__(parent)
@@ -16,6 +16,7 @@ class DownloadUI(QObject):
         self.button = button
         self.downloadThread = None
         self.downloader = None
+        self.containers =[]
 
         self.button.clicked.connect(self.startDownload)
 
@@ -39,7 +40,8 @@ class DownloadUI(QObject):
             self.verifyDownload()
 
     def run(self):
-        self.launch.emit()
+        if len(self.containers) > 0:
+            self.launch.emit(self.containers[-1].id)
 
     def verifyDownload(self):
         self.shutdown()

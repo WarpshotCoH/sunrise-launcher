@@ -53,7 +53,6 @@ def projectSelected():
 
         if runtime:
             downloadUI.load(containers, store.settings["paths"].binPath)
-            launcher.load(store.settings["paths"], app, runtime, servers[0] if servers else None)
             downloadUI.show()
 
             if app.id in store.settings["autoDownload"]:
@@ -140,7 +139,9 @@ if __name__ == "__main__":
         mainForm.window.playButton
     )
 
-    launcher = Launcher()
+    launcher = Launcher(store)
+    launcher.started.connect(store.addRunning)
+    launcher.exited.connect(store.removeRunning)
 
     downloadUI.launch.connect(launcher.launch)
 
