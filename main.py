@@ -39,9 +39,10 @@ class Form(QObject):
         ui_file.close()
 
 def projectSelected():
+    print("Called projectSelected", mainForm.window.projectsListWidget.currentRow())
     apps = list(store.applications.values())
 
-    if len(apps) > 0:
+    if len(apps) > 0 and mainForm.window.projectsListWidget.currentRow() > -1:
         app = apps[mainForm.window.projectsListWidget.currentRow()]
 
         containers = store.resolveDownload(app.id)
@@ -52,11 +53,12 @@ def projectSelected():
         runtime = store.runtimes.get(app.runtime)
 
         if runtime:
-            downloadUI.load(containers, store.settings["paths"].binPath)
+            downloadUI.load(
+                containers,
+                store.settings["paths"].binPath,
+                app.id in store.settings["autoDownload"] and not app.id in store.running
+            )
             downloadUI.show()
-
-            if app.id in store.settings["autoDownload"]:
-                downloadUI.startDownload()
         else:
             downloadUI.hide()
             # TODO: The manifest specified a runtime that the user does not have and
@@ -114,7 +116,6 @@ def updateUIFromStore():
             QListWidgetItem(app.name, mainForm.window.projectsListWidget)
 
         mainForm.window.projectsListWidget.setCurrentRow(current)
-        projectSelected()
 
 if __name__ == "__main__":
     application = QApplication(sys.argv)

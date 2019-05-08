@@ -32,12 +32,16 @@ class DownloadUI(QObject):
         self.label.show()
         self.button.show()
 
-    def load(self, containers, installPath):
+    def load(self, containers, installPath, autoDownload = False):
         self.containers = containers
         self.installPath = installPath
 
-        if os.path.isdir(installPath):
-            self.verifyDownload()
+        if not autoDownload:
+            if os.path.isdir(installPath):
+                self.verifyDownload()
+        else:
+            print("Auto downloading", list(map(lambda c: c.id, containers)))
+            self.startDownload()
 
     def run(self):
         if len(self.containers) > 0:

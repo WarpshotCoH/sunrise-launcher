@@ -87,6 +87,7 @@ class Patcher(QObject):
                     self.check = check
                     self.manifest = fromXMLString(contents)
                     # self.manifest = Manifest.fromXML(r.text)
+                    print("Update available", self.manifestUrl)
                     self.updater.emit(self.manifestUrl, self.manifest)
 
         except Exception:

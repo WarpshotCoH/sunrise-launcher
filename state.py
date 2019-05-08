@@ -41,6 +41,7 @@ class Store(QObject):
     @Slot(str, Manifest)
     def load(self, url, manifest):
         print("Updating manifest from", url, "in store")
+
         self.applications.update(manifest.applications)
         self.runtimes.update(manifest.runtimes)
         self.servers.update(manifest.servers)
