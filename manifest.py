@@ -43,21 +43,25 @@ class File:
         return file
 
 class Launcher:
-    def __init__(self, exec, params):
+    def __init__(self, exec , params):
         self.exec = exec
         self.params = params
 
     @staticmethod
     def fromXML(launcher):
         return Launcher(
-            launcher.attrib.get("exec", ""),
-            launcher.attrib.get("params", None)
+            launcher.attrib.get("exec"),
+            launcher.attrib.get("params")
         )
 
     def toXML(self):
         launcher = ET.Element("launcher")
-        launcher.attrib["exec"] = self.exec
-        launcher.attrib["params"] = self.params
+
+        if self.exec:
+            launcher.attrib["exec"] = self.exec
+
+        if self.params:
+            launcher.attrib["params"] = self.params
 
         return launcher
 
@@ -125,8 +129,9 @@ class News:
         return news
 
 class Application:
-    def __init__(self, id, runtime, custom, name, publisher, icon, websites, launcher, news, files):
+    def __init__(self, id, type, runtime, custom, name, publisher, icon, websites, launcher, news, files):
         self.id = id
+        self.type = type
         self.runtime = runtime
         self.custom = custom
         self.name = name
@@ -141,6 +146,7 @@ class Application:
     def fromXML(app):
         return Application(
             app.attrib["id"],
+            app.attrib["type"],
             app.attrib["runtime"],
             app.attrib.get("custom-server", False) == "true",
             "" if app.find("name") == None else app.find("name").text,
@@ -157,6 +163,7 @@ class Application:
         application = ET.Element("application")
 
         application.attrib["id"] = self.id
+        application.attrib["type"] = self.type
         application.attrib["runtime"] = self.runtime
 
         if self.custom:
@@ -189,31 +196,50 @@ class Application:
         return application
 
 class Server:
-    def __init__(self, name, application, auth, db):
-        self.name = name
+    def __init__(self, id, application, name, publisher, icon, website, launcher):
+        self.id = id
         self.application = application
-        self.auth = auth
-        self.db = db
+        self.name = name
+        self.publisher = publisher
+        self.icon = icon
+        self.website = website
+        self.launcher = launcher
 
     @staticmethod
     def fromXML(server):
         return Server(
-            server.attrib.get("name", ""),
-            server.attrib.get("application", ""),
-            server.attrib.get("auth"),
-            server.attrib.get("db")
+            server.attrib.get("id"),
+            server.attrib.get("application"),
+            None if server.find("name") == None else server.find("name").text,
+            None if server.find("icon") == None else server.find("icon").text,
+            None if server.find("publisher") == None else server.find("publisher").text,
+            list(map(Website.fromXML, server.findall(".//website"))),
+            None if server.find("launcher") == None else Launcher.fromXML(server.find("launcher")),
         )
 
     def toXML(self):
         server = ET.Element("server")
-        server.attrib["name"] = self.name
-        server.attrib["application"] = self.application
 
-        if self.auth:
-            server.attrib["auth"] = self.auth
+        if self.id:
+            server.attrib["id"] = self.id
 
-        if self.db:
-            server.attrib["db"] = self.db
+        if self.application:
+            server.attrib["application"] = self.application
+
+        if self.name:
+            ET.SubElement(server, "name").text = self.name
+
+        if self.publisher:
+            ET.SubElement(server, "publisher").text = self.publisher
+
+        if self.icon:
+            ET.SubElement(server, "icon").text = self.icon
+
+        for website in map(lambda w: w.toXML(), self.websites):
+            server.append(website)
+
+        if self.launcher:
+            server.append(self.launcher.toXML())
 
         return server
 
@@ -258,7 +284,7 @@ class Manifest:
     @staticmethod
     def fromXML(manifest):
         name = manifest.find("name").text
-        servers = list(map(
+        serverList = list(map(
             Server.fromXML,
             manifest.findall(".//servers/server")
         ))
@@ -271,6 +297,7 @@ class Manifest:
             manifest.findall(".//runtimes/runtime")
         ))
 
+        servers = dict((server.id,server) for server in serverList)
         applications = dict((application.id,application) for application in applicationList)
         runtimes = dict((runtime.id,runtime) for runtime in runtimeList)
 
@@ -285,7 +312,7 @@ class Manifest:
         if self.servers:
             servers = ET.SubElement(manifest, "servers")
 
-            for server in map(lambda s: s.toXML(), self.servers):
+            for server in map(lambda s: s.toXML(), self.servers.values()):
                 servers.append(server)
 
         if self.applications:

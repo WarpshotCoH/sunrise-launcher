@@ -21,7 +21,7 @@ class Store(QObject):
 
         self.applications = {}
         self.runtimes = {}
-        self.servers = []
+        self.servers = {}
         self.cache = {}
         self.settings = {}
 
@@ -42,27 +42,28 @@ class Store(QObject):
         print("Updating manifest from", url, "in store")
         self.applications.update(manifest.applications)
         self.runtimes.update(manifest.runtimes)
-        self.servers = list(set().union(self.servers, manifest.servers))
+        self.servers.update(manifest.servers)
         self.update.emit()
 
     def resolveDownload(self, id):
         # TODO: Do we need to handle collisions between app and runtime ids
         requested = self.applications.get(id, self.runtimes.get(id))
-        print("resolved", requested.id)
 
         if requested:
+            print("Resolved", requested.id)
             if hasattr(requested, "runtime") and requested.runtime:
                 return self.resolveDownload(requested.runtime) + [requested]
             else:
                 return [requested]
         else:
+            print("Failed to resolve", id)
             return []
 
     def save(self):
         m = Manifest("store", self.servers, self.applications, self.runtimes)
-        output = ET.tostring(m.toXML(), encoding='utf8', method='xml')
+        output = ET.tostring(m.toXML(), encoding="utf8", method="xml")
 
-        path = os.path.normpath(os.path.join('.', 'store'))
+        path = os.path.normpath(os.path.join(".", "store"))
 
         if not os.path.isdir(path):
             os.makedirs(path)
