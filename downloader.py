@@ -152,14 +152,22 @@ class Downloader(QObject):
                                 self.changeState(DownloaderState.VERIFICATION_FAILED, fileName)
 
                             return
-                        else:
-                            print("Verfification complete", fileName)
 
-                            if hasattr(container, "runtime"):
-                                print("Copy", path, "to", os.path.normpath(os.path.join(self.installPath, container.runtime, file.name)))
-                                copyfile(path, os.path.normpath(os.path.join(self.installPath, container.runtime, file.name)))
+                    if status:
+                        print("Verfification complete", fileName)
 
-                            self.progress.emit(index + 1)
+                        if hasattr(container, "runtime"):
+                            dstDir = os.path.abspath(os.path.normpath(os.path.join(self.installPath, container.runtime, filePath)))
+                            dstFile = os.path.join(dstDir, fileName)
+
+                            print("Copy", os.path.abspath(path), "to", dstFile)
+
+                            if not os.path.isdir(dstDir):
+                                os.makedirs(dstDir)
+
+                            copyfile(os.path.abspath(path), os.path.abspath(os.path.join(dstDir, fileName)))
+
+                        self.progress.emit(index + 1)
 
                 self.changeState(DownloaderState.COMPLETE)
         except Exception:
