@@ -52,11 +52,12 @@ class ServerListUI(QObject):
         else:
             selectedServer = None
 
-        # Side-effect! This reorders the internal server storage
+        # Side-effect! This reorders the UI internal server storage
         self.reorderServers()
 
         self.listUI.clear()
 
+        # Now we sync the new order up to the actual displayed UI
         if len(self.orderedServers) > 0:
             newIndex = 0
 
