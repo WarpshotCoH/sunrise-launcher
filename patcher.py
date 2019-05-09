@@ -9,7 +9,7 @@ import requests
 from manifest import fromXMLString, Manifest
 
 class PatcherPool(QObject):
-    update = Signal(str, Manifest)
+    updated = Signal(str, Manifest)
     startTrigger = Signal()
     stopTrigger = Signal()
 
@@ -23,7 +23,7 @@ class PatcherPool(QObject):
         if self.patchers.get(manifestUrl):
             self.patchers[manifestUrl].shutdown()
 
-        self.patchers[manifestUrl] = Patcher(manifestUrl, self.update)
+        self.patchers[manifestUrl] = Patcher(manifestUrl, self.updated)
         self.patchers[manifestUrl].moveToThread(self.thread)
         self.stopTrigger.connect(self.patchers[manifestUrl].shutdown)
 

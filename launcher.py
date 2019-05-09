@@ -27,7 +27,7 @@ class Launcher(QObject):
         else:
             ex = app.launcher.exec
 
-        runPath = os.path.abspath(os.path.join(self.store.settings["paths"].binPath, app.runtime if app.runtime else app.id))
+        runPath = os.path.abspath(os.path.join(self.store.settings.get("paths").binPath, app.runtime if app.runtime else app.id))
 
         cmd = os.path.join(runPath, ex)
 
@@ -47,7 +47,14 @@ class Launcher(QObject):
 
         (cmd, path) = self.launchCmd(id)
 
-        popenAndCall(lambda: self.started.emit(id), lambda: self.exited.emit(id), cmd.split(" "), cwd=path)
+        recentList = self.store.settings.get("recentServers")
+
+        recentList.push(id)
+        print("New recent list", recentList.recent)
+        self.store.settings.set("recentServers", recentList)
+        self.store.settings.commit()
+
+        # popenAndCall(lambda: self.started.emit(id), lambda: self.exited.emit(id), cmd.split(" "), cwd=path)
 
 # https://stackoverflow.com/questions/2581817/python-subprocess-callback-when-cmd-exits
 def popenAndCall(onStart, onExit, *popenArgs, **popenKWArgs):

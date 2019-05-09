@@ -1,0 +1,63 @@
+import webbrowser
+import sys
+
+import requests
+from PySide2.QtCore import QObject, Signal, Slot
+from PySide2.QtGui import QImage, QPixmap
+
+from manifest import Server, Application, Runtime
+
+class DetailsUI(QObject):
+    selected = Signal(Server, Application, Runtime)
+
+    def __init__(self, store, nameLabel, publisherLabel, uptimeLabel, websiteButton, icon, parent=None):
+        super(DetailsUI, self).__init__(parent)
+
+        self.store = store
+        self.nameLabel = nameLabel
+        self.publisherLabel = publisherLabel
+        self.uptimeLabel = uptimeLabel
+        self.websiteButton = websiteButton
+        self.icon = icon
+
+    @Slot(Application, Runtime, Server)
+    def load(self, application, runtime = None, server = None):
+        if len(application.websites) > 1:
+            home = next(w for w in application.websites if w.type == "home")
+
+            if home:
+                buttonUrl = home.address
+            else:
+               buttonUrl = application.websites[0].address
+        elif len(application.websites) == 1:
+            buttonUrl = application.websites[0].address
+
+        if application.name:
+            self.nameLabel.setText(application.name)
+
+        if application.publisher:
+            self.publisherLabel.setText(application.publisher)
+
+        self.uptimeLabel.setText("Uptime Unknown") # TODO: handle this... servers will have to provide a query service, specified in the manifest?
+
+        # TODO: How do we disconnect if we don't have apriori knowledge of connections
+        try:
+            self.websiteButton.clicked.disconnect()
+        except Exception:
+            pass
+
+        if buttonUrl:
+            self.websiteButton.clicked.connect(lambda: webbrowser.open(buttonUrl))
+
+        try:
+            # TODO: Move this off the ui thread. Should this be a on-off task or pooled to reuse resources
+            if application.icon:
+                if self.store.cache.get(application.icon):
+                    self.icon.setPixmap(self.store.cache.get(application.icon))
+                else:
+                    projectIconData = requests.get(application.icon, stream=True, allow_redirects=True).content # TODO: handle 404/missing icon?
+                    projectIconImage = QImage.fromData(projectIconData)
+                    self.store.cache[application.icon] = QPixmap.fromImage(projectIconImage)
+        except Exception:
+            print(sys.exc_info())
+            pass

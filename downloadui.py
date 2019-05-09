@@ -3,13 +3,15 @@ import os
 from PySide2.QtCore import QObject, QThread, Slot, Signal
 
 from downloader import Downloader, FileDownload, DownloaderState
+from manifest import Application, Runtime, Server
 
 class DownloadUI(QObject):
     launch = Signal(str)
 
-    def __init__(self, progressBar, fileBar, label, button, parent=None):
+    def __init__(self, store, progressBar, fileBar, label, button, parent=None):
         super(DownloadUI, self).__init__(parent)
 
+        self.store = store
         self.progressBar = progressBar
         self.fileBar = fileBar
         self.label = label
@@ -32,31 +34,30 @@ class DownloadUI(QObject):
         self.label.show()
         self.button.show()
 
-    def load(self, containers, installPath, autoDownload = False):
-        self.containers = containers
-        self.installPath = installPath
-
-        if not autoDownload:
-            if os.path.isdir(installPath):
+    @Slot(Application, Runtime, Server)
+    def load(self, application, runtime = None, server = None):
+        self.server = server
+        self.containers = [runtime, application]
+        if not self.store.settings.get("appSettings").get(application.id).autoPatch:
+            if os.path.isdir(self.store.settings.get("paths").binPath):
                 self.verifyDownload()
         else:
-            print("Auto downloading", list(map(lambda c: c.id, containers)))
             self.startDownload()
 
     def run(self):
-        if len(self.containers) > 0:
-            self.launch.emit(self.containers[-1].id)
+        if self.server:
+            self.launch.emit(self.server.id)
 
     def verifyDownload(self):
         self.shutdown()
-        self.downloader = Downloader(self.containers, self.installPath, True)
+        self.downloader = Downloader(self.containers, self.store.settings.get("paths").binPath, True)
         self.runInBackground(self.downloader.verify)
 
     def startDownload(self):
         # Before verifying or downloading, make sure existing downloaders and
         # threads have been cleaned up
         self.shutdown()
-        self.downloader = Downloader(self.containers, self.installPath)
+        self.downloader = Downloader(self.containers, self.store.settings.get("paths").binPath)
         self.runInBackground(self.downloader.download)
 
     # TODO: Startup on this feels slow (due to thread spawn maybe?). Can we

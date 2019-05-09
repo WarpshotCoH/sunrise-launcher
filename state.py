@@ -5,16 +5,11 @@ import sys
 from PySide2.QtCore import QObject, Slot, Signal
 
 from manifest import fromXML, Manifest
-
-class PathConfig:
-    def __init__(self, binPath, runPath):
-        self.binPath = binPath
-        self.runPath = runPath
-
+from settings import Settings, PathSettings, ApplicationSettings, RecentServers
 
 # Storage of metadata about the users current install
 class Store(QObject):
-    update = Signal()
+    updated = Signal()
 
     def __init__(self, parent=None):
         super(Store, self).__init__(parent)
@@ -23,11 +18,13 @@ class Store(QObject):
         self.runtimes = {}
         self.servers = {}
         self.cache = {}
-        self.settings = {}
+        self.settings = Settings()
         self.running = []
 
-        self.settings["autoDownload"] = []
-        self.settings["paths"] = PathConfig("bin", "run")
+        self.settings.set("appSettings", {})
+        self.settings.set("paths", PathSettings("bin", "run"))
+        self.settings.set("recentServers", RecentServers())
+        self.settings.commit()
 
         try:
             stored = Manifest.fromXML(ET.parse("store/manifests.xml").getroot())
@@ -45,7 +42,19 @@ class Store(QObject):
         self.applications.update(manifest.applications)
         self.runtimes.update(manifest.runtimes)
         self.servers.update(manifest.servers)
-        self.update.emit()
+
+        appSettings = self.settings.get("appSettings")
+
+        for app in self.applications.values():
+            if not appSettings.get(app.id):
+                appSettings[app.id] = ApplicationSettings(app.id)
+
+        self.settings.set("appSettings", appSettings)
+        self.settings.commit()
+
+        print("Committed settings for", url)
+
+        self.updated.emit()
 
     @Slot(str)
     def addRunning(self, id):

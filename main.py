@@ -17,7 +17,9 @@ from PySide2.QtUiTools import QUiLoader
 from PySide2.QtWebEngineWidgets import QWebEngineView
 from PySide2.QtWidgets import QApplication, QMainWindow, QPushButton, QListWidget, QListWidgetItem
 
+from detailsui import DetailsUI
 from downloadui import DownloadUI
+from serverlistui import ServerListUI
 from launcher import Launcher
 from patcher import PatcherPool
 from state import Store
@@ -38,113 +40,12 @@ class Form(QObject):
         self.window = loader.load(ui_file)
         ui_file.close()
 
-def projectSelected():
-    print("Called projectSelected", mainForm.window.projectsListWidget.currentRow())
-    apps = list(store.applications.values())
-
-    if len(apps) > 0 and mainForm.window.projectsListWidget.currentRow() > -1:
-        app = apps[mainForm.window.projectsListWidget.currentRow()]
-
-        containers = store.resolveDownload(app.id)
-        print("Containers required", list(map(lambda x: x.id, containers)))
-
-        servers = list(filter(lambda server: server.application == app.id, store.servers.values()))
-
-        runtime = store.runtimes.get(app.runtime)
-
-        if runtime:
-            downloadUI.load(
-                containers,
-                store.settings["paths"].binPath,
-                app.id in store.settings["autoDownload"] and not app.id in store.running
-            )
-            downloadUI.show()
-        else:
-            downloadUI.hide()
-            # TODO: The manifest specified a runtime that the user does not have and
-            #       did not provide a way for it to be retrieved. Show an error message
-
-        if len(app.websites) > 1:
-            home = next(w for w in app.websites if w.type == "home")
-
-            if home:
-                buttonUrl = home.address
-            else:
-               buttonUrl = app.websites[0].address
-        elif len(app.websites) == 1:
-            buttonUrl = app.websites[0].address
-
-        if app.name:
-            mainForm.window.projectNameLabel.setText(app.name)
-
-        if app.publisher:
-            mainForm.window.projectPublisherLabel.setText(app.publisher)
-
-        mainForm.window.projectUptimeLabel.setText("Uptime Unknown") # TODO: handle this... servers will have to provide a query service, specified in the manifest?
-
-        # TODO: How do we disconnect if we don't have apriori knowledge of connections
-        try:
-            mainForm.window.projectWebsiteButton.clicked.disconnect()
-        except Exception:
-            pass
-
-        if buttonUrl:
-            mainForm.window.projectWebsiteButton.clicked.connect(lambda: webbrowser.open(buttonUrl))
-
-        try:
-            # TODO: Move this off the ui thread
-            if app.icon:
-                if not store.cache.get(app.icon):
-                    projectIconData = requests.get(app.icon, stream=True, allow_redirects=True).content # TODO: handle 404/missing icon?
-                    projectIconImage = QImage.fromData(projectIconData)
-                    store.cache[app.icon] = QPixmap.fromImage(projectIconImage)
-
-                mainForm.window.projectIconLabel.setPixmap(store.cache.get(app.icon))
-        except Exception:
-            print(sys.exc_info())
-            pass
-
-        print("Selected Project: %s" % app.id)
-
-@Slot()
-def updateUIFromStore():
-    current = max(0, mainForm.window.projectsListWidget.currentRow())
-    mainForm.window.projectsListWidget.clear()
-
-    if len(store.applications.values()) > 0:
-        for app in store.applications.values():
-            QListWidgetItem(app.name, mainForm.window.projectsListWidget)
-
-        mainForm.window.projectsListWidget.setCurrentRow(current)
-
 if __name__ == "__main__":
     application = QApplication(sys.argv)
 
     mainForm = Form("sunrise.ui")
     settingsForm = Form("settings-dialog.ui")
     #runtimesForm = Form("runtimes-dialog.ui")
-
-    store = Store()
-    pool = PatcherPool()
-    pool.update.connect(store.load)
-    pool.add("manifests/manifest1.xml")
-    pool.add("manifests/manifest2.xml")
-    pool.update.connect(updateUIFromStore)
-
-    servers = []
-
-    downloadUI = DownloadUI(
-        mainForm.window.overallProgressBar,
-        mainForm.window.fileProgressBar,
-        mainForm.window.progressLabel,
-        mainForm.window.playButton
-    )
-
-    launcher = Launcher(store)
-    launcher.started.connect(store.addRunning)
-    launcher.exited.connect(store.removeRunning)
-
-    downloadUI.launch.connect(launcher.launch)
 
     # clear out the placeholder labels
     placeholdersToClear = [
@@ -156,15 +57,59 @@ if __name__ == "__main__":
     for placeholder in placeholdersToClear:
         placeholder.setText("")
 
-    # manifest = fromXML("manifests/manifest.xml")
+    store = Store()
 
-    for app in store.applications.values():
-        QListWidgetItem(app.name, mainForm.window.projectsListWidget)
+    pool = PatcherPool()
 
-    mainForm.window.projectsListWidget.setCurrentRow(0)
-    projectSelected()
+    downloadUI = DownloadUI(
+        store,
+        mainForm.window.overallProgressBar,
+        mainForm.window.fileProgressBar,
+        mainForm.window.progressLabel,
+        mainForm.window.playButton
+    )
 
-    mainForm.window.projectsListWidget.itemSelectionChanged.connect(projectSelected)
+    detailsUI = DetailsUI(
+        store,
+        mainForm.window.projectNameLabel,
+        mainForm.window.projectPublisherLabel,
+        mainForm.window.projectUptimeLabel,
+        mainForm.window.projectWebsiteButton,
+        mainForm.window.projectIconLabel
+    )
+
+    serverListUI = ServerListUI(
+        store,
+        mainForm.window.projectsListWidget
+    )
+
+    launcher = Launcher(store)
+
+    # Update the state store when a manifest update is received
+    pool.updated.connect(store.load)
+
+    # Connect the server list so that it updates when servers update
+    store.updated.connect(serverListUI.reload)
+
+    # Refresh the server list when recent server list changes
+    store.settings.connectKey("recentServers", serverListUI.reload)
+
+    # Update the download and server details views when a server is selected
+    serverListUI.selected.connect(detailsUI.load)
+    serverListUI.selected.connect(downloadUI.load)
+
+    # Connect the store to the launcher so a list of running applications
+    # can be maintained
+    launcher.started.connect(store.addRunning)
+    launcher.exited.connect(store.removeRunning)
+
+    # DownloadUI controls the main "Play" button. Connect its launch
+    # event to the file launcher
+    downloadUI.launch.connect(launcher.launch)
+
+    # Load the default manifest files
+    pool.add("manifests/manifest1.xml")
+    pool.add("manifests/manifest2.xml")
 
     # bind button clicks
     mainForm.window.settingsButton.clicked.connect(settingsForm.window.show)
