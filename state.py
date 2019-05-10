@@ -21,7 +21,7 @@ class Store(QObject):
         self.settings = Settings()
         self.running = []
 
-        self.settings.set("manifestList", Set())
+        self.settings.set("manifestList", set())
         self.settings.set("appSettings", {})
         self.settings.set("paths", PathSettings("bin", "run"))
         self.settings.set("recentServers", RecentServers())

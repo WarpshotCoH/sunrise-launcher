@@ -80,7 +80,7 @@ border: 1px solid black;</string>
      </rect>
     </property>
     <property name="text">
-     <string>Runtimes</string>
+     <string>Manage Servers</string>
     </property>
    </widget>
    <widget class="QPushButton" name="settingsButton">

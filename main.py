@@ -20,6 +20,7 @@ from PySide2.QtWidgets import QApplication, QMainWindow, QPushButton, QListWidge
 from detailsui import DetailsUI
 from downloadui import DownloadUI
 from serverlistui import ServerListUI
+from servermanagerui import ServerManagerUI
 from settingsui import SettingsUI
 from launcher import Launcher
 from patcher import PatcherPool
@@ -46,7 +47,7 @@ if __name__ == "__main__":
 
     mainForm = Form("sunrise.ui")
     settingsForm = Form("settings-dialog.ui")
-    #runtimesForm = Form("runtimes-dialog.ui")
+    serverManagerForm = Form("server-manager.ui")
 
     # clear out the placeholder labels
     placeholdersToClear = [
@@ -84,6 +85,11 @@ if __name__ == "__main__":
         mainForm.window.projectsListWidget
     )
 
+    serverManagerUI = ServerManagerUI(
+        store,
+        serverManagerForm.window
+    )
+
     settingsUI = SettingsUI(
         store,
         settingsForm.window.label,
@@ -92,14 +98,16 @@ if __name__ == "__main__":
 
     launcher = Launcher(store)
 
+    # TODO: Move connections to store updates into the respective UI classes
+
     # Update the state store when a manifest update is received
     pool.updated.connect(store.load)
 
     # Connect the server list so that it updates when servers update
     store.updated.connect(serverListUI.reload)
 
-    # Refresh the server list when recent server list changes
-    store.settings.connectKey("recentServers", serverListUI.reload)
+    # Refresh the server manager list when manifests update
+    store.updated.connect(serverListUI.reload)
 
     # Update the download and server details views when a server is selected
     serverListUI.selected.connect(detailsUI.load)
@@ -120,7 +128,7 @@ if __name__ == "__main__":
 
     # bind button clicks
     mainForm.window.settingsButton.clicked.connect(settingsForm.window.show)
-    # mainForm.window.runtimesButton.clicked.connect(runtimesForm.window.show)
+    mainForm.window.runtimesButton.clicked.connect(serverManagerForm.window.show)
 
     # things are ready, show the main window
     mainForm.window.show()
