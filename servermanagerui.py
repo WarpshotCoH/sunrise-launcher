@@ -14,29 +14,58 @@ class ServerManagerUI(QObject):
         self.window = serverManagerWindow
 
         self.store.updated.connect(self.reload)
+        self.store.settings.connectKey("hiddenServers", self.reload)
+        self.window.addServer.clicked.connect(self.showServer)
+        self.window.delServer.clicked.connect(self.hideServer)
 
-    @Slot()
-    def reload(self):
-        print("Reload server manager")
+    def getServers(self):
         servers = self.store.servers.values()
         hiddenIds = self.store.settings.get("hiddenServers")
 
         active = [s for s in servers if s.id not in hiddenIds]
         hidden  = [s for s in servers if s.id in hiddenIds]
 
-        # if len(self.orderedServers) > 0:
-        #     selectedServer = self.orderedServers[max(0, self.listUI.currentRow())]
-        # else:
-        #     selectedServer = None
+        return [active, hidden]
 
-        # Side-effect! This reorders the UI internal server storage
-        # self.reorderServers()
+    @Slot()
+    def showServer(self):
+        hidden = self.store.settings.get("hiddenServers")
+        hidden.remove(self.getSelectedServerId())
+        self.store.settings.set("hiddenServers", hidden)
+        self.store.settings.commit()
 
-        self.window.listWidget.clear()
-        self.window.listWidget_2.clear()
+    @Slot()
+    def hideServer(self):
+        hidden = self.store.settings.get("hiddenServers")
+        hidden.add(self.getSelectedServerId())
+        self.store.settings.set("hiddenServers", hidden)
+        self.store.settings.commit()
+
+    def getSelectedServerId(self):
+        [active, hidden] = self.getServers()
+
+        index = self.window.activeServers.currentRow()
+
+        if not index == -1:
+            return active[index].id
+        else:
+            index = self.window.hiddenServers.currentRow()
+
+            if not index == -1:
+                return hidden[index].id
+            else:
+                return None
+
+    @Slot(str)
+    def reload(self, key = None):
+        print("Reload server manager")
+        [active, hidden] = self.getServers()
+
+        self.window.activeServers.clear()
+        self.window.hiddenServers.clear()
 
         for server in active:
-            QListWidgetItem(server.name, self.window.listWidget)
+            QListWidgetItem(server.name, self.window.activeServers)
 
         for server in hidden:
-            QListWidgetItem(server.name, self.window.listWidget_2)
+            QListWidgetItem(server.name, self.window.hiddenServers)

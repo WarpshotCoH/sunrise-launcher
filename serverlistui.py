@@ -15,6 +15,7 @@ class ServerListUI(QObject):
         self.reorderServers()
 
         self.listUI.currentRowChanged.connect(self.selectServer)
+        self.store.settings.connectKey("hiddenServers", self.reload)
 
     def reorderServers(self):
         hidden = self.store.settings.get("hiddenServers")

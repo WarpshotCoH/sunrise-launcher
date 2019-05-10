@@ -49,7 +49,7 @@ class Settings(QObject):
 
             if not (k in self.store and self.store[k] == v):
                 self.store[k] = v
-                print("Emit update for", k)
+                print("Emit update for", k, v)
                 self.changed.emit(k)
 
 

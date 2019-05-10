@@ -25,7 +25,7 @@ class Store(QObject):
         self.settings.set("appSettings", {})
         self.settings.set("paths", PathSettings("bin", "run"))
         self.settings.set("recentServers", RecentServers())
-        self.settings.set("hiddenServers", [])
+        self.settings.set("hiddenServers", set())
         self.settings.set("lockedServers", [])
         self.settings.set("parentalPin", None)
         self.settings.commit()
