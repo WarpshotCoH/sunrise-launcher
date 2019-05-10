@@ -32,9 +32,6 @@ class Form(QObject):
     def __init__(self, ui_file, parent=None):
         super(Form, self).__init__(parent)
 
-        # Init the download background thread
-        self.downloadThread = QThread()
-
         ui_file = QFile(ui_file)
         ui_file.open(QFile.ReadOnly)
 
@@ -106,12 +103,6 @@ if __name__ == "__main__":
     # Update the state store when a manifest update is received
     pool.updated.connect(store.load)
 
-    # Connect the server list so that it updates when servers update
-    store.updated.connect(serverListUI.reload)
-
-    # Refresh the server manager list when manifests update
-    store.updated.connect(serverListUI.reload)
-
     # Update the download and server details views when a server is selected
     serverListUI.selected.connect(detailsUI.load)
     serverListUI.selected.connect(downloadUI.load)
@@ -131,7 +122,7 @@ if __name__ == "__main__":
 
     # bind button clicks
     mainForm.window.settingsButton.clicked.connect(settingsForm.window.show)
-    mainForm.window.runtimesButton.clicked.connect(serverManagerForm.window.show)
+    mainForm.window.runtimesButton.clicked.connect(serverManagerUI.show)
 
     # things are ready, show the main window
     mainForm.window.show()

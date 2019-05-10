@@ -13,7 +13,7 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <widget class="QListWidget" name="listWidget">
+  <widget class="QListWidget" name="activeServers">
    <property name="geometry">
     <rect>
      <x>20</x>
@@ -23,7 +23,7 @@
     </rect>
    </property>
   </widget>
-  <widget class="QListWidget" name="listWidget_2">
+  <widget class="QListWidget" name="hiddenServers">
    <property name="geometry">
     <rect>
      <x>230</x>
@@ -33,7 +33,7 @@
     </rect>
    </property>
   </widget>
-  <widget class="QPushButton" name="pushButton">
+  <widget class="QPushButton" name="delServer">
    <property name="geometry">
     <rect>
      <x>180</x>
@@ -46,7 +46,7 @@
     <string>&gt;</string>
    </property>
   </widget>
-  <widget class="QPushButton" name="pushButton_2">
+  <widget class="QPushButton" name="addServer">
    <property name="geometry">
     <rect>
      <x>180</x>
@@ -85,7 +85,7 @@
     <string>Hidden Servers</string>
    </property>
   </widget>
-  <widget class="QDialogButtonBox" name="buttonBox">
+  <widget class="QDialogButtonBox" name="controls">
    <property name="geometry">
     <rect>
      <x>220</x>

@@ -16,6 +16,15 @@ class ServerListUI(QObject):
 
         self.listUI.currentRowChanged.connect(self.selectServer)
 
+        # Connect the server list so that it updates when hidden servers are added / removed
+        self.store.settings.connectKey("hiddenServers", self.reload)
+
+        # Connect the server list so that it updates when servers update
+        self.store.updated.connect(self.reload)
+
+        # Refresh the server manager list when manifests update
+        self.store.updated.connect(self.reload)
+
     def reorderServers(self):
         hidden = self.store.settings.get("hiddenServers")
         order = self.computeServerOrder()
@@ -38,6 +47,8 @@ class ServerListUI(QObject):
     @Slot(int)
     def selectServer(self, row):
         if len(self.orderedServers) > 0 and row > -1:
+            if len(self.orderedServers) < row:
+                return
             server = self.orderedServers[row]
 
             if server:

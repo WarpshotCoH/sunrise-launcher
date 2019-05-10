@@ -8,7 +8,7 @@ class PathSettings:
         self.runPath = runPath
 
 class ApplicationSettings:
-    def __init__(self, id, autoPatch = False, customParams = None):
+    def __init__(self, id, autoPatch = True, customParams = None):
         self.id = id
         self.autoPatch = autoPatch
         self.customParams = customParams
@@ -49,7 +49,7 @@ class Settings(QObject):
 
             if not (k in self.store and self.store[k] == v):
                 self.store[k] = v
-                print("Emit update for", k)
+                print("Emit update for", k, v)
                 self.changed.emit(k)
 
 
