@@ -21,9 +21,13 @@ class Store(QObject):
         self.settings = Settings()
         self.running = []
 
+        self.settings.set("manifestList", Set())
         self.settings.set("appSettings", {})
         self.settings.set("paths", PathSettings("bin", "run"))
         self.settings.set("recentServers", RecentServers())
+        self.settings.set("hiddenServers", [])
+        self.settings.set("lockedServers", [])
+        self.settings.set("parentalPin", None)
         self.settings.commit()
 
         try:
@@ -50,6 +54,12 @@ class Store(QObject):
                 appSettings[app.id] = ApplicationSettings(app.id)
 
         self.settings.set("appSettings", appSettings)
+
+        manifests = self.settings.get("manifestList")
+        manifests.add(url)
+
+        self.settings.set("manifestList", manifests)
+
         self.settings.commit()
 
         print("Committed settings for", url)

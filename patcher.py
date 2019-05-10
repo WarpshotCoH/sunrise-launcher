@@ -68,6 +68,7 @@ class Patcher(QObject):
         self.run()
 
     def shutdown(self):
+        # TODO: Fix QObject::killTimer: Timers cannot be stopped from another thread on shutdown
         if self.timer:
             self.timer.stop()
 

@@ -20,6 +20,7 @@ from PySide2.QtWidgets import QApplication, QMainWindow, QPushButton, QListWidge
 from detailsui import DetailsUI
 from downloadui import DownloadUI
 from serverlistui import ServerListUI
+from settingsui import SettingsUI
 from launcher import Launcher
 from patcher import PatcherPool
 from state import Store
@@ -81,6 +82,12 @@ if __name__ == "__main__":
     serverListUI = ServerListUI(
         store,
         mainForm.window.projectsListWidget
+    )
+
+    settingsUI = SettingsUI(
+        store,
+        settingsForm.window.label,
+        settingsForm.window.pushButton
     )
 
     launcher = Launcher(store)

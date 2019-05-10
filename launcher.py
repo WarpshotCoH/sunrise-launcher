@@ -14,9 +14,7 @@ class Launcher(QObject):
 
         self.store = store
 
-    def launchCmd(self, id):
-        server = self.store.servers.get(id)
-
+    def launchCmd(self, server):
         if server and server.application:
             app = self.store.applications.get(server.application)
         else:
@@ -45,16 +43,23 @@ class Launcher(QObject):
         print("Running")
         print(self.launchCmd(id))
 
-        (cmd, path) = self.launchCmd(id)
+        server = self.store.servers.get(id)
 
-        recentList = self.store.settings.get("recentServers")
+        if server:
+            if server.id in self.store.settings.get("lockedServers"):
+                # TODO: Require stored parental pin to be entered. On failure display dialog and short circuit
+                True
 
-        recentList.push(id)
-        print("New recent list", recentList.recent)
-        self.store.settings.set("recentServers", recentList)
-        self.store.settings.commit()
+            (cmd, path) = self.launchCmd(server)
 
-        # popenAndCall(lambda: self.started.emit(id), lambda: self.exited.emit(id), cmd.split(" "), cwd=path)
+            recentList = self.store.settings.get("recentServers")
+
+            recentList.push(id)
+            print("New recent list", recentList.recent)
+            self.store.settings.set("recentServers", recentList)
+            self.store.settings.commit()
+
+            # popenAndCall(lambda: self.started.emit(id), lambda: self.exited.emit(id), cmd.split(" "), cwd=path)
 
 # https://stackoverflow.com/questions/2581817/python-subprocess-callback-when-cmd-exits
 def popenAndCall(onStart, onExit, *popenArgs, **popenKWArgs):

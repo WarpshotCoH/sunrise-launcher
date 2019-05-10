@@ -1,17 +1,26 @@
 from PySide2.QtCore import QObject, QThread, Slot, Signal
+from PySide2.QtWidgets import QFileDialog
 
 class SettingsUI(QObject):
-    change = Signal(str, Union[str, int, bool])
-    commit = Signal(dict)
-    cancel = Signal()
-
-    def __init__(self, parent = None)
+    def __init__(self, store, pathField, dirBrowseButton, parent = None):
         super(SettingsUI, self).__init__(parent)
 
-        # Settings are a simple key value store
-        settings = {}
+        self.store = store
+        self.pathField = pathField
+        self.dirBrowseButton = dirBrowseButton
 
-    def load(self, settings):
-        self.settings = settings
+        self.dirBrowseButton.clicked.connect(self.selectPath)
+        self.store.settings.connectKey("paths", self.updatePathLabel)
 
-    # TODO: Wire to the UI
+    @Slot(str)
+    def updatePathLabel(self, key = None):
+        self.pathField.setText(self.store.settings.get("paths").binPath)
+
+    def selectPath(self):
+        path = QFileDialog().getExistingDirectory()
+
+        if path:
+            paths = self.store.settings.get("paths")
+            paths.binPath = path
+            self.store.settings.set("paths", paths)
+            self.store.settings.commit()

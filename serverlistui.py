@@ -17,8 +17,14 @@ class ServerListUI(QObject):
         self.listUI.currentRowChanged.connect(self.selectServer)
 
     def reorderServers(self):
+        hidden = self.store.settings.get("hiddenServers")
         order = self.computeServerOrder()
-        self.orderedServers = list(sorted(self.store.servers.values(), key = lambda s: order.index(s.id)))
+        self.orderedServers = list(
+            sorted(
+                filter(lambda s: not s.id in hidden, self.store.servers.values()),
+                key = lambda s: order.index(s.id)
+            )
+        )
 
     def computeServerOrder(self):
         order = self.store.settings.get("recentServers").recent
