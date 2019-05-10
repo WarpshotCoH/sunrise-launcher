@@ -20,10 +20,10 @@ class ServerListUI(QObject):
         self.store.settings.connectKey("hiddenServers", self.reload)
 
         # Connect the server list so that it updates when servers update
-        self.store.updated.connect(serverListUI.reload)
+        self.store.updated.connect(self.reload)
 
         # Refresh the server manager list when manifests update
-        self.store.updated.connect(serverListUI.reload)
+        self.store.updated.connect(self.reload)
 
     def reorderServers(self):
         hidden = self.store.settings.get("hiddenServers")
