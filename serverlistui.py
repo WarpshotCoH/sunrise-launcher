@@ -39,6 +39,8 @@ class ServerListUI(QObject):
     @Slot(int)
     def selectServer(self, row):
         if len(self.orderedServers) > 0 and row > -1:
+            if len(self.orderedServers) < row:
+                return
             server = self.orderedServers[row]
 
             if server:

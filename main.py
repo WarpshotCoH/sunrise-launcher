@@ -128,7 +128,7 @@ if __name__ == "__main__":
 
     # bind button clicks
     mainForm.window.settingsButton.clicked.connect(settingsForm.window.show)
-    mainForm.window.runtimesButton.clicked.connect(serverManagerForm.window.show)
+    mainForm.window.runtimesButton.clicked.connect(serverManagerUI.show)
 
     # things are ready, show the main window
     mainForm.window.show()

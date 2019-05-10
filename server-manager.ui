@@ -85,7 +85,7 @@
     <string>Hidden Servers</string>
    </property>
   </widget>
-  <widget class="QDialogButtonBox" name="buttonBox">
+  <widget class="QDialogButtonBox" name="controls">
    <property name="geometry">
     <rect>
      <x>220</x>
