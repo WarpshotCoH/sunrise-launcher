@@ -95,16 +95,8 @@ if __name__ == "__main__":
 
     launcher = Launcher(store)
 
-    # TODO: Move connections to store updates into the respective UI classes
-
     # Update the state store when a manifest update is received
     pool.updated.connect(store.load)
-
-    # Connect the server list so that it updates when servers update
-    store.updated.connect(serverListUI.reload)
-
-    # Refresh the server manager list when manifests update
-    store.updated.connect(serverListUI.reload)
 
     # Update the download and server details views when a server is selected
     serverListUI.selected.connect(detailsUI.load)
