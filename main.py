@@ -32,9 +32,6 @@ class Form(QObject):
     def __init__(self, ui_file, parent=None):
         super(Form, self).__init__(parent)
 
-        # Init the download background thread
-        self.downloadThread = QThread()
-
         ui_file = QFile(ui_file)
         ui_file.open(QFile.ReadOnly)
 
