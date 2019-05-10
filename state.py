@@ -6,6 +6,7 @@ from PySide2.QtCore import QObject, Slot, Signal
 
 from manifest import fromXML, Manifest
 from settings import Settings, PathSettings, ApplicationSettings, RecentServers
+from theme import Loader
 
 # Storage of metadata about the users current install
 class Store(QObject):
@@ -20,6 +21,7 @@ class Store(QObject):
         self.cache = {}
         self.settings = Settings()
         self.running = []
+        self.theme = None
 
         self.settings.set("manifestList", set())
         self.settings.set("appSettings", {})

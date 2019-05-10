@@ -4,6 +4,7 @@ bin
 run
 runtimes
 store
+themes
 
 # Python
 __pycache__

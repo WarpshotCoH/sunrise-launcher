@@ -98,6 +98,9 @@ if __name__ == "__main__":
 
     launcher = Launcher(store)
 
+    if store.theme:
+        application.setStyleSheet(store.theme.css)
+
     # TODO: Move connections to store updates into the respective UI classes
 
     # Update the state store when a manifest update is received
@@ -131,6 +134,7 @@ if __name__ == "__main__":
     mainForm.window.runtimesButton.clicked.connect(serverManagerForm.window.show)
 
     # things are ready, show the main window
+    mainForm.window.setObjectName("main")
     mainForm.window.show()
 
     application.aboutToQuit.connect(downloadUI.shutdown)
