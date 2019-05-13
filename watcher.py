@@ -6,40 +6,38 @@ import urllib.request as request
 from PySide2.QtCore import QObject, QThread, QTimer, Slot, Signal
 import requests
 
-from manifest import fromXMLString, Manifest
-
 class WatcherPool(QObject):
-    updated = Signal(str, Manifest)
+    updated = Signal(str, str)
     startTrigger = Signal()
     stopTrigger = Signal()
 
     def __init__(self, parent=None):
         super(WatcherPool, self).__init__(parent)
-        self.patchers = {}
+        self.watchers = {}
         self.thread = QThread()
         self.thread.start()
 
-    def add(self, manifestUrl):
-        if self.patchers.get(manifestUrl):
-            self.patchers[manifestUrl].shutdown()
+    def add(self, url):
+        if self.watchers.get(url):
+            self.watchers[url].shutdown()
 
-        self.patchers[manifestUrl] = Watcher(manifestUrl, self.updated)
-        self.patchers[manifestUrl].moveToThread(self.thread)
-        self.stopTrigger.connect(self.patchers[manifestUrl].shutdown)
+        self.watchers[url] = Watcher(url, self.updated)
+        self.watchers[url].moveToThread(self.thread)
+        self.stopTrigger.connect(self.watchers[url].shutdown)
 
         if self.thread.isRunning():
-            print("Patch thread already running. Starting", manifestUrl)
+            print("Watch thread already running. Starting", url)
             # TODO: There should be a better way to write this
             try:
                 self.startTrigger.disconnect()
             except Exception:
                 pass
 
-            self.startTrigger.connect(self.patchers[manifestUrl].start)
+            self.startTrigger.connect(self.watchers[url].start)
             self.startTrigger.emit()
         else:
-            print("Patch thread not running. Scheduling", manifestUrl)
-            self.thread.started.connect(self.patchers[manifestUrl].start)
+            print("Watch thread not running. Scheduling", url)
+            self.thread.started.connect(self.watchers[url].start)
 
     def shutdown(self):
         self.stopTrigger.emit()
@@ -48,19 +46,18 @@ class WatcherPool(QObject):
         self.thread.wait()
 
 class Watcher(QObject):
-    def __init__(self, manifestUrl, updater, parent=None):
+    def __init__(self, url, updater, parent=None):
         super(Watcher, self).__init__(parent)
 
-        self.manifest = None
         self.check = None
-        self.manifestUrl = manifestUrl
+        self.url = url
         self.updater = updater
 
         self.timer = None
 
     @Slot()
     def start(self):
-        print("Start manifest patcher", self.manifestUrl)
+        print("Start watcher", self.url)
         self.timer = QTimer()
         self.timer.setInterval(60000)
         self.timer.timeout.connect(self.run)
@@ -75,10 +72,10 @@ class Watcher(QObject):
     @Slot()
     def run(self):
         try:
-            print("Try fetch", self.manifestUrl)
-            with open (self.manifestUrl, "r") as file:
+            print("Try fetch", self.url)
+            with open (self.url, "r") as file:
                 contents = file.read()
-            # r = requests.get(self.manifestUrl, timeout=5)
+            # r = requests.get(self.url, timeout=5)
 
             # with r:
                 # r.raise_for_status()
@@ -86,11 +83,11 @@ class Watcher(QObject):
 
                 if not self.check == check:
                     self.check = check
-                    self.manifest = fromXMLString(contents)
+                    # self.manifest = fromXMLString(contents)
                     # self.manifest = Manifest.fromXML(r.text)
-                    print("Update available", self.manifestUrl)
-                    self.updater.emit(self.manifestUrl, self.manifest)
+                    print("Update available", self.url)
+                    self.updater.emit(self.url, contents)
 
         except Exception:
-            print("Fetch error", self.manifestUrl)
+            print("Fetch error", self.url)
             print(sys.exc_info())

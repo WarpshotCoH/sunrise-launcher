@@ -22,9 +22,11 @@ from downloadui import DownloadUI
 from serverlistui import ServerListUI
 from servermanagerui import ServerManagerUI
 from settingsui import SettingsUI
+
 from launcher import Launcher
-from watcher import WatcherPool
+from patcher import Patcher
 from state import Store
+from watcher import WatcherPool
 
 from manifest import fromXML
 
@@ -57,6 +59,10 @@ if __name__ == "__main__":
     store = Store()
 
     pool = WatcherPool()
+
+    if store.settings.get("autoPatch"):
+        autoPatchPool = WatcherPool()
+        patcher = Patcher("https://url.to.the.patcher.endpoint/manifest.xml", autoPatchPool)
 
     downloadUI = DownloadUI(
         store,
@@ -99,7 +105,7 @@ if __name__ == "__main__":
     # TODO: Move connections to store updates into the respective UI classes
 
     # Update the state store when a manifest update is received
-    pool.updated.connect(store.load)
+    pool.updated.connect(store.loadManifest)
 
     # Update the download and server details views when a server is selected
     serverListUI.selected.connect(detailsUI.load)
@@ -120,6 +126,9 @@ if __name__ == "__main__":
 
     application.aboutToQuit.connect(downloadUI.shutdown)
     application.aboutToQuit.connect(pool.shutdown)
+
+    if patcher:
+        application.aboutToQuit.connect(patcher.shutdown)
 
     # things are ready, show the main window
     mainForm.window.show()

@@ -4,7 +4,7 @@ import sys
 
 from PySide2.QtCore import QObject, Slot, Signal
 
-from manifest import fromXML, Manifest
+from manifest import fromXML, fromXMLString, Manifest
 from settings import Settings, PathSettings, ApplicationSettings, RecentServers
 from theme import Loader
 
@@ -24,6 +24,7 @@ class Store(QObject):
         self.running = []
         self.theme = None
 
+        self.settings.set("autoPatch", True)
         self.settings.set("manifestList", set())
         self.settings.set("appSettings", {})
         self.settings.set("paths", PathSettings("bin", "run"))
@@ -44,8 +45,10 @@ class Store(QObject):
 
         self.loaded.emit()
 
-    @Slot(str, Manifest)
-    def load(self, url, manifest):
+    @Slot(str, str)
+    def loadManifest(self, url, data):
+        manifest = fromXMLString(data)
+
         print("Updating manifest from", url, "in store")
 
         self.applications.update(manifest.applications)
