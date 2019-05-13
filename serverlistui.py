@@ -102,6 +102,9 @@ class ServerListUI(QObject):
                 item = QListWidgetItem()
                 self.listUI.addItem(item)
 
+                # TODO: Supposed to be able to get the size hint from the custom
+                #       widget and assign it here, but I can not seem to figure
+                #       it out
                 item.setSizeHint(QSize(-1, 64))
 
                 self.listUI.setItemWidget(item, itemWidget)
