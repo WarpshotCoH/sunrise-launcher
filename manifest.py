@@ -211,8 +211,8 @@ class Server:
             server.attrib.get("id"),
             server.attrib.get("application"),
             None if server.find("name") == None else server.find("name").text,
-            None if server.find("icon") == None else server.find("icon").text,
             None if server.find("publisher") == None else server.find("publisher").text,
+            None if server.find("icon") == None else server.find("icon").text,
             list(map(Website.fromXML, server.findall(".//website"))),
             None if server.find("launcher") == None else Launcher.fromXML(server.find("launcher")),
         )

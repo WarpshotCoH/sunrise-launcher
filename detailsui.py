@@ -67,12 +67,12 @@ class DetailsUI(QObject):
         try:
             # TODO: Move this off the ui thread. Should this be a on-off task or pooled to reuse resources
             if application.icon:
-                if self.store.cache.get(application.icon):
-                    self.icon.setPixmap(self.store.cache.get(application.icon))
-                else:
+                if not self.store.cache.get(application.icon):
                     projectIconData = requests.get(application.icon, stream=True, allow_redirects=True).content # TODO: handle 404/missing icon?
                     projectIconImage = QImage.fromData(projectIconData)
                     self.store.cache[application.icon] = QPixmap.fromImage(projectIconImage)
+
+                self.icon.setPixmap(self.store.cache.get(application.icon))
         except Exception:
             print(sys.exc_info())
             pass

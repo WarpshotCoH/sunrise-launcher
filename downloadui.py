@@ -47,11 +47,13 @@ class DownloadUI(QObject):
             self.launch.emit(self.server.id)
 
     def verifyDownload(self):
+        return True
         self.shutdown()
         self.downloader = Downloader(self.containers, self.store.settings.get("paths").binPath, True)
         self.runInBackground(self.downloader.verify)
 
     def startDownload(self):
+        return True
         # Before verifying or downloading, make sure existing downloaders and
         # threads have been cleaned up
         self.shutdown()

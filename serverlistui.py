@@ -1,5 +1,8 @@
-from PySide2.QtCore import QObject, Signal, Slot
-from PySide2.QtWidgets import QListWidgetItem
+from PySide2.QtCore import QFile, QObject, Signal, Slot, QSize
+from PySide2.QtGui import QIcon, QImage, QPixmap
+from PySide2.QtUiTools import QUiLoader
+from PySide2.QtWidgets import QListWidgetItem, QLabel
+import requests
 
 from manifest import Server, Application, Runtime
 
@@ -82,7 +85,37 @@ class ServerListUI(QObject):
                 if selectedServer and selectedServer.id == server.id:
                     newIndex = i
 
-                QListWidgetItem(server.name, self.listUI)
+                application = self.store.applications.get(server.application)
+
+                itemWidget = ServerListUI.createItemWidget("serverlist-item.ui")
+                itemWidget.findChild(QLabel, "server").setText(server.name)
+                itemWidget.findChild(QLabel, "application").setText(application.name)
+
+                # TODO: Move off-thread for slow loading. Maybe an image loading pool?
+                if not self.store.cache.get(application.icon):
+                    data = requests.get(application.icon, stream=True, allow_redirects=True).content # TODO: handle 404/missing icon?
+                    qImage = QImage.fromData(data)
+                    self.store.cache[application.icon] = QPixmap.fromImage(qImage)
+
+                itemWidget.findChild(QLabel, "icon").setPixmap(self.store.cache.get(application.icon))
+
+                item = QListWidgetItem()
+                self.listUI.addItem(item)
+
+                item.setSizeHint(QSize(-1, 64))
+
+                self.listUI.setItemWidget(item, itemWidget)
 
 
             self.listUI.setCurrentRow(newIndex)
+
+    @staticmethod
+    def createItemWidget(ui_file):
+        ui_file = QFile(ui_file)
+        ui_file.open(QFile.ReadOnly)
+
+        loader = QUiLoader()
+        widget = loader.load(ui_file)
+        ui_file.close()
+
+        return widget
