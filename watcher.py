@@ -8,13 +8,13 @@ import requests
 
 from manifest import fromXMLString, Manifest
 
-class PatcherPool(QObject):
+class WatcherPool(QObject):
     updated = Signal(str, Manifest)
     startTrigger = Signal()
     stopTrigger = Signal()
 
     def __init__(self, parent=None):
-        super(PatcherPool, self).__init__(parent)
+        super(WatcherPool, self).__init__(parent)
         self.patchers = {}
         self.thread = QThread()
         self.thread.start()
@@ -23,7 +23,7 @@ class PatcherPool(QObject):
         if self.patchers.get(manifestUrl):
             self.patchers[manifestUrl].shutdown()
 
-        self.patchers[manifestUrl] = Patcher(manifestUrl, self.updated)
+        self.patchers[manifestUrl] = Watcher(manifestUrl, self.updated)
         self.patchers[manifestUrl].moveToThread(self.thread)
         self.stopTrigger.connect(self.patchers[manifestUrl].shutdown)
 
@@ -47,9 +47,9 @@ class PatcherPool(QObject):
         self.thread.quit()
         self.thread.wait()
 
-class Patcher(QObject):
+class Watcher(QObject):
     def __init__(self, manifestUrl, updater, parent=None):
-        super(Patcher, self).__init__(parent)
+        super(Watcher, self).__init__(parent)
 
         self.manifest = None
         self.check = None

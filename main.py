@@ -23,7 +23,7 @@ from serverlistui import ServerListUI
 from servermanagerui import ServerManagerUI
 from settingsui import SettingsUI
 from launcher import Launcher
-from patcher import PatcherPool
+from watcher import WatcherPool
 from state import Store
 
 from manifest import fromXML
@@ -56,7 +56,7 @@ if __name__ == "__main__":
 
     store = Store()
 
-    pool = PatcherPool()
+    pool = WatcherPool()
 
     downloadUI = DownloadUI(
         store,
