@@ -10,12 +10,13 @@ from manifest import Server, Application, Runtime
 class DetailsUI(QObject):
     selected = Signal(Server, Application, Runtime)
 
-    def __init__(self, store, nameLabel, publisherLabel, uptimeLabel, websiteButton, icon, parent=None):
+    def __init__(self, store, nameLabel, applicationLabel, runtimeLabel, uptimeLabel, websiteButton, icon, parent=None):
         super(DetailsUI, self).__init__(parent)
 
         self.store = store
         self.nameLabel = nameLabel
-        self.publisherLabel = publisherLabel
+        self.applicationLabel = applicationLabel
+        self.runtimeLabel = runtimeLabel
         self.uptimeLabel = uptimeLabel
         self.websiteButton = websiteButton
         self.icon = icon
@@ -32,13 +33,27 @@ class DetailsUI(QObject):
         elif len(application.websites) == 1:
             buttonUrl = application.websites[0].address
 
-        if application.name:
-            self.nameLabel.setText(application.name)
+        self.nameLabel.setText("")
+        self.applicationLabel.setText("")
+        self.runtimeLabel.setText("")
 
-        if application.publisher:
-            self.publisherLabel.setText(application.publisher)
+        if server and server.name:
+            self.nameLabel.setText(server.name)
 
-        self.uptimeLabel.setText("Uptime Unknown") # TODO: handle this... servers will have to provide a query service, specified in the manifest?
+            if application.name:
+                self.applicationLabel.setText(application.name)
+
+            if runtime.name:
+                self.runtimeLabel.setText(runtime.name)
+        else:
+            if application.name:
+                self.nameLabel.setText(application.name)
+
+
+        # if application.publisher:
+        #     self.publisherLabel.setText(application.publisher)
+
+        # self.uptimeLabel.setText("Uptime Unknown") # TODO: handle this... servers will have to provide a query service, specified in the manifest?
 
         # TODO: How do we disconnect if we don't have apriori knowledge of connections
         try:
@@ -46,8 +61,8 @@ class DetailsUI(QObject):
         except Exception:
             pass
 
-        if buttonUrl:
-            self.websiteButton.clicked.connect(lambda: webbrowser.open(buttonUrl))
+        # if buttonUrl:
+            # self.websiteButton.clicked.connect(lambda: webbrowser.open(buttonUrl))
 
         try:
             # TODO: Move this off the ui thread. Should this be a on-off task or pooled to reuse resources

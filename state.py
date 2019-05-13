@@ -11,6 +11,7 @@ from theme import Loader
 # Storage of metadata about the users current install
 class Store(QObject):
     updated = Signal()
+    loaded = Signal()
 
     def __init__(self, parent=None):
         super(Store, self).__init__(parent)
@@ -40,6 +41,8 @@ class Store(QObject):
         except Exception:
             print(sys.exc_info())
             pass
+
+        self.loaded.emit()
 
     @Slot(str, Manifest)
     def load(self, url, manifest):

@@ -160,8 +160,6 @@ class Downloader(QObject):
                             dstDir = os.path.abspath(os.path.normpath(os.path.join(self.installPath, container.runtime, filePath)))
                             dstFile = os.path.join(dstDir, fileName)
 
-                            print("Copy", os.path.abspath(path), "to", dstFile)
-
                             if not os.path.isdir(dstDir):
                                 os.makedirs(dstDir)
 

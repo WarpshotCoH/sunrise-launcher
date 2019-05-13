@@ -15,7 +15,7 @@ from PySide2.QtCore import QByteArray, QFile, QObject, QUrl, QThread, Signal, Sl
 from PySide2.QtGui import QImage, QPixmap
 from PySide2.QtUiTools import QUiLoader
 from PySide2.QtWebEngineWidgets import QWebEngineView
-from PySide2.QtWidgets import QApplication, QMainWindow, QPushButton, QListWidget, QListWidgetItem
+from PySide2.QtWidgets import QApplication, QProgressBar, QMainWindow, QVBoxLayout, QPushButton, QListWidget, QListWidgetItem
 
 from detailsui import DetailsUI
 from downloadui import DownloadUI
@@ -42,19 +42,17 @@ class Form(QObject):
 if __name__ == "__main__":
     application = QApplication(sys.argv)
 
-    mainForm = Form("sunrise.ui")
+    mainForm = Form("sunrise-v2.ui")
+
+    # mainForm = Form("sunrise.ui")
     settingsForm = Form("settings-dialog.ui")
     serverManagerForm = Form("server-manager.ui")
 
-    # clear out the placeholder labels
-    placeholdersToClear = [
-        mainForm.window.progressLabel,
-        mainForm.window.projectNameLabel,
-        mainForm.window.projectPublisherLabel,
-        mainForm.window.projectUptimeLabel
-    ]
-    for placeholder in placeholdersToClear:
-        placeholder.setText("")
+    detailsLayout = mainForm.window.detailsLayout
+    detailsHeader = detailsLayout.itemAt(1)
+    detailsHeaderText = detailsLayout.itemAt(1).itemAt(1)
+    detailsContent = detailsLayout.itemAt(0)
+    downloadLayout = detailsLayout.itemAt(2).itemAt(0).widget()
 
     store = Store()
 
@@ -62,24 +60,24 @@ if __name__ == "__main__":
 
     downloadUI = DownloadUI(
         store,
-        mainForm.window.overallProgressBar,
-        mainForm.window.fileProgressBar,
-        mainForm.window.progressLabel,
-        mainForm.window.playButton
+        downloadLayout.findChild(QProgressBar, "progress"),
+        downloadLayout.findChild(QProgressBar, "fileProgress"),
+        downloadLayout.findChild(QPushButton, "play"),
     )
 
     detailsUI = DetailsUI(
         store,
-        mainForm.window.projectNameLabel,
-        mainForm.window.projectPublisherLabel,
-        mainForm.window.projectUptimeLabel,
-        mainForm.window.projectWebsiteButton,
-        mainForm.window.projectIconLabel
+        detailsHeaderText.itemAt(0).widget(),
+        detailsHeaderText.itemAt(1).widget(),
+        detailsHeaderText.itemAt(2).widget(),
+        None,
+        detailsHeader.itemAt(1).widget(),
+        detailsHeader.itemAt(0).widget()
     )
 
     serverListUI = ServerListUI(
         store,
-        mainForm.window.projectsListWidget
+        mainForm.window.serverList
     )
 
     serverManagerUI = ServerManagerUI(
@@ -116,18 +114,18 @@ if __name__ == "__main__":
     # event to the file launcher
     downloadUI.launch.connect(launcher.launch)
 
-    # Load the default manifest files
-    pool.add("manifests/manifest1.xml")
-    pool.add("manifests/manifest2.xml")
-
     # bind button clicks
-    mainForm.window.settingsButton.clicked.connect(settingsForm.window.show)
-    mainForm.window.runtimesButton.clicked.connect(serverManagerUI.show)
+    # mainForm.window.settingsButton.clicked.connect(settingsForm.window.show)
+    # mainForm.window.runtimesButton.clicked.connect(serverManagerUI.show)
+
+    application.aboutToQuit.connect(downloadUI.shutdown)
+    application.aboutToQuit.connect(pool.shutdown)
 
     # things are ready, show the main window
     mainForm.window.show()
 
-    application.aboutToQuit.connect(downloadUI.shutdown)
-    application.aboutToQuit.connect(pool.shutdown)
+    # Load the default manifest files
+    pool.add("manifests/manifest1.xml")
+    pool.add("manifests/manifest2.xml")
 
     sys.exit(application.exec_())

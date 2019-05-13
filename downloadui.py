@@ -8,13 +8,12 @@ from manifest import Application, Runtime, Server
 class DownloadUI(QObject):
     launch = Signal(str)
 
-    def __init__(self, store, progressBar, fileBar, label, button, parent=None):
+    def __init__(self, store, progressBar, fileBar, button, parent=None):
         super(DownloadUI, self).__init__(parent)
 
         self.store = store
         self.progressBar = progressBar
         self.fileBar = fileBar
-        self.label = label
         self.button = button
         self.downloadThread = None
         self.downloader = None
@@ -24,18 +23,17 @@ class DownloadUI(QObject):
 
     def hide(self):
         self.progressBar.hide()
-        self.fileBar.hide()
         self.label.hide()
         self.button.hide()
 
     def show(self):
         self.progressBar.show()
         self.fileBar.show()
-        self.label.show()
         self.button.show()
 
     @Slot(Application, Runtime, Server)
     def load(self, application, runtime = None, server = None):
+        self.min = self.max = self.cur = 0
         self.server = server
         self.containers = [runtime, application]
         if not self.store.settings.get("appSettings").get(application.id).autoPatch:
@@ -84,7 +82,7 @@ class DownloadUI(QObject):
         # Connect up to the file progress events
         self.downloader.fileStart.connect(self.onFileStart)
         self.downloader.fileProgress.connect(self.onFileProgress)
-        self.downloader.fileVerify.connect(self.onFileVerify)
+        self.downloader.fileVerify.connect(self.onFileStart)
 
         # Move the download manager to the background thread
         self.downloader.moveToThread(self.downloadThread)
@@ -122,13 +120,17 @@ class DownloadUI(QObject):
     def onStart(self, name, pMin, pStart, pMax):
         print("Downloader Start")
         print(name, pMin, pStart, pMax)
-        self.progressBar.setFormat("[{}] %p% (%v / %m)".format(name))
+        self.min = pMin
+        self.max = pMax
+        self.progressBar.setFormat("({}) %p%".format(name))
         self.progressBar.setMinimum(pMin)
         self.progressBar.setValue(pStart)
         self.progressBar.setMaximum(pMax)
+        self.progressBar.show()
 
     @Slot(int)
     def onProgress(self, i):
+        self.cur = i
         self.progressBar.setValue(i)
 
     @Slot(DownloaderState, str)
@@ -172,30 +174,25 @@ class DownloadUI(QObject):
             self.enableButton()
 
         if state == DownloaderState.DOWNLOAD_FAILED and filename:
-            self.label.setText("Failed to download " + filename)
+            self.progressBar.setText("Failed to download {}".format(filename))
+            self.fileBar.hide()
 
         if state == DownloaderState.VERIFICATION_FAILED and filename:
-            self.label.setText("Failed to verify " + filename)
+            self.progressBar.setText("Failed to verify {}".format(filename))
+            self.fileBar.hide()
 
         # On a pause request or a complete we clear out any progress text
         if state == DownloaderState.PAUSED or state == DownloaderState.COMPLETE:
-            self.label.setText("")
+            self.progressBar.hide()
+            self.fileBar.hide()
 
     @Slot(int, int, int, str)
     def onFileStart(self, pMin, pStart, pMax, filename):
         self.fileBar.setMinimum(pMin)
         self.fileBar.setValue(pStart)
         self.fileBar.setMaximum(pMax)
-        self.label.setText("Downloading: %s..." % filename)
-        self.label.repaint()
-
-    @Slot(int, int, int, str)
-    def onFileVerify(self, pMin, pStart, pMax, filename):
-        self.fileBar.setMinimum(pMin)
-        self.fileBar.setValue(pStart)
-        self.fileBar.setMaximum(pMax)
-        self.label.setText("Verifying: %s..." % filename)
-        self.label.repaint()
+        self.fileBar.setFormat("{}/{} - {}".format(self.cur, self.max, filename))
+        self.fileBar.show()
 
     @Slot(int)
     def onFileProgress(self, i):

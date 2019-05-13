@@ -58,8 +58,6 @@ class FileDownload():
         print("Start url download", url)
 
         complete = False
-
-        time.sleep(1)
         return True
 
         try:
@@ -107,8 +105,6 @@ class FileDownload():
         verify.emit(0, 0, chunks, self.file.name)
 
         hashProgress = 0
-
-        time.sleep(0.05)
         return True
 
         try:
