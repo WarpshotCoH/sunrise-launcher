@@ -90,7 +90,7 @@ class Downloader(QObject):
                         self.changeState(DownloaderState.VERIFICATION_FAILED, fileName)
                         return
 
-                self.changeState(DownloaderState.COMPLETE)
+            self.changeState(DownloaderState.COMPLETE)
         except Exception:
             print("Error!")
             print(sys.exc_info())
@@ -167,7 +167,7 @@ class Downloader(QObject):
 
                         self.progress.emit(index + 1)
 
-                self.changeState(DownloaderState.COMPLETE)
+            self.changeState(DownloaderState.COMPLETE)
         except Exception:
             print("Error!")
             print(sys.exc_info())

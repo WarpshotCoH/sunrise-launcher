@@ -58,7 +58,6 @@ class FileDownload():
         print("Start url download", url)
 
         complete = False
-        return True
 
         try:
             r = requests.get(url, stream=True, timeout=5)
@@ -105,7 +104,6 @@ class FileDownload():
         verify.emit(0, 0, chunks, self.file.name)
 
         hashProgress = 0
-        return True
 
         try:
             if (os.path.getsize(self.path) == self.file.size):

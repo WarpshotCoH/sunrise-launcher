@@ -47,13 +47,11 @@ class DownloadUI(QObject):
             self.launch.emit(self.server.id)
 
     def verifyDownload(self):
-        return True
         self.shutdown()
-        self.downloader = Downloader(self.containers, self.store.settings.get("paths").binPath, True)
+        self.downloader = Downloader(self.containers, self.store.settings.get("paths").binPath)
         self.runInBackground(self.downloader.verify)
 
     def startDownload(self):
-        return True
         # Before verifying or downloading, make sure existing downloaders and
         # threads have been cleaned up
         self.shutdown()
@@ -162,6 +160,12 @@ class DownloadUI(QObject):
         self.button.clicked.disconnect()
         self.button.clicked.connect(buttonAction[state])
 
+        if state == DownloaderState.RUNNING:
+            self.progressBar.setProperty("Done", False)
+            self.progressBar.setStyle(self.progressBar.style())
+            self.fileBar.setProperty("Done", False)
+            self.fileBar.setStyle(self.fileBar.style())
+
         # TODO: If QThread can be re-used over and over then this is not necessary.
         #       In the meantime we tear down the thread whenever progress stops and
         #       create a new one progress begins again
@@ -185,8 +189,10 @@ class DownloadUI(QObject):
 
         # On a pause request or a complete we clear out any progress text
         if state == DownloaderState.PAUSED or state == DownloaderState.COMPLETE:
-            self.progressBar.hide()
-            self.fileBar.hide()
+            self.progressBar.setProperty("Done", True)
+            self.progressBar.setStyle(self.progressBar.style())
+            self.fileBar.setProperty("Done", True)
+            self.fileBar.setStyle(self.fileBar.style())
 
     @Slot(int, int, int, str)
     def onFileStart(self, pMin, pStart, pMax, filename):

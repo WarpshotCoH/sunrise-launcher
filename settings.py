@@ -8,7 +8,7 @@ class PathSettings:
         self.runPath = runPath
 
 class ApplicationSettings:
-    def __init__(self, id, autoPatch = True, customParams = None):
+    def __init__(self, id, autoPatch = False, customParams = None):
         self.id = id
         self.autoPatch = autoPatch
         self.customParams = customParams
