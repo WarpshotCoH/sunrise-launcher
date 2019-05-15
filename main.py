@@ -19,6 +19,8 @@ from PySide2.QtWidgets import QApplication, QProgressBar, QMainWindow, QVBoxLayo
 
 from detailsui import DetailsUI
 from downloadui import DownloadUI
+from gamelistui import GameListUI
+from headerui import HeaderUI
 from serverlistui import ServerListUI
 from servermanagerui import ServerManagerUI
 from settingsui import SettingsUI
@@ -41,10 +43,27 @@ class Form(QObject):
         self.window = loader.load(ui_file)
         ui_file.close()
 
+@Slot(int)
+def switchSection(to):
+    # TODO: Clear selections and default to initial selections
+
+    if to == 2: # Settings
+        serverListUI.hide()
+        downloadUI.hide()
+        gameListUI.hide()
+    elif to == 1: # Games
+        serverListUI.hide()
+        downloadUI.show()
+        gameListUI.show()
+    else: # Servers
+        serverListUI.show()
+        downloadUI.show()
+        gameListUI.hide()
+
 if __name__ == "__main__":
     application = QApplication(sys.argv)
 
-    mainForm = Form("sunrise-v2.ui")
+    mainForm = Form("sunrise-v3.ui")
 
     # mainForm = Form("sunrise.ui")
     settingsForm = Form("settings-dialog.ui")
@@ -64,6 +83,12 @@ if __name__ == "__main__":
         autoPatchPool = WatcherPool()
         patcher = Patcher("https://url.to.the.patcher.endpoint/manifest.xml", autoPatchPool)
 
+    headerUI = HeaderUI(
+        mainForm.window.headerWrapper.itemAt(0).widget()
+    )
+
+    headerUI.itemSelected.connect(switchSection)
+
     downloadUI = DownloadUI(
         store,
         downloadLayout.findChild(QProgressBar, "progress"),
@@ -81,10 +106,21 @@ if __name__ == "__main__":
         detailsHeader.itemAt(0).widget()
     )
 
+    # TODO: Someone with more experience than me should implement these correctly
+    #       as a custom widget
     serverListUI = ServerListUI(
         store,
-        mainForm.window.serverList
+        "serverlist.ui"
     )
+    mainForm.window.serverListLayout.addWidget(serverListUI.ui)
+
+    # TODO: Someone with more experience than me should implement these correctly
+    #       as a custom widget
+    gameListUI = GameListUI(
+        store,
+        "list.ui"
+    )
+    mainForm.window.serverListLayout.addWidget(gameListUI.ui)
 
     serverManagerUI = ServerManagerUI(
         store,
@@ -107,9 +143,11 @@ if __name__ == "__main__":
     # Update the state store when a manifest update is received
     pool.updated.connect(store.loadManifest)
 
-    # Update the download and server details views when a server is selected
+    # Update the download and server details views when an item is selected
     serverListUI.selected.connect(detailsUI.load)
     serverListUI.selected.connect(downloadUI.load)
+    gameListUI.selected.connect(detailsUI.load)
+    gameListUI.selected.connect(downloadUI.load)
 
     # Connect the store to the launcher so a list of running applications
     # can be maintained
@@ -130,11 +168,14 @@ if __name__ == "__main__":
     if patcher:
         application.aboutToQuit.connect(patcher.shutdown)
 
+    switchSection(0)
+
     # things are ready, show the main window
     mainForm.window.show()
 
     # Load the default manifest files
     pool.add("manifests/manifest1.xml")
     pool.add("manifests/manifest2.xml")
+    pool.add("manifests/manifest3.xml")
 
     sys.exit(application.exec_())

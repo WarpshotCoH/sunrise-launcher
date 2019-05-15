@@ -1,7 +1,7 @@
 from PySide2.QtCore import QFile, QObject, Signal, Slot, QSize
 from PySide2.QtGui import QIcon, QImage, QPixmap
 from PySide2.QtUiTools import QUiLoader
-from PySide2.QtWidgets import QListWidgetItem, QLabel
+from PySide2.QtWidgets import QListWidgetItem, QLabel, QListWidget
 import requests
 
 from manifest import Server, Application, Runtime
@@ -9,11 +9,12 @@ from manifest import Server, Application, Runtime
 class ServerListUI(QObject):
     selected = Signal(Application, Runtime, Server)
 
-    def __init__(self, store, listUI, parent=None):
+    def __init__(self, store, uiFile, parent=None):
         super(ServerListUI, self).__init__(parent)
 
         self.store = store
-        self.listUI = listUI
+        self.ui = ServerListUI.createWidget(uiFile)
+        self.listUI = self.ui.findChild(QListWidget, "serverList")
 
         self.reorderServers()
 
@@ -22,12 +23,17 @@ class ServerListUI(QObject):
         # Connect the server list so that it updates when hidden servers are added / removed
         self.store.settings.connectKey("hiddenServers", self.reload)
 
-        # Connect the server list so that it updates when servers update
-        self.store.updated.connect(self.reload)
-
         # Refresh the server manager list when manifests update
         self.store.updated.connect(self.reload)
 
+    def show(self):
+        self.ui.show()
+
+    def hide(self):
+        self.ui.hide()
+
+    # TODO: Redo this implementation, it is dumb. Instead render everything based
+    #       on the ordering and hide elements that are in hidden servers list
     def reorderServers(self):
         hidden = self.store.settings.get("hiddenServers")
         order = self.computeServerOrder()
@@ -49,6 +55,7 @@ class ServerListUI(QObject):
 
     @Slot(int)
     def selectServer(self, row):
+        # TODO: Fix this once the server state is all sorted out
         if len(self.orderedServers) > 0 and row > -1:
             if len(self.orderedServers) < row:
                 return
@@ -73,6 +80,8 @@ class ServerListUI(QObject):
             selectedServer = None
 
         # Side-effect! This reorders the UI internal server storage
+        # TODO: See reorderServers note above. This should be possible
+        #       without storing more state
         self.reorderServers()
 
         self.listUI.clear()
@@ -87,7 +96,7 @@ class ServerListUI(QObject):
 
                 application = self.store.applications.get(server.application)
 
-                itemWidget = ServerListUI.createItemWidget("serverlist-item.ui")
+                itemWidget = ServerListUI.createWidget("serverlist-item.ui")
                 itemWidget.findChild(QLabel, "server").setText(server.name)
                 itemWidget.findChild(QLabel, "application").setText(application.name)
 
@@ -113,7 +122,7 @@ class ServerListUI(QObject):
             self.listUI.setCurrentRow(newIndex)
 
     @staticmethod
-    def createItemWidget(ui_file):
+    def createWidget(ui_file):
         ui_file = QFile(ui_file)
         ui_file.open(QFile.ReadOnly)
 

@@ -23,7 +23,7 @@ class DownloadUI(QObject):
 
     def hide(self):
         self.progressBar.hide()
-        self.label.hide()
+        self.fileBar.hide()
         self.button.hide()
 
     def show(self):
@@ -47,11 +47,13 @@ class DownloadUI(QObject):
             self.launch.emit(self.server.id)
 
     def verifyDownload(self):
+        return True
         self.shutdown()
-        self.downloader = Downloader(self.containers, self.store.settings.get("paths").binPath)
+        self.downloader = Downloader([self.containers[-1]], self.store.settings.get("paths").binPath)
         self.runInBackground(self.downloader.verify)
 
     def startDownload(self):
+        return True
         # Before verifying or downloading, make sure existing downloaders and
         # threads have been cleaned up
         self.shutdown()
@@ -180,11 +182,11 @@ class DownloadUI(QObject):
             self.enableButton()
 
         if state == DownloaderState.DOWNLOAD_FAILED and filename:
-            self.progressBar.setText("Failed to download {}".format(filename))
+            self.progressBar.setFormat("Failed to download {}".format(filename))
             self.fileBar.hide()
 
         if state == DownloaderState.VERIFICATION_FAILED and filename:
-            self.progressBar.setText("Failed to verify {}".format(filename))
+            self.progressBar.setFormat("Failed to verify {}".format(filename))
             self.fileBar.hide()
 
         # On a pause request or a complete we clear out any progress text

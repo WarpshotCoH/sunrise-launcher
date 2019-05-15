@@ -45,6 +45,12 @@ class Store(QObject):
 
         self.loaded.emit()
 
+    def getTools(self):
+        return list(filter(lambda a: a.type == "mod", self.applications.values()))
+
+    def getClients(self):
+        return list(filter(lambda a: a.type == "client", self.applications.values()))
+
     @Slot(str, str)
     def loadManifest(self, url, data):
         manifest = fromXMLString(data)
