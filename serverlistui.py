@@ -32,6 +32,9 @@ class ServerListUI(QObject):
     def hide(self):
         self.ui.hide()
 
+    def clear(self):
+        self.listUI.setCurrentRow(-1)
+
     # TODO: Redo this implementation, it is dumb. Instead render everything based
     #       on the ordering and hide elements that are in hidden servers list
     def reorderServers(self):
@@ -70,6 +73,8 @@ class ServerListUI(QObject):
                     if runtime:
                         print("Selected server", server.id, app.id, runtime.id)
                         self.selected.emit(app, runtime, server)
+        elif row == -1:
+            self.selected.emit(None, None, None)
 
     @Slot(str)
     def reload(self, key = None):

@@ -5,6 +5,7 @@ from PySide2.QtWidgets import QListWidgetItem, QLabel, QListWidget, QScrollArea
 import requests
 
 from manifest import Server, Application, Runtime
+from helpers import isInstalled
 
 class GameListUI(QObject):
     selected = Signal(Application, Runtime, Server)
@@ -28,6 +29,9 @@ class GameListUI(QObject):
 
     def hide(self):
         self.ui.hide()
+
+    def clear(self):
+        self.list.setCurrentRow(-1)
 
     @Slot(int)
     def selectItem(self, row):
@@ -63,6 +67,8 @@ class GameListUI(QObject):
                         if runtime:
                             self.selected.emit(None, runtime, None)
                             return
+        else:
+            self.selected.emit(None, None, None)
 
     @Slot(str)
     def reload(self, key = None):
@@ -110,7 +116,7 @@ class GameListUI(QObject):
     def addListItem(self, uiList, item):
         w = GameListUI.createWidget("serverlist-item.ui")
         w.findChild(QLabel, "server").setText(item.name)
-        w.findChild(QLabel, "application").setText("Not installed")
+        w.findChild(QLabel, "application").setText("Installed" if isInstalled(self.store, item.id) else "Not Installed")
 
         # TODO: Move off-thread for slow loading. Maybe an image loading pool?
         if hasattr(item, "icon"):

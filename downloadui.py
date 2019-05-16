@@ -34,6 +34,9 @@ class DownloadUI(QObject):
 
     @Slot(Application, Runtime, Server)
     def load(self, application = None, runtime = None, server = None):
+        if application == None and runtime == None and server == None:
+            self.hide()
+
         self.min = self.max = self.cur = 0
         self.server = server
         self.containers = []
@@ -46,11 +49,12 @@ class DownloadUI(QObject):
 
         self.areContainersRunnable = application == None
 
-        if not self.store.settings.get("containerSettings").get(self.containers[-1].id).autoPatch:
-            if os.path.isdir(self.store.settings.get("paths").binPath):
-                self.verifyDownload()
-        else:
-            self.startDownload()
+        if len(self.containers) > 0:
+            if not self.store.settings.get("containerSettings").get(self.containers[-1].id).autoPatch:
+                if os.path.isdir(self.store.settings.get("paths").binPath):
+                    self.verifyDownload()
+            else:
+                self.startDownload()
 
     def run(self):
         if self.server:
@@ -60,6 +64,7 @@ class DownloadUI(QObject):
         self.shutdown()
         self.downloader = Downloader([self.containers[-1]], self.store.settings.get("paths").binPath)
         self.runInBackground(self.downloader.verify)
+        self.show()
 
     def startDownload(self):
         # Before verifying or downloading, make sure existing downloaders and
@@ -67,6 +72,7 @@ class DownloadUI(QObject):
         self.shutdown()
         self.downloader = Downloader(self.containers, self.store.settings.get("paths").binPath)
         self.runInBackground(self.downloader.download)
+        self.show()
 
     # TODO: Startup on this feels slow (due to thread spawn maybe?). Can we
     #       reuse the thread / downloader and instead use a custom slot + signal

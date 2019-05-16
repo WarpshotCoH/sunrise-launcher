@@ -49,16 +49,20 @@ def switchSection(to):
 
     if to == 2: # Settings
         serverListUI.hide()
-        downloadUI.hide()
+        serverListUI.clear()
         gameListUI.hide()
+        serverListUI.clear()
+
     elif to == 1: # Games
         serverListUI.hide()
-        downloadUI.show()
+        serverListUI.clear()
+
         gameListUI.show()
     else: # Servers
-        serverListUI.show()
-        downloadUI.show()
         gameListUI.hide()
+        gameListUI.clear()
+
+        serverListUI.show()
 
 if __name__ == "__main__":
     application = QApplication(sys.argv)
@@ -70,10 +74,10 @@ if __name__ == "__main__":
     serverManagerForm = Form("server-manager.ui")
 
     detailsLayout = mainForm.window.detailsLayout
-    detailsHeader = detailsLayout.itemAt(1)
-    detailsHeaderText = detailsLayout.itemAt(1).itemAt(1)
-    detailsContent = detailsLayout.itemAt(0)
-    downloadLayout = detailsLayout.itemAt(2).itemAt(0).widget()
+    detailsHeader = detailsLayout.itemAt(0)
+    detailsHeaderText = detailsLayout.itemAt(0).itemAt(1)
+    detailsContent = detailsLayout.itemAt(2)
+    downloadLayout = detailsLayout.itemAt(1).itemAt(0).widget()
 
     store = Store()
 

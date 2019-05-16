@@ -192,22 +192,6 @@
       </item>
       <item>
        <layout class="QGridLayout" name="detailsLayout">
-        <item row="1" column="0">
-         <spacer name="content">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-          <property name="sizeType">
-           <enum>QSizePolicy::Expanding</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>0</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
         <item row="0" column="0">
          <layout class="QHBoxLayout" name="detailsHeader">
           <property name="spacing">
@@ -480,6 +464,22 @@
            </widget>
           </item>
          </layout>
+        </item>
+        <item row="1" column="0">
+         <spacer name="content">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeType">
+           <enum>QSizePolicy::Expanding</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>0</height>
+           </size>
+          </property>
+         </spacer>
         </item>
        </layout>
       </item>
