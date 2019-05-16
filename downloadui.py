@@ -46,11 +46,9 @@ class DownloadUI(QObject):
 
         self.areContainersRunnable = application == None
 
-        if not self.store.settings.get("appSettings").get(application.id).autoPatch:
+        if not self.store.settings.get("containerSettings").get(self.containers[-1].id).autoPatch:
             if os.path.isdir(self.store.settings.get("paths").binPath):
                 self.verifyDownload()
-
-            self.button.setText("Install")
         else:
             self.startDownload()
 

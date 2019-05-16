@@ -5,7 +5,7 @@ import sys
 from PySide2.QtCore import QObject, Slot, Signal
 
 from manifest import fromXML, fromXMLString, Manifest
-from settings import Settings, PathSettings, ApplicationSettings, RecentServers
+from settings import Settings, PathSettings, ContainerSettings, RecentServers
 from theme import Loader
 
 # Storage of metadata about the users current install
@@ -26,7 +26,7 @@ class Store(QObject):
 
         self.settings.set("autoPatch", True)
         self.settings.set("manifestList", set())
-        self.settings.set("appSettings", {})
+        self.settings.set("containerSettings", {})
         self.settings.set("paths", PathSettings("bin", "run"))
         self.settings.set("recentServers", RecentServers())
         self.settings.set("hiddenServers", set())
@@ -61,13 +61,17 @@ class Store(QObject):
         self.runtimes.update(manifest.runtimes)
         self.servers.update(manifest.servers)
 
-        appSettings = self.settings.get("appSettings")
+        containerSettings = self.settings.get("containerSettings")
 
         for app in self.applications.values():
-            if not appSettings.get(app.id):
-                appSettings[app.id] = ApplicationSettings(app.id)
+            if not containerSettings.get(app.id):
+                containerSettings[app.id] = ContainerSettings(app.id)
 
-        self.settings.set("appSettings", appSettings)
+        for runtime in self.runtimes.values():
+            if not containerSettings.get(runtime.id):
+                containerSettings[runtime.id] = ContainerSettings(runtime.id)
+
+        self.settings.set("containerSettings", containerSettings)
 
         manifests = self.settings.get("manifestList")
         manifests.add(url)

@@ -17,7 +17,14 @@
 * User setting persistance / loading (research appdirs)
 * Auto-patch server, applicatio, runtime on selection
 * Track install state in user settings
-* Watcher timer shutdown bug
 * Play / Download button language
 * Create default theme
 * Refactor application to be idiomatic to Python / Qt styles (custom widgets?)
+* Pretty scrollbars
+* High density image handling
+* Windows layout adjustments
+* Hide play form non-runable items
+
+## Bugs
+* Watcher timer shutdown bug
+* Clicking on list subhead trigger select function to run and through index error

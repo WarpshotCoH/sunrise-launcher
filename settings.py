@@ -7,7 +7,7 @@ class PathSettings:
         self.binPath = binPath
         self.runPath = runPath
 
-class ApplicationSettings:
+class ContainerSettings:
     def __init__(self, id, autoPatch = False, customParams = None):
         self.id = id
         self.autoPatch = autoPatch

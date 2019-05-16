@@ -58,7 +58,11 @@ class GameListUI(QObject):
                                 self.selected.emit(client, runtime, None)
                                 return
                     elif i == 2:
-                        return
+                        runtime = list(self.store.runtimes.values())[index]
+
+                        if runtime:
+                            self.selected.emit(None, runtime, None)
+                            return
 
     @Slot(str)
     def reload(self, key = None):
