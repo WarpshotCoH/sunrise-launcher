@@ -10,12 +10,14 @@ from download import FileDownload
 
 class DownloaderState():
     NEW = 1
-    RUNNING = 2
+    VERIFYING = 2
+    DOWNLOADING = 2
     PAUSED = 3
     COMPLETE = 4
     DOWNLOAD_FAILED = 5
     VERIFICATION_FAILED = 6
     MISSING = 7
+    SHUTDOWN = 8
 
 class Downloader(QObject):
     fileStart = Signal(int, int, int, str)
@@ -45,21 +47,35 @@ class Downloader(QObject):
             self.currentFile.stop()
             self.currentFile = None
 
+    def shutdown(self):
+        self.changeState(DownloaderState.SHUTDOWN)
+
+        if self.currentFile:
+            self.currentFile.stop()
+            self.currentFile = None
+
+    def isStopped(self):
+        return self.state == DownloaderState.PAUSED or self.state == DownloaderState.SHUTDOWN
+
+    def checkForContainerInstalls(self):
+        for container in self.containers:
+            print("Checking for container install existance", container.name)
+
+            containerPath = os.path.normpath(os.path.join(self.installPath, container.id))
+
+            if not os.path.isdir(containerPath):
+                print("Missing container install path", containerPath)
+                self.changeState(DownloaderState.MISSING)
+                return False
+
+        return True
+
     def verify(self):
-        self.changeState(DownloaderState.RUNNING)
+        self.changeState(DownloaderState.VERIFYING)
 
         try:
-            # Before verifying any files, make sure that all of the
-            # containers are installed
-            for container in self.containers:
-                print("Verifying container existance", container.name)
-
-                containerPath = os.path.normpath(os.path.join(self.installPath, container.id))
-
-                if not os.path.isdir(containerPath):
-                    print("Missing container install path", containerPath)
-                    self.changeState(DownloaderState.MISSING)
-                    return
+            if not self.checkForContainerInstalls():
+                return
 
             for container in self.containers:
                 print("Verifying container", container.name)
@@ -68,7 +84,7 @@ class Downloader(QObject):
                 print("Emit runtime size")
 
                 for index, file in enumerate(container.files):
-                    if self.state == DownloaderState.PAUSED:
+                    if self.isStopped():
                         print("Exit early from pause")
                         return
 
@@ -91,7 +107,7 @@ class Downloader(QObject):
 
                         if not status:
                             # Do not fail the file if the user has requested a pause
-                            if not self.state == DownloaderState.PAUSED:
+                            if not self.isStopped():
                                 self.changeState(DownloaderState.VERIFICATION_FAILED, fileName)
 
                             return
@@ -109,9 +125,12 @@ class Downloader(QObject):
             print(sys.exc_info())
 
     def download(self):
-        self.changeState(DownloaderState.RUNNING)
+        self.changeState(DownloaderState.DOWNLOADING)
 
         try:
+            if not self.checkForContainerInstalls():
+                return
+
             for container in self.containers:
                 print("Downloading container", container.name)
 
@@ -119,7 +138,7 @@ class Downloader(QObject):
                 print("Emit runtime size")
 
                 for index, file in enumerate(container.files):
-                    if self.state == DownloaderState.PAUSED:
+                    if self.isStopped():
                         print("Exit early from pause")
                         return
 
@@ -151,7 +170,7 @@ class Downloader(QObject):
 
                     if not status:
                         # Do not fail the file if the user has requested a pause
-                        if not self.state == DownloaderState.PAUSED:
+                        if not self.isStopped():
                             self.changeState(DownloaderState.DOWNLOAD_FAILED, fileName)
 
                         return
@@ -161,7 +180,7 @@ class Downloader(QObject):
 
                         if not status:
                             # Do not fail the file if the user has requested a pause
-                            if not self.state == DownloaderState.PAUSED:
+                            if not self.isStopped():
                                 self.changeState(DownloaderState.VERIFICATION_FAILED, fileName)
 
                             return

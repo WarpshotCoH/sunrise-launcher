@@ -18,6 +18,7 @@ class DownloadUI(QObject):
         self.downloadThread = None
         self.downloader = None
         self.containers =[]
+        self.areContainersRunnable = False
 
         self.button.clicked.connect(self.startDownload)
 
@@ -32,10 +33,18 @@ class DownloadUI(QObject):
         self.button.show()
 
     @Slot(Application, Runtime, Server)
-    def load(self, application, runtime = None, server = None):
+    def load(self, application = None, runtime = None, server = None):
         self.min = self.max = self.cur = 0
         self.server = server
-        self.containers = [runtime, application]
+        self.containers = []
+
+        if runtime:
+            self.containers.append(runtime)
+
+        if application:
+            self.containers.append(application)
+
+        self.areContainersRunnable = application == None
 
         if not self.store.settings.get("appSettings").get(application.id).autoPatch:
             if os.path.isdir(self.store.settings.get("paths").binPath):
@@ -113,7 +122,7 @@ class DownloadUI(QObject):
 
     def shutdown(self):
         if self.downloader:
-            self.downloader.pause()
+            self.downloader.shutdown()
 
         if self.downloadThread:
             self.downloadThread.quit()
@@ -142,8 +151,9 @@ class DownloadUI(QObject):
         self.disableButton()
 
         buttonLabel = {
-            DownloaderState.NEW: "",
-            DownloaderState.RUNNING: "Pause",
+            DownloaderState.NEW: "Install",
+            DownloaderState.DOWNLOADING: "Pause",
+            DownloaderState.VERIFYING: "Play",
             DownloaderState.PAUSED: "Resume",
             DownloaderState.COMPLETE: "Play",
             DownloaderState.DOWNLOAD_FAILED: "Download",
@@ -153,7 +163,8 @@ class DownloadUI(QObject):
 
         buttonAction = {
             DownloaderState.NEW: self.startDownload,
-            DownloaderState.RUNNING: self.pauseDownload,
+            DownloaderState.DOWNLOADING: self.pauseDownload,
+            DownloaderState.VERIFYING: self.pauseDownload,
             DownloaderState.PAUSED: self.startDownload,
             DownloaderState.COMPLETE: self.run,
             DownloaderState.DOWNLOAD_FAILED: self.startDownload,
@@ -161,43 +172,48 @@ class DownloadUI(QObject):
             DownloaderState.MISSING: self.startDownload,
         }
 
-        self.button.setText(buttonLabel[state])
-        self.button.clicked.disconnect()
-        self.button.clicked.connect(buttonAction[state])
+        # Ignore the shutdown state. Currently it means the application is
+        # shutting down or we are transitioning to another list item
+        if not state == DownloaderState.SHUTDOWN:
+            print("Setting label to", buttonLabel[state])
+            self.button.setText(buttonLabel[state])
+            self.button.clicked.disconnect()
+            self.button.clicked.connect(buttonAction[state])
 
-        if state == DownloaderState.RUNNING:
-            self.progressBar.setProperty("Done", False)
-            self.progressBar.setStyle(self.progressBar.style())
-            self.fileBar.setProperty("Done", False)
-            self.fileBar.setStyle(self.fileBar.style())
+            if state == DownloaderState.DOWNLOADING or state == DownloaderState.VERIFYING:
+                self.progressBar.setProperty("Done", False)
+                self.progressBar.setStyle(self.progressBar.style())
+                self.fileBar.setProperty("Done", False)
+                self.fileBar.setStyle(self.fileBar.style())
 
-        # TODO: If QThread can be re-used over and over then this is not necessary.
-        #       In the meantime we tear down the thread whenever progress stops and
-        #       create a new one progress begins again
-        if state == DownloaderState.PAUSED or state == DownloaderState.COMPLETE or state == DownloaderState.DOWNLOAD_FAILED or state == DownloaderState.VERIFICATION_FAILED:
+            # TODO: If QThread can be re-used over and over then this is not necessary.
+            #       In the meantime we tear down the thread whenever progress stops and
+            #       create a new one progress begins again
+            if state == DownloaderState.PAUSED or state == DownloaderState.COMPLETE or state == DownloaderState.DOWNLOAD_FAILED or state == DownloaderState.VERIFICATION_FAILED:
 
-            # If we had a running thread that needs to be stopped, ensure that it
-            # is stopped before we allow a new download to be started with a new
-            # download thread
-            self.downloadThread.finished.connect(self.enableButton)
-            self.downloadThread.quit()
-        else:
-            self.enableButton()
+                # If we had a running thread that needs to be stopped, ensure that it
+                # is stopped before we allow a new download to be started with a new
+                # download thread
+                self.downloadThread.finished.connect(self.enableButton)
+                self.downloadThread.quit()
+            else:
+                if not state == DownloaderState.VERIFYING:
+                    self.enableButton()
 
-        if state == DownloaderState.DOWNLOAD_FAILED and filename:
-            self.progressBar.setFormat("Failed to download {}".format(filename))
-            self.fileBar.hide()
+            if state == DownloaderState.DOWNLOAD_FAILED and filename:
+                self.progressBar.setFormat("Failed to download {}".format(filename))
+                self.fileBar.hide()
 
-        if state == DownloaderState.VERIFICATION_FAILED and filename:
-            self.progressBar.setFormat("Failed to verify {}".format(filename))
-            self.fileBar.hide()
+            if state == DownloaderState.VERIFICATION_FAILED and filename:
+                self.progressBar.setFormat("Failed to verify {}".format(filename))
+                self.fileBar.hide()
 
-        # On a pause, complete, or missing we clear out any progress text
-        if state == DownloaderState.PAUSED or state == DownloaderState.COMPLETE or state == DownloaderState.MISSING:
-            self.progressBar.setProperty("Done", True)
-            self.progressBar.setStyle(self.progressBar.style())
-            self.fileBar.setProperty("Done", True)
-            self.fileBar.setStyle(self.fileBar.style())
+            # On a pause, complete, or missing we clear out any progress text
+            if state == DownloaderState.PAUSED or state == DownloaderState.COMPLETE or state == DownloaderState.MISSING:
+                self.progressBar.setProperty("Done", True)
+                self.progressBar.setStyle(self.progressBar.style())
+                self.fileBar.setProperty("Done", True)
+                self.fileBar.setStyle(self.fileBar.style())
 
     @Slot(int, int, int, str)
     def onFileStart(self, pMin, pStart, pMax, filename):
