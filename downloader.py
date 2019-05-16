@@ -15,6 +15,7 @@ class DownloaderState():
     COMPLETE = 4
     DOWNLOAD_FAILED = 5
     VERIFICATION_FAILED = 6
+    MISSING = 7
 
 class Downloader(QObject):
     fileStart = Signal(int, int, int, str)
@@ -48,6 +49,18 @@ class Downloader(QObject):
         self.changeState(DownloaderState.RUNNING)
 
         try:
+            # Before verifying any files, make sure that all of the
+            # containers are installed
+            for container in self.containers:
+                print("Verifying container existance", container.name)
+
+                containerPath = os.path.normpath(os.path.join(self.installPath, container.id))
+
+                if not os.path.isdir(containerPath):
+                    print("Missing container install path", containerPath)
+                    self.changeState(DownloaderState.MISSING)
+                    return
+
             for container in self.containers:
                 print("Verifying container", container.name)
 

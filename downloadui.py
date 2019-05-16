@@ -36,9 +36,12 @@ class DownloadUI(QObject):
         self.min = self.max = self.cur = 0
         self.server = server
         self.containers = [runtime, application]
+
         if not self.store.settings.get("appSettings").get(application.id).autoPatch:
             if os.path.isdir(self.store.settings.get("paths").binPath):
                 self.verifyDownload()
+
+            self.button.setText("Install")
         else:
             self.startDownload()
 
@@ -139,12 +142,13 @@ class DownloadUI(QObject):
         self.disableButton()
 
         buttonLabel = {
-            DownloaderState.NEW: "Download",
+            DownloaderState.NEW: "",
             DownloaderState.RUNNING: "Pause",
             DownloaderState.PAUSED: "Resume",
             DownloaderState.COMPLETE: "Play",
             DownloaderState.DOWNLOAD_FAILED: "Download",
-            DownloaderState.VERIFICATION_FAILED: "Download",
+            DownloaderState.VERIFICATION_FAILED: "Repair",
+            DownloaderState.MISSING: "Install",
         }
 
         buttonAction = {
@@ -154,6 +158,7 @@ class DownloadUI(QObject):
             DownloaderState.COMPLETE: self.run,
             DownloaderState.DOWNLOAD_FAILED: self.startDownload,
             DownloaderState.VERIFICATION_FAILED: self.startDownload,
+            DownloaderState.MISSING: self.startDownload,
         }
 
         self.button.setText(buttonLabel[state])
@@ -187,8 +192,8 @@ class DownloadUI(QObject):
             self.progressBar.setFormat("Failed to verify {}".format(filename))
             self.fileBar.hide()
 
-        # On a pause request or a complete we clear out any progress text
-        if state == DownloaderState.PAUSED or state == DownloaderState.COMPLETE:
+        # On a pause, complete, or missing we clear out any progress text
+        if state == DownloaderState.PAUSED or state == DownloaderState.COMPLETE or state == DownloaderState.MISSING:
             self.progressBar.setProperty("Done", True)
             self.progressBar.setStyle(self.progressBar.style())
             self.fileBar.setProperty("Done", True)
