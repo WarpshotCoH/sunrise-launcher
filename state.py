@@ -6,7 +6,7 @@ import xml.etree.ElementTree as ET
 from PySide2.QtCore import QObject, Slot, Signal
 
 from manifest import fromXML, fromXMLString, Manifest
-from settings import Settings, PathSettings, ContainerSettings, RecentServers
+from settings import Settings, PathSettings, ContainerSettings, RecentServers, SunriseSettings
 from theme import Loader
 
 # Storage of metadata about the users current install
@@ -26,8 +26,11 @@ class Store(QObject):
 
     def load(self):
         try:
-            if os.path.isfile(os.path.normpath("store/settings.pickle")):
-                f = open("store/settings.pickle", "rb")
+            settingsFile = os.path.join(SunriseSettings.settingsPath, "settings.pickle")
+            print(settingsFile)
+
+            if os.path.isfile(settingsFile):
+                f = open(settingsFile, "rb")
                 self.settings.load(pickle.load(f))
             else:
                 self.settings.set("autoPatch", True)
@@ -43,8 +46,8 @@ class Store(QObject):
             pass
 
         try:
-            storedManifests = open("store/manifests.xml", "r").read()
-            self.loadManifest("store/manifests.xml", storedManifests)
+            storedManifests = open(os.path.join(SunriseSettings.settingsPath, "manifests.xml"), "r").read()
+            self.loadManifest("local://manifests.xml", storedManifests)
         except Exception:
             print(sys.exc_info())
             pass
@@ -115,19 +118,17 @@ class Store(QObject):
             return []
 
     def save(self):
-        path = os.path.normpath(os.path.join(".", "store"))
-
-        if not os.path.isdir(path):
-            os.makedirs(path)
+        if not os.path.isdir(SunriseSettings.settingsPath):
+            os.makedirs(SunriseSettings.settingsPath)
 
         manifest = Manifest("store", self.servers, self.applications, self.runtimes)
         manifestOutput = ET.tostring(manifest.toXML(), encoding="utf8", method="xml")
 
-        f = open("store/manifests.xml", "wb+")
+        f = open(os.path.join(SunriseSettings.settingsPath, "manifests.xml"), "wb+")
         f.write(manifestOutput)
         f.close()
 
-        f = open("store/settings.pickle", "wb+")
+        f = open(os.path.join(SunriseSettings.settingsPath, "settings.pickle"), "wb+")
         settingsOutput = pickle.dump(self.settings.getData(), f)
 
         f.close()
