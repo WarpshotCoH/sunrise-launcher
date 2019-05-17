@@ -83,7 +83,7 @@ class Store(QObject):
         self.settings.set("containerSettings", containerSettings)
 
         manifests = self.settings.get("manifestList")
-        manifests.add(url)
+        manifests.add((url, manifest))
 
         self.settings.set("manifestList", manifests)
 

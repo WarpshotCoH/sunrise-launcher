@@ -4,23 +4,28 @@ from PySide2.QtCore import QObject, QThread, Slot, Signal
 
 from downloader import Downloader, FileDownload, DownloaderState
 from manifest import Application, Runtime, Server
+from helpers import createWidget
 
 class DownloadUI(QObject):
     launch = Signal(str)
 
-    def __init__(self, store, progressBar, fileBar, button, parent=None):
+    def __init__(self, store, parent):
         super(DownloadUI, self).__init__(parent)
 
         self.store = store
-        self.progressBar = progressBar
-        self.fileBar = fileBar
-        self.button = button
+        self.ui = createWidget("ui/listview-download.ui")
+
+        self.progressBar = self.ui.progress
+        self.fileBar = self.ui.fileProgress
+        self.button = self.ui.play
         self.downloadThread = None
         self.downloader = None
         self.containers =[]
         self.launchId = None
 
         self.button.clicked.connect(self.startDownload)
+
+        parent.addWidget(self.ui)
 
     def hide(self):
         self.progressBar.hide()

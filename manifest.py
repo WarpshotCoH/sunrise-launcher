@@ -275,14 +275,15 @@ class Runtime:
         return runtime
 
 class Manifest:
-    def __init__(self, name, servers, applications, runtimes):
+    def __init__(self, name, servers, applications, runtimes, source):
         self.name = name
         self.servers = servers
         self.applications = applications
         self.runtimes = runtimes
+        self.source = source
 
     @staticmethod
-    def fromXML(manifest):
+    def fromXML(manifest, source):
         name = manifest.find("name").text
         serverList = list(map(
             Server.fromXML,
@@ -301,7 +302,7 @@ class Manifest:
         applications = dict((application.id,application) for application in applicationList)
         runtimes = dict((runtime.id,runtime) for runtime in runtimeList)
 
-        return Manifest(name, servers, applications, runtimes)
+        return Manifest(name, servers, applications, runtimes, source)
 
     def toXML(self):
         manifest = ET.Element("sunrise-manifest")
@@ -330,10 +331,10 @@ class Manifest:
         return manifest
 
 def fromXML(file):
-    return Manifest.fromXML(ET.parse(file).getroot())
+    return Manifest.fromXML(ET.parse(file).getroot(), file)
 
 def fromXMLString(file):
-    return Manifest.fromXML(ET.fromstring(file))
+    return Manifest.fromXML(ET.fromstring(file), file)
 
 # TODO: Implement me
 def fromYML(file):

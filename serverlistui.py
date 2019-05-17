@@ -1,37 +1,17 @@
-from PySide2.QtCore import QFile, QObject, Signal, Slot, QSize
-from PySide2.QtGui import QIcon, QImage, QPixmap
-from PySide2.QtUiTools import QUiLoader
-from PySide2.QtWidgets import QListWidgetItem, QLabel, QListWidget
-import requests
+from PySide2.QtCore import Slot
 
+from listviewui import ListViewUI
 from manifest import Server, Application, Runtime
 
-class ServerListUI(QObject):
-    selected = Signal(Application, Runtime, Server)
+class ServerListUI(ListViewUI):
+    def __init__(self, store, parent):
+        super(ServerListUI, self).__init__(store, parent)
 
-    def __init__(self, store, uiFile, parent=None):
-        super(ServerListUI, self).__init__(parent)
-
-        self.store = store
-        self.ui = ServerListUI.createWidget(uiFile)
-        self.listUI = self.ui.findChild(QListWidget, "serverList")
-
-        self.listUI.currentRowChanged.connect(self.selectServer)
+        self.header.hide()
+        self.list.currentRowChanged.connect(self.selectServer)
 
         # Connect the server list so that it updates when hidden servers are added / removed
         self.store.settings.connectKey("hiddenServers", self.reload)
-
-        # Refresh the server manager list when manifests update
-        self.store.updated.connect(self.reload)
-
-    def show(self):
-        self.ui.show()
-
-    def hide(self):
-        self.ui.hide()
-
-    def clear(self):
-        self.listUI.setCurrentRow(-1)
 
     def computeServerOrder(self):
         recentSettings = self.store.settings.get("recentServers")
@@ -71,17 +51,19 @@ class ServerListUI(QObject):
         servers = sorted(self.store.servers.values(), key = lambda s: order.index(s.id))
 
         if len(servers) > 0:
-            selectedServer = servers[max(0, self.listUI.currentRow())]
+            selectedServer = servers[max(0, self.list.currentRow())]
         else:
             selectedServer = None
 
         hidden = self.store.settings.get("hiddenServers")
 
-        self.listUI.clear()
+        self.list.clear()
 
         # Now we sync the new order up to the actual displayed UI
         if len(servers) > 0:
-            newIndex = 0
+            self.addHeader("Servers")
+
+            newIndex = -1
 
             for i, server in enumerate(servers):
                 if selectedServer and selectedServer.id == server.id and not server.id in hidden:
@@ -89,40 +71,9 @@ class ServerListUI(QObject):
 
                 application = self.store.applications.get(server.application)
 
-                itemWidget = ServerListUI.createWidget("serverlist-item.ui")
-                itemWidget.findChild(QLabel, "server").setText(server.name)
-                itemWidget.findChild(QLabel, "application").setText(application.name)
-
-                # TODO: Move off-thread for slow loading. Maybe an image loading pool?
-                if not self.store.cache.get(application.icon):
-                    data = requests.get(application.icon, stream=True, allow_redirects=True).content # TODO: handle 404/missing icon?
-                    qImage = QImage.fromData(data)
-                    self.store.cache[application.icon] = QPixmap.fromImage(qImage)
-
-                itemWidget.findChild(QLabel, "icon").setPixmap(self.store.cache.get(application.icon))
-
-                item = QListWidgetItem()
-                self.listUI.addItem(item)
-
-                # TODO: Supposed to be able to get the size hint from the custom
-                #       widget and assign it here, but I can not seem to figure
-                #       it out
-                item.setSizeHint(QSize(-1, 64))
-
-                self.listUI.setItemWidget(item, itemWidget)
+                self.addListItem(server.name, application.name, application.icon)
 
                 if server.id in hidden:
                     item.hide()
 
-            self.listUI.setCurrentRow(newIndex)
-
-    @staticmethod
-    def createWidget(ui_file):
-        ui_file = QFile(ui_file)
-        ui_file.open(QFile.ReadOnly)
-
-        loader = QUiLoader()
-        widget = loader.load(ui_file)
-        ui_file.close()
-
-        return widget
+            self.list.setCurrentRow(newIndex)
