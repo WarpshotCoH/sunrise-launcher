@@ -6,6 +6,7 @@
 * Redo server list ordering hiding, the current impl is dumb
 * Impl server, application, and runtime settings
 * Impl global settings
+* Clear details on tab switch
 * Manifest adding ui
 * Details view. News / website / etc
 * Impl Sunrise auto-patching
@@ -13,14 +14,11 @@
 * Theme management and installing
 * User setting persistance / loading (research appdirs)
 * Auto-patch server, applicatio, runtime on selection
-* Track install state in user settings
-* Play / Download button language
-* Create default theme
 * Refactor application to be idiomatic to Python / Qt styles (custom widgets?)
 * Pretty scrollbars
 * High density image handling
 * Windows layout adjustments
-* Hide play form non-runable items
+* Hide play from non-runable items
 
 ## Bugs
 * Watcher timer shutdown bug

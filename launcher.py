@@ -14,51 +14,68 @@ class Launcher(QObject):
 
         self.store = store
 
-    def launchCmd(self, server):
-        if server and server.application:
-            app = self.store.applications.get(server.application)
-        else:
-            app = self.store.applications.get(id)
+    def getApplicationCmd(self, application):
+        runPath = os.path.abspath(os.path.join(self.store.settings.get("paths").binPath, application.runtime if application.runtime else application.id))
+
+        cmd = os.path.join(runPath, application.launcher.exec)
+
+        if application.launcher.params:
+            cmd = cmd + " " + application.launcher.params
+
+        return (cmd, runPath)
+
+
+    def getServerCmd(self, server):
+        application = self.store.applications.get(server.application)
 
         if server and server.launcher and server.launcher.exec:
             ex = server.launcher.exec
         else:
-            ex = app.launcher.exec
+            ex = application.launcher.exec
 
-        runPath = os.path.abspath(os.path.join(self.store.settings.get("paths").binPath, app.runtime if app.runtime else app.id))
+        runPath = os.path.abspath(os.path.join(self.store.settings.get("paths").binPath, application.runtime if application.runtime else application.id))
 
         cmd = os.path.join(runPath, ex)
 
-        if app.launcher.params:
-            cmd = cmd + " " + app.launcher.params
+        if application.launcher.params:
+            cmd = cmd + " " + application.launcher.params
 
         if server and server.launcher and server.launcher.params:
             cmd = cmd + " " + server.launcher.params
 
         return (cmd, runPath)
 
+    def launchCmd(self, id):
+        server = self.store.servers.get(id)
+
+        if server:
+            return self.getServerCmd(server)
+
+        application = self.store.applications.get(id)
+
+        if application:
+            return self.getApplicationCmd(application)
+
+        return (None, None)
+
     @Slot(str)
     def launch(self, id):
         print("Launching application" + id)
         print("Running")
-        print(self.launchCmd(id))
 
-        server = self.store.servers.get(id)
+        (cmd, path) = self.launchCmd(id)
 
-        if server:
-            if server.id in self.store.settings.get("lockedServers"):
-                # TODO: Require stored parental pin to be entered. On failure display dialog and short circuit
-                True
+        if cmd:
+            server = self.store.servers.get(id)
 
-            (cmd, path) = self.launchCmd(server)
+            if server:
+                recentList = self.store.settings.get("recentServers")
+                recentList.push(id)
+                print("New recent list", recentList.recent)
+                self.store.settings.set("recentServers", recentList)
+                self.store.settings.commit()
 
-            recentList = self.store.settings.get("recentServers")
-
-            recentList.push(id)
-            print("New recent list", recentList.recent)
-            self.store.settings.set("recentServers", recentList)
-            self.store.settings.commit()
-
+            print(cmd, path)
             # popenAndCall(lambda: self.started.emit(id), lambda: self.exited.emit(id), cmd.split(" "), cwd=path)
 
 # https://stackoverflow.com/questions/2581817/python-subprocess-callback-when-cmd-exits

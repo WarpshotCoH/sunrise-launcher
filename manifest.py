@@ -196,13 +196,13 @@ class Application:
         return application
 
 class Server:
-    def __init__(self, id, application, name, publisher, icon, website, launcher):
+    def __init__(self, id, application, name, publisher, icon, websites, launcher):
         self.id = id
         self.application = application
         self.name = name
         self.publisher = publisher
         self.icon = icon
-        self.website = website
+        self.websites = websites
         self.launcher = launcher
 
     @staticmethod
@@ -213,7 +213,7 @@ class Server:
             None if server.find("name") == None else server.find("name").text,
             None if server.find("publisher") == None else server.find("publisher").text,
             None if server.find("icon") == None else server.find("icon").text,
-            list(map(Website.fromXML, server.findall(".//website"))),
+            list(map(Website.fromXML, server.findall(".//websites"))),
             None if server.find("launcher") == None else Launcher.fromXML(server.find("launcher")),
         )
 

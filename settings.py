@@ -40,6 +40,12 @@ class Settings(QObject):
     def getPending(self, k):
         return self.pending.get(k)
 
+    def getData(self):
+        return deepcopy(self.store)
+
+    def load(self, store):
+        self.store = deepcopy(store)
+
     def set(self, k, v):
         self.pending[k] = v
 

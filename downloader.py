@@ -128,9 +128,6 @@ class Downloader(QObject):
         self.changeState(DownloaderState.DOWNLOADING)
 
         try:
-            if not self.checkForContainerInstalls():
-                return
-
             for container in self.containers:
                 print("Downloading container", container.name)
 

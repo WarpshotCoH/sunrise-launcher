@@ -1,6 +1,7 @@
 import os
-import xml.etree.ElementTree as ET
+import pickle
 import sys
+import xml.etree.ElementTree as ET
 
 from PySide2.QtCore import QObject, Slot, Signal
 
@@ -11,7 +12,6 @@ from theme import Loader
 # Storage of metadata about the users current install
 class Store(QObject):
     updated = Signal()
-    loaded = Signal()
 
     def __init__(self, parent=None):
         super(Store, self).__init__(parent)
@@ -24,26 +24,34 @@ class Store(QObject):
         self.running = []
         self.theme = None
 
-        self.settings.set("autoPatch", True)
-        self.settings.set("manifestList", set())
-        self.settings.set("containerSettings", {})
-        self.settings.set("paths", PathSettings("bin", "run"))
-        self.settings.set("recentServers", RecentServers())
-        self.settings.set("hiddenServers", set())
-        self.settings.set("lockedServers", [])
-        self.settings.set("parentalPin", None)
-        self.settings.commit()
-
+    def load(self):
         try:
-            stored = Manifest.fromXML(ET.parse("store/manifests.xml").getroot())
-            self.applications = stored.applications
-            self.runtimes = stored.runtimes
-            self.servers = stored.servers
+            storedManifests = Manifest.fromXML(ET.parse("store/manifests.xml").getroot())
+            self.applications = storedManifests.applications
+            self.runtimes = storedManifests.runtimes
+            self.servers = storedManifests.servers
         except Exception:
             print(sys.exc_info())
             pass
 
-        self.loaded.emit()
+        try:
+            if os.path.isfile(os.path.normpath("store/settings.pickle")):
+                f = open("store/settings.pickle", "rb")
+                self.settings.load(pickle.load(f))
+            else:
+                self.settings.set("autoPatch", True)
+                self.settings.set("manifestList", set())
+                self.settings.set("containerSettings", {})
+                self.settings.set("paths", PathSettings("bin", "run"))
+                self.settings.set("recentServers", RecentServers())
+                self.settings.set("hiddenServers", set())
+
+            self.settings.commit()
+        except Exception:
+            print(sys.exc_info())
+            pass
+
+        self.updated.emit()
 
     def getTools(self):
         return list(filter(lambda a: a.type == "mod", self.applications.values()))
@@ -109,14 +117,19 @@ class Store(QObject):
             return []
 
     def save(self):
-        m = Manifest("store", self.servers, self.applications, self.runtimes)
-        output = ET.tostring(m.toXML(), encoding="utf8", method="xml")
-
         path = os.path.normpath(os.path.join(".", "store"))
 
         if not os.path.isdir(path):
             os.makedirs(path)
 
+        manifest = Manifest("store", self.servers, self.applications, self.runtimes)
+        manifestOutput = ET.tostring(manifest.toXML(), encoding="utf8", method="xml")
+
         f = open("store/manifests.xml", "wb+")
-        f.write(output)
+        f.write(manifestOutput)
+        f.close()
+
+        f = open("store/settings.pickle", "wb+")
+        settingsOutput = pickle.dump(self.settings.getData(), f)
+
         f.close()

@@ -48,13 +48,18 @@ class ServerListUI(QObject):
         )
 
     def computeServerOrder(self):
-        order = self.store.settings.get("recentServers").recent
+        recentSettings = self.store.settings.get("recentServers")
 
-        for id in self.store.servers.keys():
-            if not id in order:
-                order.append(id)
+        if recentSettings:
+            order = recentSettings.recent
 
-        return order
+            for id in self.store.servers.keys():
+                if not id in order:
+                    order.append(id)
+
+            return order
+
+        return []
 
     @Slot(int)
     def selectServer(self, row):

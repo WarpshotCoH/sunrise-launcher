@@ -18,7 +18,7 @@ class DownloadUI(QObject):
         self.downloadThread = None
         self.downloader = None
         self.containers =[]
-        self.areContainersRunnable = False
+        self.launchId = None
 
         self.button.clicked.connect(self.startDownload)
 
@@ -38,16 +38,21 @@ class DownloadUI(QObject):
             self.hide()
 
         self.min = self.max = self.cur = 0
-        self.server = server
         self.containers = []
+
+        if server:
+            self.launchId = server.id
+        elif application and application.type == "mod":
+            # TODO: Filter out non-launchable applications
+            self.launchId = application.id
+        else:
+            self.launchId = None
 
         if runtime:
             self.containers.append(runtime)
 
         if application:
             self.containers.append(application)
-
-        self.areContainersRunnable = application == None
 
         if len(self.containers) > 0:
             if not self.store.settings.get("containerSettings").get(self.containers[-1].id).autoPatch:
@@ -57,8 +62,8 @@ class DownloadUI(QObject):
                 self.startDownload()
 
     def run(self):
-        if self.server:
-            self.launch.emit(self.server.id)
+        if self.launchId:
+            self.launch.emit(self.launchId)
 
     def verifyDownload(self):
         self.shutdown()

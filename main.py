@@ -79,6 +79,8 @@ if __name__ == "__main__":
     detailsContent = detailsLayout.itemAt(2)
     downloadLayout = detailsLayout.itemAt(1).itemAt(0).widget()
 
+    patcher = None
+
     store = Store()
 
     pool = WatcherPool()
@@ -178,8 +180,12 @@ if __name__ == "__main__":
     mainForm.window.show()
 
     # Load the default manifest files
-    pool.add("manifests/manifest1.xml")
-    pool.add("manifests/manifest2.xml")
-    pool.add("manifests/manifest3.xml")
+    # pool.add("manifests/manifest1.xml")
+    # pool.add("manifests/manifest2.xml")
+    # pool.add("manifests/manifest3.xml")
+
+    store.load()
+
+    store.save()
 
     sys.exit(application.exec_())
