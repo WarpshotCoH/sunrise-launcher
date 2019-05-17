@@ -16,8 +16,6 @@ class ServerListUI(QObject):
         self.ui = ServerListUI.createWidget(uiFile)
         self.listUI = self.ui.findChild(QListWidget, "serverList")
 
-        self.reorderServers()
-
         self.listUI.currentRowChanged.connect(self.selectServer)
 
         # Connect the server list so that it updates when hidden servers are added / removed
@@ -35,18 +33,6 @@ class ServerListUI(QObject):
     def clear(self):
         self.listUI.setCurrentRow(-1)
 
-    # TODO: Redo this implementation, it is dumb. Instead render everything based
-    #       on the ordering and hide elements that are in hidden servers list
-    def reorderServers(self):
-        hidden = self.store.settings.get("hiddenServers")
-        order = self.computeServerOrder()
-        self.orderedServers = list(
-            sorted(
-                filter(lambda s: not s.id in hidden, self.store.servers.values()),
-                key = lambda s: order.index(s.id)
-            )
-        )
-
     def computeServerOrder(self):
         recentSettings = self.store.settings.get("recentServers")
 
@@ -63,11 +49,8 @@ class ServerListUI(QObject):
 
     @Slot(int)
     def selectServer(self, row):
-        # TODO: Fix this once the server state is all sorted out
-        if len(self.orderedServers) > 0 and row > -1:
-            if len(self.orderedServers) < row:
-                return
-            server = self.orderedServers[row]
+        if row < len(self.store.servers) and row > -1:
+            server = list(self.store.servers.values())[row]
 
             if server:
                 app = self.store.applications.get(server.application)
@@ -78,30 +61,30 @@ class ServerListUI(QObject):
                     if runtime:
                         print("Selected server", server.id, app.id, runtime.id)
                         self.selected.emit(app, runtime, server)
-        elif row == -1:
+        else:
             self.selected.emit(None, None, None)
 
     @Slot(str)
     def reload(self, key = None):
         print("Reload server list")
-        if len(self.orderedServers) > 0:
-            selectedServer = self.orderedServers[max(0, self.listUI.currentRow())]
+        order = self.computeServerOrder()
+        servers = sorted(self.store.servers.values(), key = lambda s: order.index(s.id))
+
+        if len(servers) > 0:
+            selectedServer = servers[max(0, self.listUI.currentRow())]
         else:
             selectedServer = None
 
-        # Side-effect! This reorders the UI internal server storage
-        # TODO: See reorderServers note above. This should be possible
-        #       without storing more state
-        self.reorderServers()
+        hidden = self.store.settings.get("hiddenServers")
 
         self.listUI.clear()
 
         # Now we sync the new order up to the actual displayed UI
-        if len(self.orderedServers) > 0:
+        if len(servers) > 0:
             newIndex = 0
 
-            for i, server in enumerate(self.orderedServers):
-                if selectedServer and selectedServer.id == server.id:
+            for i, server in enumerate(servers):
+                if selectedServer and selectedServer.id == server.id and not server.id in hidden:
                     newIndex = i
 
                 application = self.store.applications.get(server.application)
@@ -128,6 +111,8 @@ class ServerListUI(QObject):
 
                 self.listUI.setItemWidget(item, itemWidget)
 
+                if server.id in hidden:
+                    item.hide()
 
             self.listUI.setCurrentRow(newIndex)
 

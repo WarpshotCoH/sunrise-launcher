@@ -159,6 +159,8 @@ class DownloadUI(QObject):
         print("Change state", state)
         self.disableButton()
 
+        # TODO: Button/label for non-runnable targets
+
         buttonLabel = {
             DownloaderState.NEW: "Install",
             DownloaderState.DOWNLOADING: "Pause",

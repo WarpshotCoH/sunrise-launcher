@@ -179,12 +179,12 @@ if __name__ == "__main__":
     # things are ready, show the main window
     mainForm.window.show()
 
+    store.load()
+
     # Load the default manifest files
     # pool.add("manifests/manifest1.xml")
     # pool.add("manifests/manifest2.xml")
     # pool.add("manifests/manifest3.xml")
-
-    store.load()
 
     store.save()
 

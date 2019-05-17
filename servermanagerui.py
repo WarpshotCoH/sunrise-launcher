@@ -60,8 +60,9 @@ class ServerManagerUI(QObject):
 
     @Slot(str)
     def updateNewHiddenServers(self, key = None):
-        self.newHidden = self.newHidden.union(self.store.settings.get("hiddenServers"))
-        self.reload()
+        if self.store.settings.get("hiddenServers"):
+            self.newHidden = self.newHidden.union(self.store.settings.get("hiddenServers"))
+            self.reload()
 
     def getSelectedServerId(self):
         [active, hidden] = self.getServers()

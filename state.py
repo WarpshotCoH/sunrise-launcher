@@ -26,15 +26,6 @@ class Store(QObject):
 
     def load(self):
         try:
-            storedManifests = Manifest.fromXML(ET.parse("store/manifests.xml").getroot())
-            self.applications = storedManifests.applications
-            self.runtimes = storedManifests.runtimes
-            self.servers = storedManifests.servers
-        except Exception:
-            print(sys.exc_info())
-            pass
-
-        try:
             if os.path.isfile(os.path.normpath("store/settings.pickle")):
                 f = open("store/settings.pickle", "rb")
                 self.settings.load(pickle.load(f))
@@ -47,6 +38,13 @@ class Store(QObject):
                 self.settings.set("hiddenServers", set())
 
             self.settings.commit()
+        except Exception:
+            print(sys.exc_info())
+            pass
+
+        try:
+            storedManifests = open("store/manifests.xml", "r").read()
+            self.loadManifest("store/manifests.xml", storedManifests)
         except Exception:
             print(sys.exc_info())
             pass
