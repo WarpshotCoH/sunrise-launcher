@@ -26,6 +26,7 @@ from serverlistui import ServerListUI
 from settingsui import SettingsUI
 
 from launcher import Launcher
+from manifestpool import ManifestPool
 from patcher import Patcher
 from state import Store
 from watcher import WatcherPool
@@ -64,7 +65,7 @@ if __name__ == "__main__":
     # Initialize background data fetching pools
     autoPatchPool = None
 
-    pool = WatcherPool()
+    pool = ManifestPool(store)
 
     if store.settings.get("autoPatch"):
         autoPatchPool = WatcherPool()
@@ -105,8 +106,6 @@ if __name__ == "__main__":
     pool.add("manifests/manifest1.xml")
     pool.add("manifests/manifest2.xml")
     pool.add("manifests/manifest3.xml")
-
-    # store.save()
 
     # Load the selected theme
     if store.theme:

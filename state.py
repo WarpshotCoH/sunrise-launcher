@@ -5,6 +5,7 @@ import xml.etree.ElementTree as ET
 
 from PySide2.QtCore import QObject, Slot, Signal
 
+from helpers import uList
 from manifest import fromXML, fromXMLString, Manifest
 from settings import Settings, PathSettings, ContainerSettings, RecentServers, SunriseSettings
 from theme import Loader
@@ -16,6 +17,7 @@ class Store(QObject):
     def __init__(self, parent=None):
         super(Store, self).__init__(parent)
 
+        self.manifestNames = {}
         self.applications = {}
         self.runtimes = {}
         self.servers = {}
@@ -23,6 +25,9 @@ class Store(QObject):
         self.settings = Settings()
         self.running = []
         self.theme = None
+
+        self.settings.committed.connect(self.save)
+        self.updated.connect(self.save)
 
     def load(self):
         try:
@@ -34,23 +39,23 @@ class Store(QObject):
                 self.settings.load(pickle.load(f))
             else:
                 self.settings.set("autoPatch", True)
-                self.settings.set("manifestList", set())
+                self.settings.set("manifestList", uList())
                 self.settings.set("containerSettings", {})
                 self.settings.set("paths", PathSettings("bin", "run"))
                 self.settings.set("recentServers", RecentServers())
-                self.settings.set("hiddenServers", set())
+                self.settings.set("hiddenServers", uList())
 
             self.settings.commit()
         except Exception:
             print(sys.exc_info())
             pass
 
-        try:
-            storedManifests = open(os.path.join(SunriseSettings.settingsPath, "manifests.xml"), "r").read()
-            self.loadManifest("local://manifests.xml", storedManifests)
-        except Exception:
-            print(sys.exc_info())
-            pass
+        # try:
+        #     storedManifests = open(os.path.join(SunriseSettings.settingsPath, "manifests.xml"), "r").read()
+        #     self.loadManifest("local://manifests.xml", storedManifests)
+        # except Exception:
+        #     print(sys.exc_info())
+        #     pass
 
         self.updated.emit()
 
@@ -82,8 +87,9 @@ class Store(QObject):
 
         self.settings.set("containerSettings", containerSettings)
 
+        self.manifestNames[url] = manifest.name
         manifests = self.settings.get("manifestList")
-        manifests.add((url, manifest))
+        manifests.push(url)
 
         self.settings.set("manifestList", manifests)
 
@@ -121,12 +127,12 @@ class Store(QObject):
         if not os.path.isdir(SunriseSettings.settingsPath):
             os.makedirs(SunriseSettings.settingsPath)
 
-        manifest = Manifest("store", self.servers, self.applications, self.runtimes)
-        manifestOutput = ET.tostring(manifest.toXML(), encoding="utf8", method="xml")
+        # manifest = Manifest("store", self.servers, self.applications, self.runtimes)
+        # manifestOutput = ET.tostring(manifest.toXML(), encoding="utf8", method="xml")
 
-        f = open(os.path.join(SunriseSettings.settingsPath, "manifests.xml"), "wb+")
-        f.write(manifestOutput)
-        f.close()
+        # f = open(os.path.join(SunriseSettings.settingsPath, "manifests.xml"), "wb+")
+        # f.write(manifestOutput)
+        # f.close()
 
         f = open(os.path.join(SunriseSettings.settingsPath, "settings.pickle"), "wb+")
         settingsOutput = pickle.dump(self.settings.getData(), f)

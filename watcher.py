@@ -39,6 +39,11 @@ class WatcherPool(QObject):
             print("Watch thread not running. Scheduling", url)
             self.thread.started.connect(self.watchers[url].start)
 
+    def remove(self, url):
+        if self.watchers.get(url):
+            self.watchers[url].shutdown()
+            self.watchers.pop(url, None)
+
     def shutdown(self):
         self.stopTrigger.emit()
 

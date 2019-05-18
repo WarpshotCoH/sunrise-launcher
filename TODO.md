@@ -19,6 +19,8 @@
 * High density image handling
 * Windows layout adjustments
 * Hide play from non-runable items
+* Loading manifestList from stored settings generate keyerror on manifest list until manifests are loaded
+* Optimizations are available pretty much everywhere
 
 ## Bugs
 * Watcher timer shutdown bug
