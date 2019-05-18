@@ -8,6 +8,21 @@ class Theme:
         self.props = props
         self.css = css
 
+    @staticmethod
+    def fromPath(path):
+        theme = Theme()
+
+        propsPath = os.path.join(path, "props.json")
+        stylePath = os.path.join(path, "styles.css")
+
+        with open(propsPath, "r") as props:
+            theme.props = json.loads(props.read())
+
+        with open(stylePath, "r") as styles:
+            theme.css = styles.read()
+
+        return theme
+
 class Loader:
     @staticmethod
     def load(path):
@@ -16,17 +31,6 @@ class Loader:
         with ZipFile(path, "r") as z:
             z.extractall("themes")
 
-            theme = Theme()
-
-            propsPath = os.path.join("themes", themeName, "props.json")
-            stylePath = os.path.join("themes", themeName, "styles.css")
-
-            with open(propsPath, "r") as props:
-                theme.props = json.loads(props.read())
-
-            with open(stylePath, "r") as styles:
-                theme.css = styles.read()
-
-            return theme
+            return Theme.fromPath(os.path.join("themes", themeName))
 
         return None

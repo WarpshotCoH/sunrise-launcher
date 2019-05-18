@@ -1,6 +1,7 @@
 from PySide2.QtCore import QObject, QThread, Slot, Signal
 from PySide2.QtWidgets import QFileDialog, QPushButton
 
+from generalsettingsui import GeneralSettingsUI
 from helpers import createWidget
 from manifestui import ManifestUI
 from settings import Settings
@@ -19,13 +20,9 @@ class SettingsUI(QObject):
         self.headerButtons = header.findChildren(QPushButton)
         self.bindHeaderButtons()
 
-        general = createWidget("ui/settings-general.ui")
-        self.ui.settingsBodyLayout.addWidget(general)
-
         # TODO: Break tabs into their own classes as they become complex
         self.tabs = [
-            general,
-            # createWidget("ui/settings-manifest.ui")
+            GeneralSettingsUI(store, self.ui.settingsBodyLayout).ui,
             ManifestUI(store, self.ui.settingsBodyLayout).ui
         ]
 

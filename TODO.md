@@ -12,15 +12,16 @@
 * Impl Sunrise auto-patching
 * Launching on non-Windows
 * Theme management and installing
-* User setting persistance / loading (research appdirs)
-* Auto-patch server, applicatio, runtime on selection
+* User setting persistance / loading (something safe)
+* Auto-patch server, application, runtime on selection
 * Refactor application to be idiomatic to Python / Qt styles (custom widgets?)
 * Pretty scrollbars
 * High density image handling
 * Windows layout adjustments
 * Hide play from non-runable items
-* Loading manifestList from stored settings generate keyerror on manifest list until manifests are loaded
+* Indicator for failing to load manifests
 * Optimizations are available pretty much everywhere
+* Manifest priority handling
 
 ## Bugs
 * Watcher timer shutdown bug

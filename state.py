@@ -8,13 +8,13 @@ from PySide2.QtCore import QObject, Slot, Signal
 from helpers import uList
 from manifest import fromXML, fromXMLString, Manifest
 from settings import Settings, PathSettings, ContainerSettings, RecentServers, SunriseSettings
-from theme import Loader
+from theme import Loader, Theme
 
 # Storage of metadata about the users current install
 class Store(QObject):
     updated = Signal()
 
-    def __init__(self, parent=None):
+    def __init__(self, parent = None):
         super(Store, self).__init__(parent)
 
         self.manifestNames = {}
@@ -24,12 +24,25 @@ class Store(QObject):
         self.cache = {}
         self.settings = Settings()
         self.running = []
-        self.theme = None
+        self.themes = {}
 
         self.settings.committed.connect(self.save)
         self.updated.connect(self.save)
 
     def load(self):
+        try:
+            dirs = list(os.walk(os.path.abspath("themes")))
+            for themeId in dirs[0][1]:
+                print("Adding theme from", themeId)
+                theme = Theme.fromPath(os.path.join("themes", themeId))
+
+                if theme.props and "name" in theme.props:
+                    self.themes[theme.props["name"]] = theme
+
+        except Exception:
+            print(sys.exc_info())
+            pass
+
         try:
             settingsFile = os.path.join(SunriseSettings.settingsPath, "settings.pickle")
             print(settingsFile)
@@ -44,6 +57,7 @@ class Store(QObject):
                 self.settings.set("paths", PathSettings("bin", "run"))
                 self.settings.set("recentServers", RecentServers())
                 self.settings.set("hiddenServers", uList())
+                self.settings.set("theme", list(self.themes.keys())[0])
 
             self.settings.commit()
         except Exception:
@@ -56,6 +70,8 @@ class Store(QObject):
         # except Exception:
         #     print(sys.exc_info())
         #     pass
+
+        print("Loaded state")
 
         self.updated.emit()
 
