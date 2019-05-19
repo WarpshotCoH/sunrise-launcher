@@ -78,20 +78,16 @@ class Watcher(QObject):
     def run(self):
         try:
             print("Try fetch", self.url)
-            with open (self.url, "r") as file:
-                contents = file.read()
-            # r = requests.get(self.url, timeout=5)
+            req = requests.get(self.url, timeout=5)
 
-            # with r:
-                # r.raise_for_status()
-                check = hashlib.sha512(contents.encode("utf-8")).hexdigest()
+            with req:
+                req.raise_for_status()
+                check = hashlib.sha512(req.content).hexdigest()
 
                 if not self.check == check:
                     self.check = check
-                    # self.manifest = fromXMLString(contents)
-                    # self.manifest = Manifest.fromXML(r.text)
                     print("Update available", self.url)
-                    self.updater.emit(self.url, contents)
+                    self.updater.emit(self.url, req.text)
 
         except Exception:
             print("Fetch error", self.url)

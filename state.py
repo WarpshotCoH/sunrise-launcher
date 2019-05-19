@@ -26,10 +26,6 @@ class Store(QObject):
         self.running = []
         self.themes = {}
 
-        self.settings.committed.connect(self.save)
-        self.updated.connect(self.save)
-
-    def load(self):
         try:
             dirs = list(os.walk(os.path.abspath("themes")))
             for themeId in dirs[0][1]:
@@ -42,6 +38,11 @@ class Store(QObject):
         except Exception:
             print(sys.exc_info())
             pass
+
+        self.settings.committed.connect(self.save)
+        self.updated.connect(self.save)
+
+    def load(self):
 
         try:
             settingsFile = os.path.join(SunriseSettings.settingsPath, "settings.pickle")
@@ -94,11 +95,11 @@ class Store(QObject):
         containerSettings = self.settings.get("containerSettings")
 
         for app in self.applications.values():
-            if not containerSettings.get(app.id):
+            if not app.id in containerSettings:
                 containerSettings[app.id] = ContainerSettings(app.id)
 
         for runtime in self.runtimes.values():
-            if not containerSettings.get(runtime.id):
+            if not runtime.id in containerSettings:
                 containerSettings[runtime.id] = ContainerSettings(runtime.id)
 
         self.settings.set("containerSettings", containerSettings)

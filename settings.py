@@ -52,13 +52,15 @@ class Settings(QObject):
         return deepcopy(self.store)
 
     def load(self, store):
-        self.store = deepcopy(store)
+        self.pending = store
 
     def set(self, k, v):
         self.pending[k] = v
 
     def commit(self):
-        for k, v in self.pending.items():
+        pending = deepcopy(self.pending)
+
+        for k, v in pending.items():
             print("Checking", k, "for updates")
 
             if not (k in self.store and self.store[k] == v):

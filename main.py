@@ -100,15 +100,15 @@ if __name__ == "__main__":
     if autoPatchPool:
         application.aboutToQuit.connect(autoPatchPool.shutdown)
 
+    # Connect to theme selection
+    store.settings.connectKey("theme", lambda _: application.setStyleSheet(store.themes[store.settings.get("theme")].css))
+
     # Load any settings store for the user
     store.load()
 
     # pool.add("manifests/manifest1.xml")
     # pool.add("manifests/manifest2.xml")
     # pool.add("manifests/manifest3.xml")
-
-    # Load the selected theme
-    store.settings.connectKey("theme", lambda _: application.setStyleSheet(store.themes[store.settings.get("theme")].css))
 
     # Show the application
     window.show()

@@ -13,7 +13,6 @@ class ManifestUI:
         self.ui.manifestSourceAdd.clicked.connect(self.addManifestSource)
 
         self.store.settings.connectKey("manifestList", self.reload)
-        self.store.updated.connect(lambda: self.reload(None))
 
         parent.addWidget(self.ui)
 

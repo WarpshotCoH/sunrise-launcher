@@ -24,5 +24,6 @@ class GeneralSettingsUI:
 
     @Slot(int)
     def themeChange(self, index):
-        self.store.settings.set("theme", self.themeSelect.itemText(index))
-        self.store.settings.commit()
+        if not index == -1:
+            self.store.settings.set("theme", self.themeSelect.itemText(index))
+            self.store.settings.commit()
