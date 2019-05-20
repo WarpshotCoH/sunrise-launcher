@@ -73,6 +73,7 @@ class Store(QObject):
         #     pass
 
         print("Loaded state")
+        print(self.settings.get("theme"))
 
         self.updated.emit()
 

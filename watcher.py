@@ -66,7 +66,7 @@ class Watcher(QObject):
         print("Start watcher", self.url)
         print("Current thread during start", QThread.currentThread().objectName())
         self.timer = QTimer()
-        self.timer.setInterval(10000)
+        self.timer.setInterval(60000)
         self.timer.timeout.connect(self.run)
         self.timer.start()
         self.run()
