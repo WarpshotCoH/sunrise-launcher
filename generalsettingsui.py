@@ -20,10 +20,12 @@ class GeneralSettingsUI:
     @Slot(Qt.CheckState)
     def autoCloseChange(self, state):
         self.store.settings.set("autoClose", state == Qt.Checked)
+        self.store.settings.commit()
 
     @Slot(Qt.CheckState)
     def autoPatchChange(self, state):
         self.store.settings.set("autoPatch", state == Qt.Checked)
+        self.store.settings.commit()
 
     @Slot(int)
     def themeChange(self, index):
@@ -35,6 +37,20 @@ class GeneralSettingsUI:
     @Slot(str)
     def reload(self, key = None):
         print("Reload general settings")
+
+        # Set global launch params
+        # TODO: QLineEdit.editingFinished
+
+        # Set auto options
+        autoClose = self.store.settings.get("autoClose")
+        if not autoClose == (self.ui.autoCloseOption.checkState() == Qt.Checked):
+            self.ui.autoCloseOption.setCheckState(Qt.Checked if autoClose else Qt.Unchecked)
+
+        autoPatch = self.store.settings.get("autoPatch")
+        if not autoPatch == (self.ui.autoPatchOption.checkState() == Qt.Checked):
+            self.ui.autoPatchOption.setCheckState(Qt.Checked if autoPatch else Qt.Unchecked)
+
+        # Update the theme selector
         selectedTheme = self.store.settings.get("theme")
         self.themeSelect.clear()
 
