@@ -71,6 +71,7 @@ class Downloader(QObject):
         return True
 
     def verify(self):
+        print("Thread during verify", QThread.currentThread().objectName())
         self.changeState(DownloaderState.VERIFYING)
 
         try:

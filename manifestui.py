@@ -11,6 +11,7 @@ class ManifestUI:
         self.list = self.ui.manifestSourceList
 
         self.ui.manifestSourceAdd.clicked.connect(self.addManifestSource)
+        self.ui.manifestSourceInput.returnPressed.connect(self.addManifestSource)
 
         self.store.settings.connectKey("manifestList", self.reload)
 

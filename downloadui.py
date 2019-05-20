@@ -99,6 +99,7 @@ class DownloadUI(QObject):
         #       continually reused by placing new work on to it. Seems like
         #       something that we should be able to do.
         self.downloadThread = QThread()
+        self.downloadThread.setObjectName("Download")
 
         # Connect up to the files progress events
         self.downloader.start.connect(self.onStart)

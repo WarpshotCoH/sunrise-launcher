@@ -8,11 +8,15 @@ class ManifestPool(WatcherPool):
         super(ManifestPool, self).__init__(parent)
         self.store = store
         self.store.settings.connectKey("manifestList", self.update)
+        self.thread.setObjectName("ManifestWatcher")
+
+    def load(self):
+        self.update("manifestList")
 
     @Slot(str)
     def update(self, key):
         urlList = self.watchers.keys()
-        newList = self.store.settings.get("manifestList")
+        newList = self.store.settings.get(key)
 
         for url in list(set(urlList) - set(newList)):
             self.remove(url)

@@ -41,6 +41,7 @@ def selectPage(index):
     pages[index].show()
 
 if __name__ == "__main__":
+    QThread.currentThread().setObjectName("Main")
     application = QApplication(sys.argv)
 
     # Construct the main ui window

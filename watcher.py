@@ -15,7 +15,7 @@ class WatcherPool(QObject):
         super(WatcherPool, self).__init__(parent)
         self.watchers = {}
         self.thread = QThread()
-        self.thread.start()
+        self.thread.setObjectName("Watcher")
 
     def add(self, url):
         if self.watchers.get(url):
@@ -38,6 +38,7 @@ class WatcherPool(QObject):
         else:
             print("Watch thread not running. Scheduling", url)
             self.thread.started.connect(self.watchers[url].start)
+            self.thread.start()
 
     def remove(self, url):
         if self.watchers.get(url):
@@ -51,7 +52,7 @@ class WatcherPool(QObject):
         self.thread.wait()
 
 class Watcher(QObject):
-    def __init__(self, url, updater, parent=None):
+    def __init__(self, url, updater = None, parent=None):
         super(Watcher, self).__init__(parent)
 
         self.check = None
@@ -63,19 +64,24 @@ class Watcher(QObject):
     @Slot()
     def start(self):
         print("Start watcher", self.url)
+        print("Current thread during start", QThread.currentThread().objectName())
         self.timer = QTimer()
-        self.timer.setInterval(60000)
+        self.timer.setInterval(10000)
         self.timer.timeout.connect(self.run)
         self.timer.start()
         self.run()
 
+    @Slot()
     def shutdown(self):
         # TODO: Fix QObject::killTimer: Timers cannot be stopped from another thread on shutdown
+        print("Current thread during shutdown", QThread.currentThread().objectName())
+
         if self.timer:
             self.timer.stop()
 
     @Slot()
     def run(self):
+        print("Current thread during run", QThread.currentThread().objectName())
         try:
             print("Try fetch", self.url)
             req = requests.get(self.url, timeout=5)

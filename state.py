@@ -53,12 +53,12 @@ class Store(QObject):
                 self.settings.load(pickle.load(f))
             else:
                 self.settings.set("autoPatch", True)
-                self.settings.set("manifestList", uList())
                 self.settings.set("containerSettings", {})
                 self.settings.set("paths", PathSettings("bin", "run"))
                 self.settings.set("recentServers", RecentServers())
                 self.settings.set("hiddenServers", uList())
                 self.settings.set("theme", list(self.themes.keys())[0])
+                self.settings.set("manifestList", uList())
 
             self.settings.commit()
         except Exception:
