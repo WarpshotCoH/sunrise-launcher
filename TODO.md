@@ -22,6 +22,7 @@
 * Indicator for failing to load manifests
 * Optimizations are available pretty much everywhere
 * Manifest priority handling
+* Existance check before loading theme stylesheet needed
 
 ## Bugs
 * Watcher timer shutdown bug

@@ -102,6 +102,7 @@ if __name__ == "__main__":
         application.aboutToQuit.connect(autoPatchPool.shutdown)
 
     # Connect to theme selection
+    # TODO: This requires a key existance check. User may have deleted the theme between runs
     store.settings.connectKey("theme", lambda _: application.setStyleSheet(store.themes[store.settings.get("theme")].css))
 
     # Load any settings store for the user
