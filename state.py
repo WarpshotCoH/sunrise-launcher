@@ -10,6 +10,8 @@ from manifest import fromXML, fromXMLString, Manifest
 from settings import Settings, PathSettings, ContainerSettings, RecentServers, SunriseSettings
 from theme import Loader, Theme
 
+LOCAL_MANIFEST_URL = "local://manifests.xml"
+
 # Storage of metadata about the users current install
 class Store(QObject):
     updated = Signal()
@@ -52,8 +54,8 @@ class Store(QObject):
             print(sys.exc_info())
             pass
 
-        self.settings.committed.connect(self.save)
-        self.updated.connect(self.save)
+        self.settings.committed.connect(self.saveSettings)
+        self.updated.connect(self.saveManifests)
 
     def load(self):
 
@@ -78,12 +80,12 @@ class Store(QObject):
             print(sys.exc_info())
             pass
 
-        # try:
-        #     storedManifests = open(os.path.join(SunriseSettings.settingsPath, "manifests.xml"), "r").read()
-        #     self.loadManifest("local://manifests.xml", storedManifests)
-        # except Exception:
-        #     print(sys.exc_info())
-        #     pass
+        try:
+            storedManifests = open(os.path.join(SunriseSettings.settingsPath, "manifests.xml"), "r").read()
+            self.loadManifest(LOCAL_MANIFEST_URL, storedManifests)
+        except Exception:
+            print(sys.exc_info())
+            pass
 
         print("Loaded state")
         print(self.settings.get("theme"))
@@ -107,7 +109,7 @@ class Store(QObject):
 
     @Slot(str, str)
     def loadManifest(self, url, data):
-        manifest = fromXMLString(data)
+        manifest = fromXMLString(data, url)
 
         print("Updating manifest from", url, "in store")
 
@@ -127,14 +129,16 @@ class Store(QObject):
 
         self.settings.set("containerSettings", containerSettings)
 
-        self.manifestNames[url] = manifest.name
-        manifests = self.settings.get("manifestList")
-        manifests.push(url)
+        if not manifest.source == LOCAL_MANIFEST_URL:
+            self.manifestNames[url] = manifest.name
+            manifests = self.settings.get("manifestList")
+            manifests.push(url)
 
-        self.settings.set("manifestList", manifests)
+            print("Manifest source", manifest.source, manifest.source == LOCAL_MANIFEST_URL)
+
+            self.settings.set("manifestList", manifests)
 
         self.settings.commit()
-
         print("Committed settings for", url)
 
         self.updated.emit()
@@ -163,18 +167,22 @@ class Store(QObject):
             print("Failed to resolve", id)
             return []
 
-    def save(self):
+    def saveSettings(self):
         if not os.path.isdir(SunriseSettings.settingsPath):
             os.makedirs(SunriseSettings.settingsPath)
-
-        # manifest = Manifest("store", self.servers, self.applications, self.runtimes)
-        # manifestOutput = ET.tostring(manifest.toXML(), encoding="utf8", method="xml")
-
-        # f = open(os.path.join(SunriseSettings.settingsPath, "manifests.xml"), "wb+")
-        # f.write(manifestOutput)
-        # f.close()
 
         f = open(os.path.join(SunriseSettings.settingsPath, "settings.pickle"), "wb+")
         settingsOutput = pickle.dump(self.settings.getData(), f)
 
+        f.close()
+
+    def saveManifests(self):
+        if not os.path.isdir(SunriseSettings.settingsPath):
+            os.makedirs(SunriseSettings.settingsPath)
+
+        manifest = Manifest("store", self.servers, self.applications, self.runtimes, LOCAL_MANIFEST_URL)
+        manifestOutput = ET.tostring(manifest.toXML(), encoding="utf8", method="xml")
+
+        f = open(os.path.join(SunriseSettings.settingsPath, "manifests.xml"), "wb+")
+        f.write(manifestOutput)
         f.close()

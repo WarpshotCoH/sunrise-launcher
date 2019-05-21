@@ -330,11 +330,11 @@ class Manifest:
 
         return manifest
 
-def fromXML(file):
-    return Manifest.fromXML(ET.parse(file).getroot(), file)
+def fromXML(file, url):
+    return Manifest.fromXML(ET.parse(file).getroot(), url)
 
-def fromXMLString(file):
-    return Manifest.fromXML(ET.fromstring(file), file)
+def fromXMLString(file, url):
+    return Manifest.fromXML(ET.fromstring(file), url)
 
 # TODO: Implement me
 def fromYML(file):

@@ -97,9 +97,10 @@ class FileDownload():
 
 
     def verify(self, verify, progress):
+        multiplier = 128
         verified = False
 
-        chunks = math.ceil(self.file.size/65536)
+        chunks = math.ceil(self.file.size / (65536 * multiplier))
 
         verify.emit(0, 0, chunks, self.file.name)
 
@@ -115,7 +116,7 @@ class FileDownload():
                 # filesize matches, so check the hash; size + hash is more secure than hash alone
                 with open(self.path, 'rb+') as f:
                     hasher = algoMap[self.file.algo]()
-                    for chunk in iter(lambda: f.read(65536), b''):
+                    for chunk in iter(lambda: f.read(65536 * multiplier), b''):
                         # Allow downloads to be interrupted
                         if self.interrupt:
                             return verified

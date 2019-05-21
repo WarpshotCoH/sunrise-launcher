@@ -18,8 +18,8 @@ class ManifestPool(WatcherPool):
         urlList = self.watchers.keys()
         newList = self.store.settings.get(key)
 
-        for url in list(set(urlList) - set(newList)):
-            self.remove(url)
+        # for url in list(set(urlList) - set(newList)):
+            # self.remove(url)
 
         for url in list(set(newList) - set(urlList)):
             self.add(url)
