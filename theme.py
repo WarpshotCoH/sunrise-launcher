@@ -1,7 +1,8 @@
 import json
 import os
-
 from zipfile import ZipFile
+
+from settings import SunriseSettings
 
 class Theme:
     def __init__(self, props = None, css = None):
@@ -27,10 +28,14 @@ class Loader:
     @staticmethod
     def load(path):
         themeName = os.path.basename(path).replace(".sunrisetheme", "")
+        themeInstallPath = os.path.join(SunriseSettings.settingsPath, "themes")
+
+        if not os.path.isdir(themeInstallPath):
+            os.makedirs(themeInstallPath)
 
         with ZipFile(path, "r") as z:
-            z.extractall("themes")
+            z.extractall(themeInstallPath)
 
-            return Theme.fromPath(os.path.join("themes", themeName))
+            return Theme.fromPath(os.path.join(themeInstallPath, themeName))
 
         return None

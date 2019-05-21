@@ -1,4 +1,5 @@
 from PySide2.QtCore import Slot, Qt
+from PySide2.QtWidgets import QFileDialog
 
 from helpers import createWidget
 
@@ -12,6 +13,8 @@ class GeneralSettingsUI:
         self.ui.autoCloseOption.stateChanged.connect(self.autoCloseChange)
         self.ui.autoPatchOption.stateChanged.connect(self.autoPatchChange)
         self.themeSelect.currentIndexChanged.connect(self.themeChange)
+
+        self.ui.themeAddition.clicked.connect(self.addTheme)
 
         self.store.updated.connect(lambda: self.reload(None))
 
@@ -33,6 +36,18 @@ class GeneralSettingsUI:
         if not index == -1:
             self.store.settings.set("theme", self.themeSelect.itemText(index))
             self.store.settings.commit()
+
+    @Slot()
+    def addTheme(self):
+        fileName = QFileDialog.getOpenFileName(
+            self.ui,
+            "Add Theme",
+            "",
+            "Sunrise Theme (*.sunrisetheme)"
+        )[0]
+
+        if len(fileName) > 0:
+            self.store.installTheme(fileName)
 
     @Slot(str)
     def reload(self, key = None):

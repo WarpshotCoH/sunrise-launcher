@@ -39,6 +39,19 @@ class Store(QObject):
             print(sys.exc_info())
             pass
 
+        try:
+            dirs = list(os.walk(os.path.join(SunriseSettings.settingsPath, "themes")))
+            for themeId in dirs[0][1]:
+                print("Adding user theme from", themeId)
+                theme = Theme.fromPath(os.path.join(SunriseSettings.settingsPath, "themes", themeId))
+
+                if theme.props and "name" in theme.props:
+                    self.themes[theme.props["name"]] = theme
+
+        except Exception:
+            print(sys.exc_info())
+            pass
+
         self.settings.committed.connect(self.save)
         self.updated.connect(self.save)
 
@@ -82,6 +95,15 @@ class Store(QObject):
 
     def getClients(self):
         return list(filter(lambda a: a.type == "client", self.applications.values()))
+
+    def installTheme(self, filePath):
+        theme = Loader.load(filePath)
+
+        if theme:
+            self.themes[theme.props["name"]] = theme
+            self.settings.set("theme", theme.props["name"])
+            self.settings.commit()
+            self.updated.emit()
 
     @Slot(str, str)
     def loadManifest(self, url, data):
