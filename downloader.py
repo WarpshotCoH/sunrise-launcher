@@ -71,10 +71,11 @@ class Downloader(QObject):
         return True
 
     def verify(self):
-        print("Thread during verify", QThread.currentThread().objectName())
-        self.changeState(DownloaderState.VERIFYING)
-
         try:
+            assert not QThread.currentThread().objectName() == "Main", "Verifiction running on main thread"
+
+            self.changeState(DownloaderState.VERIFYING)
+
             if not self.checkForContainerInstalls():
                 return
 
@@ -126,9 +127,11 @@ class Downloader(QObject):
             print(sys.exc_info())
 
     def download(self):
-        self.changeState(DownloaderState.DOWNLOADING)
-
         try:
+            assert not QThread.currentThread().objectName() == "Main", "Download running on main thread"
+
+            self.changeState(DownloaderState.DOWNLOADING)
+
             for container in self.containers:
                 print("Downloading container", container.name)
 

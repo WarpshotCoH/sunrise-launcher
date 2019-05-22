@@ -79,6 +79,9 @@ class Watcher(QObject):
     def start(self):
         print("Start watcher", self.url)
         print("Current thread during start", QThread.currentThread().objectName())
+
+        assert not QThread.currentThread().objectName() == "Main", "Watcher startup on main thread"
+
         self.timer = QTimer()
         self.timer.setInterval(6000)
         self.timer.timeout.connect(self.run)
@@ -87,7 +90,7 @@ class Watcher(QObject):
 
     @Slot(str)
     def stop(self, url):
-        print("Current thread during watcher stop", QThread.currentThread().objectName(), url)
+        assert not QThread.currentThread().objectName() == "Main", "Watcher is trying to stop from main thread"
 
         if self.timer:
             if url == self.url:
@@ -96,7 +99,7 @@ class Watcher(QObject):
 
     @Slot()
     def shutdown(self):
-        print("Current thread during watcher shutdown", QThread.currentThread().objectName())
+        assert not QThread.currentThread().objectName() == "Main", "Watcher is trying to shutdown from main thread"
 
         if self.timer:
             print("Stop timer")
@@ -104,7 +107,8 @@ class Watcher(QObject):
 
     @Slot()
     def run(self):
-        print("Current thread during run", QThread.currentThread().objectName())
+        assert not QThread.currentThread().objectName() == "Main", "Watcher is running on main thread"
+
         try:
             print("Try fetch", self.url)
             req = requests.get(self.url, timeout=5)
