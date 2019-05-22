@@ -1,3 +1,5 @@
+import sys
+
 import requests
 from PySide2.QtCore import QObject, Signal, Slot, QSize, Qt
 from PySide2.QtGui import QImage, QPixmap
@@ -28,6 +30,7 @@ class ListViewUI(QObject):
         self.launch = self.downloadUI.launch
 
         self.selected.connect(self.downloadUI.load)
+        self.selected.connect(self.loadDetails)
 
         parent.addWidget(self.ui)
 
@@ -51,6 +54,45 @@ class ListViewUI(QObject):
     @Slot(str)
     def reload(self, key = None):
         return True
+
+    @Slot(Application, Runtime, Server)
+    def loadDetails(self, application = None, runtime = None, server = None):
+        if server:
+            self.ui.detailsName.setText(server.name)
+            self.ui.detailsSubname1.setText(application.name)
+            self.ui.detailsSubname1.show()
+            self.ui.detailsSubname2.setText(runtime.name)
+            self.ui.detailsSubname2.show()
+
+            # We do not need to load here as the icon is either in the cache
+            # from being loaded by the item list or it failed to load in the
+            # item list and we are just going to ignore it
+            if server.icon and self.store.cache.get(server.icon):
+                self.ui.icon.setPixmap(self.store.cache.get(server.icon))
+        elif application:
+            if application:
+                self.ui.detailsName.setText(application.name)
+                self.ui.detailsSubname1.setText(runtime.name)
+                self.ui.detailsSubname1.show()
+                self.ui.detailsSubname2.setText("")
+                self.ui.detailsSubname2.show()
+
+                # We do not need to load here as the icon is either in the cache
+                # from being loaded by the item list or it failed to load in the
+                # item list and we are just going to ignore it
+                if application.icon and self.store.cache.get(application.icon):
+                    self.ui.icon.setPixmap(self.store.cache.get(application.icon))
+        elif runtime:
+            if runtime:
+                self.ui.detailsName.setText(runtime.name)
+                self.ui.detailsSubname1.hide()
+                self.ui.detailsSubname2.hide()
+
+                # We do not need to load here as the icon is either in the cache
+                # from being loaded by the item list or it failed to load in the
+                # item list and we are just going to ignore it
+                if runtime.icon and self.store.cache.get(runtime.icon):
+                    self.ui.icon.setPixmap(self.store.cache.get(runtime.icon))
 
     def addHeader(self, label):
         header = QLabel()

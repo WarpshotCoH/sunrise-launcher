@@ -16,6 +16,7 @@
 * Indicator for failing to load manifests
 * Optimizations are available pretty much everywhere
 * Manifest priority handling
+* Fix server / app / runtime header text vertical alignment in details view
 
 ## Bugs
 * Clicking on list subhead trigger select function to run and through index error
