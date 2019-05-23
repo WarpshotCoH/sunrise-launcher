@@ -4,7 +4,9 @@ from PySide2.QtCore import QObject, QThread, Slot, Signal
 
 from downloader import Downloader, FileDownload, DownloaderState
 from manifest import Application, Runtime, Server
-from helpers import createWidget
+from helpers import createWidget, logger
+
+log = logger("main.ui.download")
 
 class DownloadUI(QObject):
     launch = Signal(str)
@@ -88,7 +90,7 @@ class DownloadUI(QObject):
     #       reuse the thread / downloader and instead use a custom slot + signal
     #       for triggering instead of thread start?
     def runInBackground(self, fn):
-        print("Start background download")
+        log.info("Start background download")
 
         # We do not want multiple downloads to start while waiting for the thread
         # to initialize
@@ -145,8 +147,8 @@ class DownloadUI(QObject):
 
     @Slot(str, int, int, int)
     def onStart(self, name, pMin, pStart, pMax):
-        print("Downloader Start")
-        print(name, pMin, pStart, pMax)
+        log.info("Downloader Start")
+        log.info("%s %s %s %s", name, pMin, pStart, pMax)
         self.min = pMin
         self.max = pMax
         self.progressBar.setFormat("({}) %p%".format(name))
@@ -162,7 +164,7 @@ class DownloadUI(QObject):
 
     @Slot(DownloaderState, str)
     def onDownloaderStateChange(self, state, filename = None):
-        print("Change state", state)
+        log.debug("Change state %s", state)
         self.disableButton()
 
         # TODO: Button/label for non-runnable targets
@@ -192,7 +194,7 @@ class DownloadUI(QObject):
         # Ignore the shutdown state. Currently it means the application is
         # shutting down or we are transitioning to another list item
         if not state == DownloaderState.SHUTDOWN:
-            print("Setting label to", buttonLabel[state])
+            log.debug("Setting button label to %s", buttonLabel[state])
             self.button.setText(buttonLabel[state])
             self.button.clicked.disconnect()
             self.button.clicked.connect(buttonAction[state])

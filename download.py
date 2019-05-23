@@ -11,6 +11,9 @@ import urllib.parse
 import requests
 
 from manifest import algoMap
+from helpers import logger
+
+log = logger("main.downloader.file")
 
 class FileDownload():
     def __init__(self, file, writePath):
@@ -26,7 +29,7 @@ class FileDownload():
             self.skipHashCheck = state
 
     def start(self, init, progress):
-        print("Start file download")
+        log.info("Start file download")
         urlNumToTry = random.randint(0, len(self.file.urls) - 1)
         downloaded = False
         tries = 0
@@ -37,10 +40,10 @@ class FileDownload():
             if self.interrupt:
                 return downloaded
 
-            print(downloaded, urlNumToTry, tries, self.file.urls[urlNumToTry])
+            log.debug("%s %s %s %s", downloaded, urlNumToTry, tries, self.file.urls[urlNumToTry])
 
             if (tries > len(self.file.urls) - 1):
-                print("Ran out of tries")
+                log.warning("Ran out of tries")
                 return downloaded
 
             url = self.file.urls[urlNumToTry]
@@ -55,7 +58,7 @@ class FileDownload():
         return downloaded
 
     def downloadUrl(self, url, init, progress):
-        print("Start url download", url)
+        log.info("Start url download %s", url)
 
         complete = False
 
@@ -68,7 +71,7 @@ class FileDownload():
 
             init.emit(0, 0, remoteFilesize, remoteFilename)
 
-            print("Downloading %s from: %s" % (remoteFilename, url))
+            log.info("Downloading %s from: %s", remoteFilename, url)
 
             fileProgress = 0
 
@@ -90,8 +93,8 @@ class FileDownload():
                 complete = True
 
         except:
-            print("Download error", self.file.name)
-            print(sys.exc_info())
+            log.error("Download error %s", self.file.name)
+            log.error(sys.exc_info())
 
         return complete
 
@@ -109,7 +112,7 @@ class FileDownload():
         try:
             if (os.path.getsize(self.path) == self.file.size):
                 if self.skipHashCheck:
-                    print("Skip hash check")
+                    log.debug("Skip hash check")
                     progress.emit(chunks)
                     return True
 
@@ -129,11 +132,11 @@ class FileDownload():
                 if (check == self.file.check):
                     verified = True
                 else:
-                    print("Hash mismatch")
+                    log.warning("Hash mismatch")
             else:
-                print("Filesize mismatch")
+                log.warning("Filesize mismatch")
         except Exception:
-            print(sys.exc_info())
+            log.error(sys.exc_info())
 
         return verified
 

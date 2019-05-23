@@ -5,7 +5,10 @@ import requests
 from PySide2.QtCore import QObject, Signal, Slot
 from PySide2.QtGui import QImage, QPixmap
 
+from helpers import logger
 from manifest import Server, Application, Runtime
+
+log = logger("main.ui.details")
 
 class DetailsUI(QObject):
     selected = Signal(Server, Application, Runtime)
@@ -76,5 +79,5 @@ class DetailsUI(QObject):
 
                     self.icon.setPixmap(self.store.cache.get(application.icon))
             except Exception:
-                print(sys.exc_info())
+                log.error(sys.exc_info())
                 pass

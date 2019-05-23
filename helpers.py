@@ -1,7 +1,18 @@
+import logging
 import os
+import sys
 
+from appdirs import user_log_dir
 from PySide2.QtCore import QFile
 from PySide2.QtUiTools import QUiLoader
+
+def logger(name):
+    l = logging.getLogger(name)
+    l.setLevel(logging.DEBUG)
+    handler = logging.FileHandler(os.path.join(user_log_dir("Sunrise", "Sunrise"), "sunrise.log"))
+    handler.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
+    l.addHandler(handler)
+    return l
 
 def isInstalled(store, id):
     installPath = store.settings.get("paths").binPath

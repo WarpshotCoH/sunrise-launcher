@@ -1,8 +1,10 @@
 from PySide2.QtCore import Slot
 
-from helpers import isInstalled
+from helpers import isInstalled, logger
 from listviewui import ListViewUI
 from manifest import Server, Application, Runtime
+
+log = logger("main.ui.gamelist")
 
 class GameListUI(ListViewUI):
     def __init__(self, store, parent):
@@ -18,7 +20,7 @@ class GameListUI(ListViewUI):
             for i, group in enumerate(self.offsets):
                 if group[0] <= row and row <= group[1]:
                     index = row - group[0]
-                    print("Selected games index", index)
+                    log.info("Selected games index %s", index)
 
                     if i == 0:
                         tools = self.store.getTools()
@@ -51,7 +53,7 @@ class GameListUI(ListViewUI):
 
     @Slot(str)
     def reload(self, key = None):
-        print("Reload games list")
+        log.debug("Reload games list")
 
         self.list.clear()
 

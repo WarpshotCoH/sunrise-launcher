@@ -6,6 +6,11 @@ import urllib.request as request
 from PySide2.QtCore import QObject, QThread, QTimer, Slot, Signal
 import requests
 
+from helpers import logger
+
+pLog = logger("main.watcherpool")
+wlog = logger("main.watcherpool.watcher")
+
 class WatcherPool(QObject):
     updated = Signal(str, str)
     startTrigger = Signal()
@@ -30,7 +35,7 @@ class WatcherPool(QObject):
         self.shutdownTrigger.connect(self.watchers[url].shutdown)
 
         if self.thread.isRunning():
-            print("Watch thread already running. Starting", url)
+            pLog.debug("Watch thread already running. Starting %s", url)
             # TODO: There should be a better way to write this
             try:
                 self.startTrigger.disconnect()
@@ -40,7 +45,7 @@ class WatcherPool(QObject):
             self.startTrigger.connect(self.watchers[url].start)
             self.startTrigger.emit()
         else:
-            print("Watch thread not running. Scheduling", url)
+            pLog.debug("Watch thread not running. Scheduling %s", url)
             self.thread.started.connect(self.watchers[url].start)
 
     def remove(self, url):
@@ -77,8 +82,8 @@ class Watcher(QObject):
 
     @Slot()
     def start(self):
-        print("Start watcher", self.url)
-        print("Current thread during start", QThread.currentThread().objectName())
+        wLog.debug("Start watcher for %s", self.url)
+        wLog.debug("Current thread during watcher start %s", QThread.currentThread().objectName())
 
         assert not QThread.currentThread().objectName() == "Main", "Watcher startup on main thread"
 
@@ -94,7 +99,7 @@ class Watcher(QObject):
 
         if self.timer:
             if url == self.url:
-                print("Stop timer")
+                wLog.debug("Stop timer %s", self.url)
                 self.timer.stop()
 
     @Slot()
@@ -102,7 +107,7 @@ class Watcher(QObject):
         assert not QThread.currentThread().objectName() == "Main", "Watcher is trying to shutdown from main thread"
 
         if self.timer:
-            print("Stop timer")
+            wLog.debug("Stop timer %s", self.url)
             self.timer.stop()
 
     @Slot()
@@ -110,7 +115,7 @@ class Watcher(QObject):
         assert not QThread.currentThread().objectName() == "Main", "Watcher is running on main thread"
 
         try:
-            print("Try fetch", self.url)
+            wLog.info("Try fetch for %s", self.url)
             req = requests.get(self.url, timeout=5)
 
             with req:
@@ -119,9 +124,9 @@ class Watcher(QObject):
 
                 if not self.check == check:
                     self.check = check
-                    print("Update available", self.url)
+                    wLog.info("Update available for %s", self.url)
                     self.updater.emit(self.url, req.text)
 
         except Exception:
-            print("Fetch error", self.url)
-            print(sys.exc_info())
+            wLog.error("Fetch error %s", self.url)
+            wLog.error(sys.exc_info())

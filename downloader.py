@@ -7,6 +7,9 @@ import time
 from PySide2.QtCore import QThread, QObject, Signal
 
 from download import FileDownload
+from helpers import logger
+
+log = logger("main.downloader")
 
 class DownloaderState():
     NEW = 1
@@ -59,12 +62,12 @@ class Downloader(QObject):
 
     def checkForContainerInstalls(self):
         for container in self.containers:
-            print("Checking for container install existance", container.name)
+            log.info("Checking for container install existance %s", container.name)
 
             containerPath = os.path.normpath(os.path.join(self.installPath, container.id))
 
             if not os.path.isdir(containerPath):
-                print("Missing container install path", containerPath)
+                log.info("Missing container install path %s", containerPath)
                 self.changeState(DownloaderState.MISSING)
                 return False
 
@@ -80,51 +83,51 @@ class Downloader(QObject):
                 return
 
             for container in self.containers:
-                print("Verifying container", container.name)
+                log.info("Verifying container %s", container.name)
 
                 self.start.emit(container.name, 0, 0, len(container.files))
-                print("Emit runtime size")
+                log.debug("Emit runtime size")
 
                 for index, file in enumerate(container.files):
                     if self.isStopped():
-                        print("Exit early from pause")
+                        log.info("Exit verification early from pause")
                         return
 
-                    print("Verify", index)
+                    log.debug("Verify %s", index)
                     fileName = posixpath.basename(file.name)
                     filePath = file.name
 
                     path = os.path.normpath(os.path.join(self.installPath, container.id, filePath))
 
-                    print("Verify from", path)
+                    log.debug("Verify from %s", path)
 
                     self.currentFile = FileDownload(file, path)
                     self.currentFile.toggleHashCheck(self.fastCheck)
 
-                    print("Constructed file", fileName)
+                    log.debug("Constructed file %s", fileName)
 
                     if os.path.isfile(path):
-                        print("File exists. Verifying", path)
+                        log.debug("File exists. Verifying %s", path)
                         status = self.currentFile.verify(self.fileVerify, self.fileProgress)
 
                         if not status:
                             # Do not fail the file if the user has requested a pause
                             if not self.isStopped():
+                                log.info("Verification failed %s mismatch", path)
                                 self.changeState(DownloaderState.VERIFICATION_FAILED, fileName)
 
                             return
                         else:
-                            print("Verfification complete", fileName)
+                            log.info("Verfification complete %s", fileName)
                             self.progress.emit(index + 1)
                     else:
-                        print("File missing. Verifying", path)
+                        log.info("Verification failed %s missing", path)
                         self.changeState(DownloaderState.VERIFICATION_FAILED, fileName)
                         return
 
             self.changeState(DownloaderState.COMPLETE)
         except Exception:
-            print("Error!")
-            print(sys.exc_info())
+            log.error(sys.exc_info())
 
     def download(self):
         try:
@@ -133,17 +136,17 @@ class Downloader(QObject):
             self.changeState(DownloaderState.DOWNLOADING)
 
             for container in self.containers:
-                print("Downloading container", container.name)
+                log.info("Downloading container %s", container.name)
 
                 self.start.emit(container.name, 0, 0, len(container.files))
-                print("Emit runtime size")
+                log.debug("Emit runtime size")
 
                 for index, file in enumerate(container.files):
                     if self.isStopped():
-                        print("Exit early from pause")
+                        log.info("Exit download early from pause")
                         return
 
-                    print("Download", index)
+                    log.debug("Download %s", index)
                     fileName = os.path.basename(file.name)
                     filePath = os.path.dirname(file.name)
 
@@ -151,17 +154,17 @@ class Downloader(QObject):
                     dirPath = os.path.normpath(os.path.join(self.installPath, container.id, filePath))
 
                     if not os.path.isdir(dirPath):
-                        print("Create download path", dirPath)
+                        log.info("Create download path %s", dirPath)
                         os.makedirs(dirPath)
 
-                    print("Write to", path)
+                    log.info("Write to %s", path)
 
                     self.currentFile = FileDownload(file, path)
 
-                    print("Constructed file", fileName)
+                    log.debug("Constructed file", fileName)
 
                     if os.path.isfile(path):
-                        print("File already exists. Verifying", path)
+                        log.info("File already exists. Verifying %s", path)
                         status = self.currentFile.verify(self.fileVerify, self.fileProgress)
                     else:
                         status = False
@@ -176,7 +179,7 @@ class Downloader(QObject):
 
                         return
                     else:
-                        print("Download complete", fileName)
+                        log.info("Download complete %s", fileName)
                         status = self.currentFile.verify(self.fileVerify, self.fileProgress)
 
                         if not status:
@@ -187,7 +190,7 @@ class Downloader(QObject):
                             return
 
                     if status:
-                        print("Verfification complete", fileName)
+                        log.info("Verfification complete %s", fileName)
 
                         if hasattr(container, "runtime"):
                             dstDir = os.path.abspath(os.path.normpath(os.path.join(self.installPath, container.runtime, filePath)))
@@ -202,5 +205,4 @@ class Downloader(QObject):
 
             self.changeState(DownloaderState.COMPLETE)
         except Exception:
-            print("Error!")
-            print(sys.exc_info())
+            log.error(sys.exc_info())

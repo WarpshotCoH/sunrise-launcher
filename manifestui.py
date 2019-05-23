@@ -1,7 +1,9 @@
 from PySide2.QtCore import Slot, QSize
 from PySide2.QtWidgets import QListWidgetItem, QLabel, QPushButton
 
-from helpers import createWidget
+from helpers import createWidget, logger
+
+log = logger("main.ui.manifests")
 
 class ManifestUI:
     def __init__(self, store, parent):
@@ -19,7 +21,7 @@ class ManifestUI:
 
     @Slot(str)
     def reload(self, key = None):
-        print("Reload manifest list")
+        log.debug("Reload manifest list")
         self.list.clear()
 
         for url in self.store.settings.get("manifestList"):
@@ -38,7 +40,7 @@ class ManifestUI:
 
             self.ui.manifestSourceInput.clear()
         else:
-            print("Ignoring empty manifest source input")
+            log.warning("Ignoring empty manifest source input")
 
     def addListItem(self, name, url):
         w = createWidget("ui/settings-manifest-item.ui")
@@ -60,9 +62,6 @@ class ManifestUI:
         w.findChild(QPushButton, "manifestItemUp").clicked.connect(self.moveUpFactory(listItem))
         w.findChild(QPushButton, "manifestItemDown").clicked.connect(self.moveDownFactory(listItem))
 
-        # TODO: Supposed to be able to get the size hint from the custom
-        #       widget and assign it here, but I can not seem to figure
-        #       it out
         listItem.setSizeHint(w.sizeHint())
 
         self.list.setItemWidget(listItem, w)

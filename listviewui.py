@@ -128,9 +128,6 @@ class ListViewUI(QObject):
         listItem = QListWidgetItem()
         self.list.addItem(listItem)
 
-        # TODO: Supposed to be able to get the size hint from the custom
-        #       widget and assign it here, but I can not seem to figure
-        #       it out
         listItem.setSizeHint(w.sizeHint())
 
         self.list.setItemWidget(listItem, w)

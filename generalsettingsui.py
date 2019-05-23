@@ -1,7 +1,9 @@
 from PySide2.QtCore import Slot, Qt
 from PySide2.QtWidgets import QFileDialog
 
-from helpers import createWidget
+from helpers import createWidget, logger
+
+log = logger("main.ui.settings")
 
 class GeneralSettingsUI:
     def __init__(self, store, parent):
@@ -32,7 +34,7 @@ class GeneralSettingsUI:
 
     @Slot(int)
     def themeChange(self, index):
-        print("Theme change", index)
+        log.info("Theme change %s", index)
         if not index == -1:
             self.store.settings.set("theme", self.themeSelect.itemText(index))
             self.store.settings.commit()
@@ -51,7 +53,7 @@ class GeneralSettingsUI:
 
     @Slot(str)
     def reload(self, key = None):
-        print("Reload general settings")
+        log.debug("Reload general settings")
 
         # Set global launch params
         # TODO: QLineEdit.editingFinished

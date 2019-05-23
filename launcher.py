@@ -5,6 +5,10 @@ import threading
 
 from PySide2.QtCore import QObject, QThread, Slot, Signal
 
+from helpers import logger
+
+log = logger("main.launcher")
+
 class Launcher(QObject):
     started = Signal(str)
     exited = Signal(str)
@@ -60,8 +64,7 @@ class Launcher(QObject):
 
     @Slot(str)
     def launch(self, id):
-        print("Launching application" + id)
-        print("Running")
+        log.info("Launching application %s", id)
 
         (cmd, path) = self.launchCmd(id)
 
@@ -71,11 +74,11 @@ class Launcher(QObject):
             if server:
                 recentList = self.store.settings.get("recentServers")
                 recentList.push(id)
-                print("New recent list", recentList.recent)
+                log.info("New recent list %s", recentList.recent)
                 self.store.settings.set("recentServers", recentList)
                 self.store.settings.commit()
 
-            print(cmd, path)
+            log.debug("Run command: %s %s", cmd, path)
             # popenAndCall(lambda: self.started.emit(id), lambda: self.exited.emit(id), cmd.split(" "), cwd=path)
 
 # https://stackoverflow.com/questions/2581817/python-subprocess-callback-when-cmd-exits
@@ -94,7 +97,7 @@ def popenAndCall(onStart, onExit, *popenArgs, **popenKWArgs):
             proc = subprocess.Popen(*popenArgs, **popenKWArgs)
             proc.wait()
         except Exception:
-            print(sys.exc_info())
+            log.error(sys.exc_info())
             pass
 
         onExit()

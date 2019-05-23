@@ -244,10 +244,11 @@ class Server:
         return server
 
 class Runtime:
-    def __init__(self, id, name, publisher, files):
+    def __init__(self, id, name, publisher, icon, files):
         self.id = id
         self.name = name
         self.publisher = publisher
+        self.icon = icon
         self.files = files
 
     @staticmethod
@@ -256,6 +257,7 @@ class Runtime:
             runtime.attrib.get("id", ""),
             "" if runtime.find("name") == None else runtime.find("name").text,
             "" if runtime.find("publisher") == None else runtime.find("publisher").text,
+            None if runtime.find("icon") == None else runtime.find("icon").text,
             list(map(File.fromXML, runtime.findall(".//files/file")))
         )
 
@@ -264,7 +266,10 @@ class Runtime:
         runtime.attrib["id"] = self.id
 
         ET.SubElement(runtime, "name").text = self.name
-        ET.SubElement(runtime, "publisher").text = self.name
+        ET.SubElement(runtime, "publisher").text = self.publisher
+
+        if self.icon:
+            ET.SubElement(runtime, "icon").text = self.icon
 
         files = ET.Element("files")
         for f in map(lambda f: f.toXML(), self.files):

@@ -3,11 +3,14 @@ from copy import deepcopy
 from appdirs import user_data_dir, user_log_dir
 from PySide2.QtCore import QObject, QThread, Slot, Signal
 
+from helpers import logger
+
 APP_NAME = "Sunrise"
 APP_AUTHOR = "Sunrise"
 
+log = logger("main.state.settings")
+
 class SunriseSettings:
-    logsPath = user_log_dir(APP_NAME, APP_AUTHOR)
     settingsPath = user_data_dir(APP_NAME, APP_AUTHOR)
 
 class PathSettings:
@@ -61,11 +64,11 @@ class Settings(QObject):
         pending = deepcopy(self.pending)
 
         for k, v in pending.items():
-            print("Checking", k, "for updates")
+            log.debug("Checking %s for updates", k)
 
             if not (k in self.store and self.store[k] == v):
                 self.store[k] = v
-                print("Emit update for", k, v)
+                log.debug("Emit update for %s: %s", k, v)
                 self.changed.emit(k)
 
 

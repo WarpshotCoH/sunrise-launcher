@@ -3,6 +3,10 @@ from PySide2.QtCore import Slot
 from listviewui import ListViewUI
 from manifest import Server, Application, Runtime
 
+from helpers import logger
+
+log = logger("main.ui.serverlist")
+
 class ServerListUI(ListViewUI):
     def __init__(self, store, parent):
         super(ServerListUI, self).__init__(store, parent)
@@ -40,14 +44,14 @@ class ServerListUI(ListViewUI):
                     runtime = self.store.runtimes.get(app.runtime)
 
                     if runtime:
-                        print("Selected server", server.id, app.id, runtime.id)
+                        log.info("Selected server %s %s %s", server.id, app.id, runtime.id)
                         self.selected.emit(app, runtime, server)
         else:
             self.selected.emit(None, None, None)
 
     @Slot(str)
     def reload(self, key = None):
-        print("Reload server list")
+        log.debug("Reload server list")
         order = self.computeServerOrder()
         servers = sorted(self.store.servers.values(), key = lambda s: order.index(s.id))
 

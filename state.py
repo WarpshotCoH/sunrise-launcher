@@ -10,6 +10,10 @@ from manifest import fromXML, fromXMLString, Manifest
 from settings import Settings, PathSettings, ContainerSettings, RecentServers, SunriseSettings
 from theme import Loader, Theme
 
+from helpers import logger
+
+log = logger("main.state")
+
 LOCAL_MANIFEST_URL = "local://manifests.xml"
 
 # Storage of metadata about the users current install
@@ -31,27 +35,27 @@ class Store(QObject):
         try:
             dirs = list(os.walk(os.path.abspath("themes")))
             for themeId in dirs[0][1]:
-                print("Adding theme from", themeId)
+                log.info("Adding theme from %s", themeId)
                 theme = Theme.fromPath(os.path.join("themes", themeId))
 
                 if theme.props and "name" in theme.props:
                     self.themes[theme.props["name"]] = theme
 
         except Exception:
-            print(sys.exc_info())
+            log.error(sys.exc_info())
             pass
 
         try:
             dirs = list(os.walk(os.path.join(SunriseSettings.settingsPath, "themes")))
             for themeId in dirs[0][1]:
-                print("Adding user theme from", themeId)
+                log.info("Adding user theme from %s", themeId)
                 theme = Theme.fromPath(os.path.join(SunriseSettings.settingsPath, "themes", themeId))
 
                 if theme.props and "name" in theme.props:
                     self.themes[theme.props["name"]] = theme
 
         except Exception:
-            print(sys.exc_info())
+            log.error(sys.exc_info())
             pass
 
         self.settings.committed.connect(self.saveSettings)
@@ -61,7 +65,6 @@ class Store(QObject):
 
         try:
             settingsFile = os.path.join(SunriseSettings.settingsPath, "settings.pickle")
-            print(settingsFile)
 
             if os.path.isfile(settingsFile):
                 f = open(settingsFile, "rb")
@@ -77,18 +80,18 @@ class Store(QObject):
 
             self.settings.commit()
         except Exception:
-            print(sys.exc_info())
+            log.error(sys.exc_info())
             pass
 
         try:
             storedManifests = open(os.path.join(SunriseSettings.settingsPath, "manifests.xml"), "r").read()
             self.loadManifest(LOCAL_MANIFEST_URL, storedManifests)
         except Exception:
-            print(sys.exc_info())
+            log.error(sys.exc_info())
             pass
 
-        print("Loaded state")
-        print(self.settings.get("theme"))
+        log.debug("Loaded state")
+        log.debug("%s theme is selected", self.settings.get("theme"))
 
         self.updated.emit()
 
@@ -111,7 +114,7 @@ class Store(QObject):
     def loadManifest(self, url, data):
         manifest = fromXMLString(data, url)
 
-        print("Updating manifest from", url, "in store")
+        log.info("Loading manifest from %s in to the store", url)
 
         self.applications.update(manifest.applications)
         self.runtimes.update(manifest.runtimes)
@@ -134,38 +137,22 @@ class Store(QObject):
             manifests = self.settings.get("manifestList")
             manifests.push(url)
 
-            print("Manifest source", manifest.source, manifest.source == LOCAL_MANIFEST_URL)
-
             self.settings.set("manifestList", manifests)
 
         self.settings.commit()
-        print("Committed settings for", url)
+        log.info("Committed container settings for %s", url)
 
         self.updated.emit()
 
     @Slot(str)
     def addRunning(self, id):
-        print("Adding", id, "to running list")
+        log.debug("Adding %s to running list", id)
         self.running.append(id)
 
     @Slot(str)
     def removeRunning(self, id):
-        print("Removing", id, "to running list")
+        log.debug("Removing %s to running list", id)
         self.running.remove(id)
-
-    def resolveDownload(self, id):
-        # TODO: Do we need to handle collisions between app and runtime ids
-        requested = self.applications.get(id, self.runtimes.get(id))
-
-        if requested:
-            print("Resolved", requested.id)
-            if hasattr(requested, "runtime") and requested.runtime:
-                return self.resolveDownload(requested.runtime) + [requested]
-            else:
-                return [requested]
-        else:
-            print("Failed to resolve", id)
-            return []
 
     def saveSettings(self):
         if not os.path.isdir(SunriseSettings.settingsPath):
