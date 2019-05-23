@@ -9,14 +9,19 @@ from helpers import createWidget
 class HeaderUI(QObject):
     itemSelected = Signal(int)
 
-    def __init__(self, parent):
+    def __init__(self, store, parent):
         super(HeaderUI, self).__init__(parent)
 
+        self.store = store
         self.ui = createWidget("ui/header.ui")
         parent.addWidget(self.ui)
 
         self.items = self.ui.findChildren(QPushButton)
         self.items[0].setProperty("Active", True)
+
+        self.items[0].setText(store.s("MAIN_MENU_SERVERS"))
+        self.items[1].setText(store.s("MAIN_MENU_GAMES"))
+        self.items[2].setText(store.s("MAIN_MENU_SETTINGS"))
 
         self.bindItems()
 

@@ -51,7 +51,7 @@ if __name__ == "__main__":
     store = Store()
 
     # Initialize the global UI elements
-    headerUI = HeaderUI(window.gridLayout)
+    headerUI = HeaderUI(store, window.gridLayout)
 
     # Initialize the main pages
     serverListUI = ServerListUI(store, window.gridLayout)

@@ -19,6 +19,12 @@ class ManifestUI:
 
         parent.addWidget(self.ui)
 
+    def layoutText(self):
+        self.ui.manifestSourceLabel.setText(self.store("MANIFEST_SOURCES"))
+        self.ui.manifestSourceHelp.setText(self.store("MANIFEST_DESCRIPTION"))
+        self.ui.manifestSourceInput.setPlaceholder(self.store("MANIFEST_URL_PLACEHOLDER"))
+        self.ui.manifestSourceAdd.setText(self.store("MANIFEST_URL_ADD"))
+
     @Slot(str)
     def reload(self, key = None):
         log.debug("Reload manifest list")

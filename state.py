@@ -1,3 +1,4 @@
+import json
 import os
 import pickle
 import sys
@@ -31,6 +32,7 @@ class Store(QObject):
         self.settings = Settings()
         self.running = []
         self.themes = {}
+        self.strings = {}
 
         try:
             dirs = list(os.walk(os.path.abspath("themes")))
@@ -40,6 +42,16 @@ class Store(QObject):
 
                 if theme.props and "name" in theme.props:
                     self.themes[theme.props["name"]] = theme
+
+        except Exception:
+            log.error(sys.exc_info())
+            pass
+
+        try:
+            stringConfig = open("twine/app.json", "r").read()
+
+            if stringConfg:
+                self.strings = json.loads(stringConfig)
 
         except Exception:
             log.error(sys.exc_info())
@@ -60,6 +72,9 @@ class Store(QObject):
 
         self.settings.committed.connect(self.saveSettings)
         self.updated.connect(self.saveManifests)
+
+    def s(self, key):
+        return self.strings.get(key)
 
     def load(self):
 

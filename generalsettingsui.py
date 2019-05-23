@@ -22,6 +22,13 @@ class GeneralSettingsUI:
 
         parent.addWidget(self.ui)
 
+    def layoutText(self):
+        self.ui.launchParamsLabel.setText(self.store("GENERAL_LAUNCH_PARAMS"))
+        self.ui.autoCloseLabel.setText(self.store("GENERAL_AUTO_CLOSE"))
+        self.ui.autoPatchLabel.setText(self.store("GENERAL_AUTO_PATCH"))
+        self.ui.themeLabel.setText(self.store("GENERAL_THEME"))
+        self.ui.themeAddition.setText(self.store("GENERAL_THEME_ADD"))
+
     @Slot(Qt.CheckState)
     def autoCloseChange(self, state):
         self.store.settings.set("autoClose", state == Qt.Checked)

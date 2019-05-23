@@ -66,7 +66,7 @@ class ServerListUI(ListViewUI):
 
         # Now we sync the new order up to the actual displayed UI
         if len(servers) > 0:
-            self.addHeader("Servers")
+            self.addHeader(self.store.s("SERVERS_LIST_SERVERS"))
 
             newIndex = -1
 

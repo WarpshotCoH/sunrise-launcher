@@ -170,14 +170,14 @@ class DownloadUI(QObject):
         # TODO: Button/label for non-runnable targets
 
         buttonLabel = {
-            DownloaderState.NEW: "Install",
-            DownloaderState.DOWNLOADING: "Pause",
-            DownloaderState.VERIFYING: "Play",
-            DownloaderState.PAUSED: "Resume",
-            DownloaderState.COMPLETE: "Play",
-            DownloaderState.DOWNLOAD_FAILED: "Download",
-            DownloaderState.VERIFICATION_FAILED: "Repair",
-            DownloaderState.MISSING: "Install",
+            DownloaderState.NEW: self.store.s("DOWNLOAD_INSTALL"),
+            DownloaderState.DOWNLOADING: self.store.s("DOWNLOAD_PAUSE"),
+            DownloaderState.VERIFYING: self.store.s("DOWNLOAD_PLAY"),
+            DownloaderState.PAUSED: self.store.s("DOWNLOAD_RESUME"),
+            DownloaderState.COMPLETE: self.store.s("DOWNLOAD_PLAY"),
+            DownloaderState.DOWNLOAD_FAILED: self.store.s("DOWNLOAD_DOWNLOAD"),
+            DownloaderState.VERIFICATION_FAILED: self.store.s("DOWNLOAD_REPAIR"),
+            DownloaderState.MISSING: self.store.s("DOWNLOAD_INSTALL"),
         }
 
         buttonAction = {

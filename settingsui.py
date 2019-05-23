@@ -39,6 +39,12 @@ class SettingsUI(QObject):
 
         parent.addWidget(self.ui)
 
+    def layoutText(self):
+        self.ui.settingsGeneralButton.setText(self.store("SETTINGS_MENU_GENERAL"))
+        self.ui.settingsManifestButton.setText(self.store("SETTINGS_MENU_MANIFESTS"))
+        self.ui.settingsServerButton.setPlaceholder(self.store("SETTINGS_MENU_SERVERS"))
+        self.ui.settingsAboutButton.setText(self.store("SETTINGS_MENU_ABOUT"))
+
     def hide(self):
         self.ui.hide()
 

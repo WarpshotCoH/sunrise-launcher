@@ -29,6 +29,25 @@ class AboutUI(QObject):
 
         parent.addWidget(self.ui)
 
+    def layoutText(self):
+
+        # Set application and credit text
+        self.ui.title.setText(self.store("ABOUT_TITLE"))
+        self.ui.updatedAt.setText(self.store("ABOUT_UPDATED"))
+        self.ui.baseCredit.setText(self.store("ABOUT_CREDIT"))
+
+        # Set informational button text
+        self.ui.customAbout1.setText(self.store("ABOUT_CUSTOM_BUTTON_1"))
+        self.ui.customAbout2.setText(self.store("ABOUT_CUSTOM_BUTTON_2"))
+        self.ui.sourceButton.setText(self.store("ABOUT_SOURCE_BUTTON"))
+        self.ui.licenseButton.setText(self.store("ABOUT_LICENSE_BUTTON"))
+
+        # Set dev text
+        self.ui.creditHeader1.setText(self.store("ABOUT_DEV_HEADER_1"))
+        self.ui.creditContent1.setText(self.store("ABOUT_DEV_CONTENT_1").join("\n"))
+        self.ui.creditHeader2.setText(self.store("ABOUT_DEV_HEADER_2"))
+        self.ui.creditContent2.setText(self.store("ABOUT_DEV_CONTENT_2").join("\n"))
+
     def bindButtons(self):
         bindUrl(self.ui.customAbout1, "")
         bindUrl(self.ui.customAbout2, "")

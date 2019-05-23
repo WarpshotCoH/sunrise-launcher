@@ -60,17 +60,17 @@ class GameListUI(ListViewUI):
         mods = self.store.getTools()
         clients = self.store.getClients()
 
-        self.addHeader("Mods / Tools")
+        self.addHeader(self.store.s("GAMES_LIST_MODS_TOOLS"))
         for i, mod in enumerate(mods):
-            self.addListItem(mod.name, "Installed" if isInstalled(self.store, mod.id) else "Not Installed")
+            self.addListItem(mod.name, self.store.s("GAMES_LIST_INSTALLED") if isInstalled(self.store, mod.id) else self.store.s("GAMES_LIST_NOT_INSTALLED"))
         self.offsets[0] = (1, 1 + len(mods))
 
-        self.addHeader("Clients")
+        self.addHeader(self.store.s("GAMES_LIST_CLIENTS"))
         for i, client in enumerate(clients):
-            self.addListItem(client.name, "Installed" if isInstalled(self.store, client.id) else "Not Installed")
+            self.addListItem(client.name, self.store.s("GAMES_LIST_INSTALLED") if isInstalled(self.store, client.id) else self.store.s("GAMES_LIST_NOT_INSTALLED"))
         self.offsets[1] = [self.offsets[0][1] + 1, self.offsets[0][1] + 1 + len(clients)]
 
-        self.addHeader("Runtimes")
+        self.addHeader(self.store.s("GAMES_LIST_RUNTIMES"))
         for i, runtime in enumerate(self.store.runtimes.values()):
-            self.addListItem(runtime.name, "Installed" if isInstalled(self.store, runtime.id) else "Not Installed")
+            self.addListItem(runtime.name, self.store.s("GAMES_LIST_INSTALLED") if isInstalled(self.store, runtime.id) else self.store.s("GAMES_LIST_NOT_INSTALLED"))
         self.offsets[2] = [self.offsets[1][1] + 1, self.offsets[1][1] + 1 + len(self.store.runtimes)]
