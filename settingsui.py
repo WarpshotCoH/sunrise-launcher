@@ -17,8 +17,9 @@ class SettingsUI(QObject):
 
         self.ui = createWidget("ui/settings-v2.ui")
 
-        header = createWidget("ui/settings-menu.ui")
-        self.headerButtons = header.findChildren(QPushButton)
+        self.header = createWidget("ui/settings-menu.ui")
+
+        self.headerButtons = self.header.findChildren(QPushButton)
         self.bindHeaderButtons()
 
         # TODO: Break tabs into their own classes as they become complex
@@ -29,7 +30,7 @@ class SettingsUI(QObject):
             AboutUI(store, self.ui.settingsBodyLayout).ui
         ]
 
-        self.ui.settingsHeaderLayout.addWidget(header)
+        self.ui.settingsHeaderLayout.addWidget(self.header)
 
         self.selectTab(0)
 
@@ -37,13 +38,15 @@ class SettingsUI(QObject):
 
         self.store.settings.committed.connect(self.update)
 
+        self.layoutText()
+
         parent.addWidget(self.ui)
 
     def layoutText(self):
-        self.ui.settingsGeneralButton.setText(self.store("SETTINGS_MENU_GENERAL"))
-        self.ui.settingsManifestButton.setText(self.store("SETTINGS_MENU_MANIFESTS"))
-        self.ui.settingsServerButton.setPlaceholder(self.store("SETTINGS_MENU_SERVERS"))
-        self.ui.settingsAboutButton.setText(self.store("SETTINGS_MENU_ABOUT"))
+        self.header.settingsGeneralButton.setText(self.store.s("SETTINGS_MENU_GENERAL"))
+        self.header.settingsManifestButton.setText(self.store.s("SETTINGS_MENU_MANIFESTS"))
+        self.header.settingsServerButton.setText(self.store.s("SETTINGS_MENU_SERVERS"))
+        self.header.settingsAboutButton.setText(self.store.s("SETTINGS_MENU_ABOUT"))
 
     def hide(self):
         self.ui.hide()

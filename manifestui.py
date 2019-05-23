@@ -17,13 +17,15 @@ class ManifestUI:
 
         self.store.settings.connectKey("manifestList", self.reload)
 
+        self.layoutText()
+
         parent.addWidget(self.ui)
 
     def layoutText(self):
-        self.ui.manifestSourceLabel.setText(self.store("MANIFEST_SOURCES"))
-        self.ui.manifestSourceHelp.setText(self.store("MANIFEST_DESCRIPTION"))
-        self.ui.manifestSourceInput.setPlaceholder(self.store("MANIFEST_URL_PLACEHOLDER"))
-        self.ui.manifestSourceAdd.setText(self.store("MANIFEST_URL_ADD"))
+        self.ui.manifestSourceLabel.setText(self.store.s("MANIFEST_SOURCES"))
+        self.ui.manifestSourceHelp.setText(self.store.s("MANIFEST_DESCRIPTION"))
+        self.ui.manifestSourceInput.setPlaceholderText(self.store.s("MANIFEST_URL_PLACEHOLDER"))
+        self.ui.manifestSourceAdd.setText(self.store.s("MANIFEST_URL_ADD"))
 
     @Slot(str)
     def reload(self, key = None):
