@@ -5,7 +5,6 @@ run
 runtimes
 store
 themes
-twine
 
 # Python
 __pycache__

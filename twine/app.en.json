@@ -1,0 +1,95 @@
+{
+
+    // Main - Menu
+
+    "MAIN_MENU_SERVERS": "Servers",
+    "MAIN_MENU_GAMES": "Games",
+    "MAIN_MENU_SETTINGS": "Settings",
+
+    // Servers - List
+
+    "SERVERS_LIST_SERVERS": "Servers",
+
+    // Servers - Details
+
+    "SERVERS_DETAILS_SETTINGS_BUTTON": "Settings",
+    "SERVERS_DETAILS_WEBSITE_BUTTON": "Website",
+
+    // Games - List
+
+    "GAMES_LIST_MODS_TOOLS": "Mods / Tools",
+    "GAMES_LIST_CLIENTS": "Clients",
+    "GAMES_LIST_RUNTIMES": "Runtimes",
+
+    "GAMES_LIST_INSTALLED": "Installed",
+    "GAMES_LIST_NOT_INSTALLED": "Not Installed",
+    "GAMES_LIST_UPDATING": "Updating",
+    "GAMES_LIST_UPDATE_AVAILABLE": "Update Available",
+
+    // Games - Details
+
+    "GAMES_DETAILS_SETTINGS_BUTTON": "Settings",
+    "GAMES_DETAILS_WEBSITE_BUTTON": "Website",
+
+    // List - Download
+
+    "DOWNLOAD_PAUSE": "Pause",
+    "DOWNLOAD_PLAY": "Play",
+    "DOWNLOAD_RESUME": "Resume",
+    "DOWNLOAD_DOWNLOAD": "Download",
+    "DOWNLOAD_REPAIR": "Repair",
+    "DOWNLOAD_INSTALL": "Install",
+
+    "DOWNLOAD_FAILED_DOWNLOAD_FILE": "Failed to download",
+    "DOWNLOAD_FAILED_VERIFY_FILE": "Failed to verify",
+
+    // Settings - Menu
+
+    "SETTINGS_MENU_GENERAL": "General",
+    "SETTINGS_MENU_MANIFESTS": "Manifests",
+    "SETTINGS_MENU_SERVERS": "Servers",
+    "SETTINGS_MENU_ABOUT": "About",
+
+    // Settings - General
+
+    "GENERAL_LAUNCH_PARAMS": "Launch parameters",
+    "GENERAL_CLOSE_ON_START": "Close launcher on game start",
+    "GENERAL_AUTO_PATCH": "Auto-patch",
+    "GENERAL_THEME": "Theme",
+    "GENERAL_THEME_ADD": "Add Theme",
+
+    // Settings - Manifests
+
+    "MANIFEST_SOURCES": "Sources",
+    "MANIFEST_DESCRIPTION": "Add and reorder custom manifest sources here. If two sources contain the same application/runtime, the one highest in the list takes precedence.",
+    "MANIFEST_UP": "Up",
+    "MANIFEST_DOWN": "Down",
+    "MANIFEST_REMOVE": "Remove",
+
+    "MANIFEST_URL_PLACEHOLDER": "Enter manifest URL...",
+    "MANIFEST_URL_ADD": "Add",
+
+    // Settings - Servers
+
+    // Settings - About
+
+    "ABOUT_TITLE": "Game Launcher",
+    "ABOUT_UPDATED": "Last updated",
+    "ABOUT_CREDIT": "Based on Sunrise v1.0.0",
+
+    "ABOUT_CUSTOM_BUTTON_1": "Custom Link 1",
+    "ABOUT_CUSTOM_BUTTON_2": "Custom Link 2",
+    "ABOUT_SOURCE_BUTTON": "Source",
+    "ABOUT_LICENSE_BUTTON": "Licenses",
+
+    "ABOUT_DEV_HEADER_1": "Developers",
+    "ABOUT_DEV_CONTENT_1": [
+        "Dev1",
+        "Dev2"
+    ],
+    "ABOUT_DEV_HEADER_2": "Designers",
+    "ABOUT_DEV_CONTENT_2": [
+        "Des1",
+        "Des2"
+    ]
+}

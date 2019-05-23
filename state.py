@@ -48,7 +48,7 @@ class Store(QObject):
             pass
 
         try:
-            stringConfig = open("twine/app.json", "r").read()
+            stringConfig = open("twine/app.en.json", "r").read()
 
             if stringConfg:
                 self.strings = json.loads(stringConfig)
