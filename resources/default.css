@@ -1,0 +1,184 @@
+/* Base. */
+QMainWindow,
+QDialog {
+    background-color: #333;
+    background-position: left top;
+    background-repeat: no-repeat;
+}
+
+* {
+    color: #fff;
+    font-family: "Lato", sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* Buttons and combo boxes. */
+QPushButton,
+QComboBox {
+    padding: 4px 6px;
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #888, stop:1 #555);
+    color: #fff;
+    border: 1px solid rgba(0, 0, 0, 0.4);
+    border-radius: 3px;
+}
+
+QPushButton:hover,
+QComboBox:hover {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #999, stop:1 #666);
+}
+
+QComboBox::dropdown {
+    background: transparent;
+    color: #fff;
+    border: 1px solid rgba(0, 0, 0, 0.4);
+    border-radius: 3px;
+}
+
+QMenu,
+QListView,
+QListWidget {
+    padding: 0;
+    background: #222;
+    color: #fff;
+    border: 1px solid rgba(0, 0, 0, 0.4);
+    border-radius: 3px;
+}
+
+QMenu::item,
+QListView::item,
+QListWidget::item {
+    padding: 4px 6px;
+    background: transparent;
+}
+
+QMenu::item:hover,
+QListView::item:hover,
+QListWidget::item:hover {
+    background: #444;
+    border: none;
+    border-left: 1px solid rgba(0, 0, 0, 0.4);
+    border-right: 1px solid rgba(0, 0, 0, 0.4);
+}
+
+QMenu::item:selected,
+QListView::item:selected,
+QListWidget::item:selected {
+    background: #666;
+    border: none;
+    border-left: 1px solid rgba(0, 0, 0, 0.4);
+    border-right: 1px solid rgba(0, 0, 0, 0.4);
+}
+
+/* Controls. */
+QLineEdit {
+    padding: 4px 6px;
+    background: #222;
+    color: #fff;
+    border: 1px solid rgba(0, 0, 0, 0.4);
+    border-radius: 3px;
+}
+
+QListWidget {
+    padding: 0;
+    background: #222;
+    color: #fff;
+    border: 1px solid rgba(0, 0, 0, 0.4);
+    border-radius: 3px;
+}
+
+QProgressBar {
+    padding: 0;
+    background: #222;
+    color: #fff;
+    font-weight: bold;
+    text-align: center;
+    border: 1px solid rgba(0, 0, 0, 0.4);
+    border-radius: 3px;
+}
+
+QProgressBar::chunk {
+    background: #888;
+    border: none;
+    border-radius: 2px;
+}
+
+/* Header. */
+#header {
+    background: rgba(0, 0, 0, 0.4);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.4);
+}
+
+#header #headerLogo {
+    background: url("resources/logo.png");
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+#header QPushButton {
+    padding: 18px 6px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 20px;
+    text-transform: uppercase;
+    border: none;
+}
+
+#header QPushButton:hover {
+    color: rgba(255, 255, 255, 1);
+}
+
+#header QPushButton[Active=true] {
+    color: rgba(255, 255, 255, 1);
+}
+
+/* Sidebar. */
+#listBackground {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(0, 0, 0, 0.4);
+    border-radius: 6px;
+}
+
+#listBackground QListWidget {
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+}
+
+#listBackground QListWidget QLabel[ListSubhead=true] {
+    color: rgba(255, 255, 255, 0.6);
+    text-transform: uppercase;
+}
+
+/* Info section. */
+#detailsName {
+    font-size: 20px;
+}
+
+#detailsSubname1,
+#detailsSubname2 {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* Download section. */
+#downloadPanel {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(0, 0, 0, 0.4);
+    border-radius: 6px;
+}
+
+#downloadPanel #play {
+    padding: 6px;
+    font-size: 28px;
+    text-transform: uppercase;
+    border-radius: 6px;
+}
+
+/* Settings. */
+#settings {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(0, 0, 0, 0.4);
+    border-radius: 6px;
+}
