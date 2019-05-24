@@ -76,5 +76,7 @@
     "ABOUT_DEV_CONTENT_2": [
         "Des1",
         "Des2"
-    ]
+    ],
+
+    "ABOUT_LICENSE_HEADER": "Licenses"
 }

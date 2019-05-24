@@ -5,6 +5,7 @@ from PySide2.QtGui import QImage, QPixmap
 from PySide2.QtWidgets import QListWidgetItem, QLabel
 
 from helpers import createWidget, logger
+from licenseui import LicenseUI
 from listviewui import ListViewUI
 
 log = logger("main.ui.about")
@@ -26,6 +27,8 @@ class AboutUI(QObject):
 
         self.store = store
         self.ui = createWidget("ui/settings-about.ui")
+        self.licenses = LicenseUI(store).ui
+
         self.bindButtons()
 
         self.layoutText()
@@ -56,7 +59,7 @@ class AboutUI(QObject):
         bindUrl(self.ui.customAbout2, self.store.config['about']['about_button_2_url'])
         bindUrl(self.ui.sourceButton, self.store.config['about']['source_url'])
 
-        # bindUrl(self.ui.licenseButton, "")
+        self.ui.licenseButton.clicked.connect(lambda: self.licenses.show())
 
     @Slot()
     def displayLicenses(self, key = None):

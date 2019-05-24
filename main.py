@@ -112,6 +112,8 @@ if __name__ == "__main__":
     # pool.add("manifests/manifest2.xml")
     # pool.add("manifests/manifest3.xml")
 
+    window.setWindowTitle(store.s("ABOUT_TITLE"))
+
     # Show the application
     window.show()
 
