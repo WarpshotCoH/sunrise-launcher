@@ -16,6 +16,7 @@ class GameListUI(ListViewUI):
 
     @Slot(int)
     def selectItem(self, row):
+        log.info("Offsets %s", self.offsets)
         if row > -1:
             for i, group in enumerate(self.offsets):
                 if group[0] <= row and row <= group[1]:
@@ -63,14 +64,17 @@ class GameListUI(ListViewUI):
         self.addHeader(self.store.s("GAMES_LIST_MODS_TOOLS"))
         for i, mod in enumerate(mods):
             self.addListItem(mod.name, self.store.s("GAMES_LIST_INSTALLED") if isInstalled(self.store, mod.id) else self.store.s("GAMES_LIST_NOT_INSTALLED"))
-        self.offsets[0] = (1, 1 + len(mods))
+
+        self.offsets[0] = (1, len(mods))
 
         self.addHeader(self.store.s("GAMES_LIST_CLIENTS"))
         for i, client in enumerate(clients):
             self.addListItem(client.name, self.store.s("GAMES_LIST_INSTALLED") if isInstalled(self.store, client.id) else self.store.s("GAMES_LIST_NOT_INSTALLED"))
-        self.offsets[1] = [self.offsets[0][1] + 1, self.offsets[0][1] + 1 + len(clients)]
+
+        self.offsets[1] = (self.offsets[0][1] + 2, self.offsets[0][1] + 1 + len(clients))
 
         self.addHeader(self.store.s("GAMES_LIST_RUNTIMES"))
         for i, runtime in enumerate(self.store.runtimes.values()):
             self.addListItem(runtime.name, self.store.s("GAMES_LIST_INSTALLED") if isInstalled(self.store, runtime.id) else self.store.s("GAMES_LIST_NOT_INSTALLED"))
-        self.offsets[2] = [self.offsets[1][1] + 1, self.offsets[1][1] + 1 + len(self.store.runtimes)]
+
+        self.offsets[2] = (self.offsets[1][1] + 2, self.offsets[1][1] + 1 + len(self.store.runtimes))

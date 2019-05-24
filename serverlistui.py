@@ -33,8 +33,8 @@ class ServerListUI(ListViewUI):
 
     @Slot(int)
     def selectServer(self, row):
-        if row < len(self.store.servers) + 1 and row > -1:
-            # Offset row by one to account for header element
+        # Offset row by one to account for header element
+        if row < len(self.store.servers) + 1 and row > 0:
             server = list(self.store.servers.values())[row - 1]
 
             if server:
