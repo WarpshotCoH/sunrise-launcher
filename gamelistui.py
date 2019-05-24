@@ -49,8 +49,9 @@ class GameListUI(ListViewUI):
                         if runtime:
                             self.selected.emit(None, runtime, None)
                             return
-        else:
-            self.selected.emit(None, None, None)
+
+        # Fall through to none case
+        self.selected.emit(None, None, None)
 
     @Slot(str)
     def reload(self, key = None):

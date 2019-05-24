@@ -30,18 +30,15 @@ class DownloadUI(QObject):
         parent.addWidget(self.ui)
 
     def hide(self):
-        self.progressBar.hide()
-        self.fileBar.hide()
-        self.button.hide()
+        self.ui.hide()
 
     def show(self):
-        self.progressBar.show()
-        self.fileBar.show()
-        self.button.show()
+        self.ui.show()
 
     @Slot(Application, Runtime, Server)
     def load(self, application = None, runtime = None, server = None):
         if application == None and runtime == None and server == None:
+            self.shutdown()
             self.hide()
 
         self.min = self.max = self.cur = 0
