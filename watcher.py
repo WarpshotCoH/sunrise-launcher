@@ -91,7 +91,7 @@ class Watcher(QObject):
             assert not QThread.currentThread().objectName() == "Main", "Watcher startup on main thread"
 
             self.timer = QTimer()
-            self.timer.setInterval(6000)
+            self.timer.setInterval(60000)
             self.timer.timeout.connect(self.run)
             self.timer.start()
             self.run()

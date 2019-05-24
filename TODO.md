@@ -1,6 +1,5 @@
 # TODO
 
-* Lots of text extraction into external file (can we support translation?)
 * Impl server, application, and runtime settings
 * Impl global settings
 * Details view. News / website / etc

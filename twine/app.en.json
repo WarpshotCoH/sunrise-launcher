@@ -27,8 +27,8 @@
     "DOWNLOAD_PAUSE": "Pause",
     "DOWNLOAD_PLAY": "Play",
     "DOWNLOAD_RESUME": "Resume",
-    "DOWNLOAD_DOWNLOAD": "Download",
-    "DOWNLOAD_REPAIR": "Repair",
+    "DOWNLOAD_DOWNLOAD": "Update",
+    "DOWNLOAD_REPAIR": "Update",
     "DOWNLOAD_INSTALL": "Install",
 
     "DOWNLOAD_FAILED_DOWNLOAD_FILE": "Failed to download",

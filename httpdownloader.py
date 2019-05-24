@@ -162,7 +162,7 @@ class HTTPDownloader(QObject):
 
                     self.currentFile = FileDownload(file, path, mirror)
 
-                    log.debug("Constructed file", fileName)
+                    log.debug("Constructed file %s", fileName)
 
                     if os.path.isfile(path):
                         log.info("File already exists. Verifying %s", path)

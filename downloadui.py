@@ -19,7 +19,15 @@ class DownloadUI(QObject):
         self.ui = createWidget("ui/listview-download.ui")
 
         self.progressBar = self.ui.progress
+        progressSizePolicy = self.progressBar.sizePolicy()
+        progressSizePolicy.setRetainSizeWhenHidden(True)
+        self.progressBar.setSizePolicy(progressSizePolicy)
+
         self.fileBar = self.ui.fileProgress
+        fileBarSizePolicy = self.fileBar.sizePolicy()
+        fileBarSizePolicy.setRetainSizeWhenHidden(True)
+        self.fileBar.setSizePolicy(fileBarSizePolicy)
+
         self.button = self.ui.play
         self.downloadThread = None
         self.downloader = None
@@ -198,10 +206,8 @@ class DownloadUI(QObject):
             self.button.clicked.connect(buttonAction[state])
 
             if state == DownloaderState.DOWNLOADING or state == DownloaderState.VERIFYING:
-                self.progressBar.setProperty("Done", False)
-                self.progressBar.setStyle(self.progressBar.style())
-                self.fileBar.setProperty("Done", False)
-                self.fileBar.setStyle(self.fileBar.style())
+                self.progressBar.show()
+                self.fileBar.show()
 
             # TODO: If QThread can be re-used over and over then this is not necessary.
             #       In the meantime we tear down the thread whenever progress stops and
@@ -227,10 +233,8 @@ class DownloadUI(QObject):
 
             # On a pause, complete, or missing we clear out any progress text
             if state == DownloaderState.PAUSED or state == DownloaderState.COMPLETE or state == DownloaderState.MISSING:
-                self.progressBar.setProperty("Done", True)
-                self.progressBar.setStyle(self.progressBar.style())
-                self.fileBar.setProperty("Done", True)
-                self.fileBar.setStyle(self.fileBar.style())
+                self.progressBar.hide()
+                self.fileBar.hide()
 
     @Slot(int, int, int, str)
     def onFileStart(self, pMin, pStart, pMax, filename):

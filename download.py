@@ -16,8 +16,9 @@ from helpers import logger
 log = logger("main.downloader.file")
 
 class FileDownload():
-    def __init__(self, file, mirror):
+    def __init__(self, file, writePath, mirror = None):
         self.file = file
+        self.path = writePath
         self.mirror = mirror
         self.interrupt = False
         self.skipHashCheck = False
@@ -33,7 +34,7 @@ class FileDownload():
 
         # First try downloading from the designated mirror
         if self.mirror:
-            log.debug("%s mirror selected. Attempting to download from mirror first", self.mirror)
+            log.debug("%s mirror selected. Attempting to download from mirror first", self.mi)
             if self.downloadUrl(self.mirror + self.file.name, init, progress):
                 return True
 
@@ -74,7 +75,7 @@ class FileDownload():
 
             remoteFilename = posixpath.basename(urllib.parse.urlparse(url).path)
             # TODO: Handle Transfer-Encoding: chunked; unable to know the remote filesize there.
-            remoteFilesize = int(r.headers['Content-Length'])
+            remoteFilesize = int(r.headers['Content-Length']) if 'Content-Length' in r.headers else self.file.size
 
             init.emit(0, 0, remoteFilesize, remoteFilename)
 
