@@ -9,9 +9,18 @@ from PySide2.QtUiTools import QUiLoader
 def logger(name):
     l = logging.getLogger(name)
     l.setLevel(logging.DEBUG)
-    handler = logging.FileHandler(os.path.join(user_log_dir("Sunrise", "Sunrise"), "sunrise.log"))
-    handler.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
-    l.addHandler(handler)
+
+    console = logging.StreamHandler()
+    console.setFormatter(logging.Formatter("%(name)s - %(levelname)s - %(message)s"))
+    console.setLevel(logging.DEBUG)
+    l.addHandler(console)
+
+    file = logging.FileHandler(os.path.join(user_log_dir("Sunrise", "Sunrise"), "sunrise.log"))
+    file.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
+    file.setLevel(logging.INFO)
+
+    l.addHandler(file)
+
     return l
 
 def isInstalled(store, id):

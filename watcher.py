@@ -9,7 +9,7 @@ import requests
 from helpers import logger
 
 pLog = logger("main.watcherpool")
-wlog = logger("main.watcherpool.watcher")
+wLog = logger("main.watcherpool.watcher")
 
 class WatcherPool(QObject):
     updated = Signal(str, str)
@@ -44,6 +44,8 @@ class WatcherPool(QObject):
 
             self.startTrigger.connect(self.watchers[url].start)
             self.startTrigger.emit()
+
+            pLog.debug("Emitted start trigger")
         else:
             pLog.debug("Watch thread not running. Scheduling %s", url)
             self.thread.started.connect(self.watchers[url].start)
@@ -126,6 +128,8 @@ class Watcher(QObject):
                     self.check = check
                     wLog.info("Update available for %s", self.url)
                     self.updater.emit(self.url, req.text)
+                else:
+                    wLog.debug("Manifest at %s has not changed", self.url)
 
         except Exception:
             wLog.error("Fetch error %s", self.url)

@@ -42,6 +42,28 @@ class File:
 
         return file
 
+class Source:
+    def __init__(self, tag, src):
+        self.tag = tag
+        self.src = src
+
+    @staticmethod
+    def fromXML(source):
+        if source.tag == "torrent":
+            return Source("torrent", source.attrib.get("magent"))
+        else:
+            return Source("http", source.attrib.get("url"))
+
+    def toXML(self):
+        tag = ET.Element(self.tag)
+
+        if tag == "torrent":
+            tag.attrib["magnet"] = self.src
+        else:
+            tag.attrib["url"] = self.url
+
+        return tag
+
 class Launcher:
     def __init__(self, exec , params):
         self.exec = exec
@@ -129,7 +151,7 @@ class News:
         return news
 
 class Application:
-    def __init__(self, id, type, runtime, custom, name, publisher, icon, websites, launcher, news, files):
+    def __init__(self, id, type, runtime, custom, name, publisher, icon, websites, launcher, news, files, sources):
         self.id = id
         self.type = type
         self.runtime = runtime
@@ -141,6 +163,7 @@ class Application:
         self.launcher = launcher
         self.news = news
         self.files = files
+        self.sources = sources
 
     @staticmethod
     def fromXML(app):
@@ -156,7 +179,8 @@ class Application:
             # TODO: How can this be written cleaner? it looks pretty verbose
             None if app.find("launcher") == None else Launcher.fromXML(app.find("launcher")),
             None if app.find("news") == None else News.fromXML(app.find("news")),
-            list(map(File.fromXML, app.findall(".//files/file")))
+            list(map(File.fromXML, app.findall(".//files/file"))),
+            list(map(Source.fromXML, app.find("sources").getChildren() if app.find("sources") else [])),
         )
 
     def toXML(self):
@@ -192,6 +216,12 @@ class Application:
             files.append(f)
 
         application.append(files)
+
+        sources = ET.Element("sources")
+        for s in map(lambda s: s.toXML(), self.sources):
+            sources.append(f)
+
+        application.append(sources)
 
         return application
 
@@ -244,12 +274,13 @@ class Server:
         return server
 
 class Runtime:
-    def __init__(self, id, name, publisher, icon, files):
+    def __init__(self, id, name, publisher, icon, files, sources):
         self.id = id
         self.name = name
         self.publisher = publisher
         self.icon = icon
         self.files = files
+        self.sources = sources
 
     @staticmethod
     def fromXML(runtime):
@@ -258,7 +289,8 @@ class Runtime:
             "" if runtime.find("name") == None else runtime.find("name").text,
             "" if runtime.find("publisher") == None else runtime.find("publisher").text,
             None if runtime.find("icon") == None else runtime.find("icon").text,
-            list(map(File.fromXML, runtime.findall(".//files/file")))
+            list(map(File.fromXML, runtime.findall(".//files/file"))),
+            list(map(Source.fromXML, runtime.find("sources").getChildren() if runtime.find("sources") else [])),
         )
 
     def toXML(self):
@@ -276,6 +308,12 @@ class Runtime:
             files.append(f)
 
         runtime.append(files)
+
+        sources = ET.Element("sources")
+        for s in map(lambda s: s.toXML(), self.sources):
+            sources.append(f)
+
+        runtime.append(sources)
 
         return runtime
 
