@@ -24,6 +24,15 @@ class Theme:
 
         return theme
 
+    def activate(target, application):
+        defaultStylePath = os.path.join("resources", "default.css")
+        defaultCss = ""
+
+        with open(defaultStylePath, "r") as styles:
+            defaultCss = styles.read()
+
+        application.setStyleSheet(defaultCss + target.css)
+
 class Loader:
     @staticmethod
     def load(path):
