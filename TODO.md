@@ -19,4 +19,4 @@
 * Fix server / app / runtime header text vertical alignment in details view
 
 ## Bugs
-* Clicking on list subhead trigger select function to run and through index error
+* Watchers logging each message multiple times. Are they actually running multiple times?
