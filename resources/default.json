@@ -1,6 +1,8 @@
 {
     "fonts": [
         "resources/fonts/Lato.ttf",
-        "resources/fonts/Lato-Italic.ttf"
+        "resources/fonts/Lato-Italic.ttf",
+        "resources/fonts/Lato-Bold.ttf",
+        "resources/fonts/Lato-BoldItalic.ttf"
     ]
 }
