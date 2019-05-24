@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>download</class>
- <widget class="QWidget" name="download">
+ <class>downloadPanel</class>
+ <widget class="QWidget" name="downloadPanel">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>651</width>
-    <height>90</height>
+    <width>360</width>
+    <height>68</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -21,24 +21,24 @@
   </property>
   <layout class="QHBoxLayout" name="downloadLayout">
    <property name="spacing">
-    <number>-1</number>
+    <number>6</number>
    </property>
    <property name="leftMargin">
-    <number>12</number>
+    <number>6</number>
    </property>
    <property name="topMargin">
-    <number>12</number>
+    <number>6</number>
    </property>
    <property name="rightMargin">
-    <number>12</number>
+    <number>6</number>
    </property>
    <property name="bottomMargin">
-    <number>12</number>
+    <number>6</number>
    </property>
    <item>
-    <layout class="QVBoxLayout" name="progressLayou" stretch="100,20">
+    <layout class="QVBoxLayout" name="progressLayout" stretch="100,20">
      <property name="spacing">
-      <number>-1</number>
+      <number>6</number>
      </property>
      <property name="sizeConstraint">
       <enum>QLayout::SetDefaultConstraint</enum>
@@ -57,7 +57,7 @@
        <property name="minimumSize">
         <size>
          <width>200</width>
-         <height>40</height>
+         <height>28</height>
         </size>
        </property>
        <property name="baseSize">
@@ -79,7 +79,7 @@
        <property name="minimumSize">
         <size>
          <width>200</width>
-         <height>0</height>
+         <height>20</height>
         </size>
        </property>
        <property name="baseSize">
