@@ -52,9 +52,9 @@ class AboutUI(QObject):
         self.ui.creditContent2.setText("\n".join(self.store.s("ABOUT_DEV_CONTENT_2")))
 
     def bindButtons(self):
-        bindUrl(self.ui.customAbout1, "")
-        bindUrl(self.ui.customAbout2, "")
-        bindUrl(self.ui.sourceButton, "")
+        bindUrl(self.ui.customAbout1, self.store.config['about']['about_button_1_url'])
+        bindUrl(self.ui.customAbout2, self.store.config['about']['about_button_2_url'])
+        bindUrl(self.ui.sourceButton, self.store.config['about']['source_url'])
 
         # bindUrl(self.ui.licenseButton, "")
 

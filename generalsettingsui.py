@@ -17,6 +17,7 @@ class GeneralSettingsUI:
         self.themeSelect.currentIndexChanged.connect(self.themeChange)
 
         self.ui.themeAddition.clicked.connect(self.addTheme)
+        self.ui.themeAddition.setVisible(self.store.f('add_theme'))
 
         self.store.updated.connect(lambda: self.reload(None))
 

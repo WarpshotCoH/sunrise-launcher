@@ -24,6 +24,7 @@ class Store(QObject):
     def __init__(self, parent = None):
         super(Store, self).__init__(parent)
 
+        self.config = {}
         self.manifestNames = {}
         self.applications = {}
         self.runtimes = {}
@@ -33,6 +34,16 @@ class Store(QObject):
         self.running = []
         self.themes = {}
         self.strings = {}
+
+        try:
+            config = open("config.json", "r").read()
+
+            if config:
+                self.config = json.loads(config)
+
+        except Exception:
+            log.error(sys.exc_info())
+            pass
 
         try:
             dirs = list(os.walk(os.path.abspath("themes")))
@@ -72,6 +83,9 @@ class Store(QObject):
 
         self.settings.committed.connect(self.saveSettings)
         self.updated.connect(self.saveManifests)
+
+    def f(self, key):
+        return self.config['flags'].get(key)
 
     def s(self, key):
         return self.strings.get(key)
