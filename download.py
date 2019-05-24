@@ -16,9 +16,9 @@ from helpers import logger
 log = logger("main.downloader.file")
 
 class FileDownload():
-    def __init__(self, file, writePath):
+    def __init__(self, file, mirror):
         self.file = file
-        self.path = writePath
+        self.mirror = mirror
         self.interrupt = False
         self.skipHashCheck = False
 
@@ -30,6 +30,13 @@ class FileDownload():
 
     def start(self, init, progress):
         log.info("Start file download")
+
+        # First try downloading from the designated mirror
+        if self.mirror:
+            log.debug("%s mirror selected. Attempting to download from mirror first", self.mirror)
+            if self.downloadUrl(self.mirror + self.file.name, init, progress):
+                return True
+
         urlNumToTry = random.randint(0, len(self.file.urls) - 1)
         downloaded = False
         tries = 0

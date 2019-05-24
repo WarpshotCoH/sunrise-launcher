@@ -84,39 +84,57 @@ class Watcher(QObject):
 
     @Slot()
     def start(self):
-        wLog.debug("Start watcher for %s", self.url)
-        wLog.debug("Current thread during watcher start %s", QThread.currentThread().objectName())
+        try:
+            wLog.debug("Start watcher for %s", self.url)
+            wLog.debug("Current thread during watcher start %s", QThread.currentThread().objectName())
 
-        assert not QThread.currentThread().objectName() == "Main", "Watcher startup on main thread"
+            assert not QThread.currentThread().objectName() == "Main", "Watcher startup on main thread"
 
-        self.timer = QTimer()
-        self.timer.setInterval(6000)
-        self.timer.timeout.connect(self.run)
-        self.timer.start()
-        self.run()
+            self.timer = QTimer()
+            self.timer.setInterval(6000)
+            self.timer.timeout.connect(self.run)
+            self.timer.start()
+            self.run()
+        except Exception as error:
+            wLog.error("Start error %s", self.url)
+            wLog.error(sys.exc_info())
+
+            raise error
 
     @Slot(str)
     def stop(self, url):
-        assert not QThread.currentThread().objectName() == "Main", "Watcher is trying to stop from main thread"
+        try:
+            assert not QThread.currentThread().objectName() == "Main", "Watcher is trying to stop from main thread"
 
-        if self.timer:
-            if url == self.url:
-                wLog.debug("Stop timer %s", self.url)
-                self.timer.stop()
+            if self.timer:
+                if url == self.url:
+                    wLog.debug("Stop timer %s", self.url)
+                    self.timer.stop()
+        except Exception as error:
+            wLog.error("Stop error %s", self.url)
+            wLog.error(sys.exc_info())
+
+            raise error
 
     @Slot()
     def shutdown(self):
-        assert not QThread.currentThread().objectName() == "Main", "Watcher is trying to shutdown from main thread"
+        try:
+            assert not QThread.currentThread().objectName() == "Main", "Watcher is trying to shutdown from main thread"
 
-        if self.timer:
-            wLog.debug("Stop timer %s", self.url)
-            self.timer.stop()
+            if self.timer:
+                wLog.debug("Stop timer %s", self.url)
+                self.timer.stop()
+        except Exception as error:
+            wLog.error("Shutdown error %s", self.url)
+            wLog.error(sys.exc_info())
+
+            raise error
 
     @Slot()
     def run(self):
-        assert not QThread.currentThread().objectName() == "Main", "Watcher is running on main thread"
-
         try:
+            assert not QThread.currentThread().objectName() == "Main", "Watcher is running on main thread"
+
             wLog.info("Try fetch for %s", self.url)
             req = requests.get(self.url, timeout=5)
 
@@ -131,6 +149,8 @@ class Watcher(QObject):
                 else:
                     wLog.debug("Manifest at %s has not changed", self.url)
 
-        except Exception:
+        except Exception as error:
             wLog.error("Fetch error %s", self.url)
             wLog.error(sys.exc_info())
+
+            raise error

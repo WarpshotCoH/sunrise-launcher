@@ -10,16 +10,20 @@ def logger(name):
     l = logging.getLogger(name)
     l.setLevel(logging.DEBUG)
 
-    console = logging.StreamHandler()
-    console.setFormatter(logging.Formatter("%(name)s - %(levelname)s - %(message)s"))
-    console.setLevel(logging.DEBUG)
-    l.addHandler(console)
+    # TODO: Move handlers up to the top level and re-enable propagate
+    l.propagate = False
 
-    file = logging.FileHandler(os.path.join(user_log_dir("Sunrise", "Sunrise"), "sunrise.log"))
-    file.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
-    file.setLevel(logging.INFO)
+    if len(l.handlers) == 0:
+        console = logging.StreamHandler()
+        console.setFormatter(logging.Formatter("%(name)s - %(levelname)s - %(message)s"))
+        console.setLevel(logging.DEBUG)
+        l.addHandler(console)
 
-    l.addHandler(file)
+        file = logging.FileHandler(os.path.join(user_log_dir("Sunrise", "Sunrise"), "sunrise.log"))
+        file.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
+        file.setLevel(logging.INFO)
+
+        l.addHandler(file)
 
     return l
 

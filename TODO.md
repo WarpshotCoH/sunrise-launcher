@@ -19,4 +19,3 @@
 * Fix server / app / runtime header text vertical alignment in details view
 
 ## Bugs
-* Watchers logging each message multiple times. Are they actually running multiple times?
