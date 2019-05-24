@@ -151,9 +151,10 @@ class News:
         return news
 
 class Application:
-    def __init__(self, id, type, runtime, custom, name, publisher, icon, websites, launcher, news, files, sources):
+    def __init__(self, id, type, version, runtime, custom, name, publisher, icon, websites, launcher, news, files, sources):
         self.id = id
         self.type = type
+        self.version = version
         self.runtime = runtime
         self.custom = custom
         self.name = name
@@ -170,6 +171,7 @@ class Application:
         return Application(
             app.attrib["id"],
             app.attrib["type"],
+            None,
             app.attrib["runtime"],
             app.attrib.get("custom-server", False) == "true",
             "" if app.find("name") == None else app.find("name").text,
@@ -195,6 +197,9 @@ class Application:
 
         if self.name:
             ET.SubElement(application, "name").text = self.name
+
+        if self.version:
+            ET.SubElement(application, "version").text = self.version
 
         if self.publisher:
             ET.SubElement(application, "publisher").text = self.publisher

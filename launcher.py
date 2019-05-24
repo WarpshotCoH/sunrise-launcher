@@ -1,4 +1,4 @@
-import os
+from os.path import join, abspath, normpath
 import subprocess
 import sys
 import threading
@@ -8,6 +8,44 @@ from PySide2.QtCore import QObject, QThread, Slot, Signal
 from helpers import logger
 
 log = logger("main.launcher")
+
+class ServerArgs:
+    def __init__(self, store, server):
+        binPath = self.store.settings.get("paths").binPath
+        absBin = abspath(binPath)
+
+        application = self.store.applications.get(server.application)
+
+        if application and application.runtime:
+            runtime = self.store.runtimes.get(application.runtime)
+        else:
+            runtime = None
+
+        self.APP_ID = application.id if application else None
+        self.APP_VERSION = application.version if application else None
+        self.RT_ID = runtime.id if runtime else ""
+        self.APP_PATH = join(binPath, application.id) if application else ""
+        self.RT_PATH = join(binPath, runtime.id) if runtime else ""
+        self.APP_ABSPATH = join(absBin, application.id) if application else ""
+        self.RT_ABSPATH = join(absBin, runtime.id) if runtime else ""
+
+class ApplicationArgs:
+    def __init__(self, store, application):
+        binPath = self.store.settings.get("paths").binPath
+        absBin = abspath(binPath)
+
+        if application and application.runtime:
+            runtime = self.store.runtimes.get(application.runtime)
+        else:
+            runtime = None
+
+        self.APP_ID = application.id if application else None
+        self.APP_VERSION = application.id if application else None
+        self.RT_ID = application.id if application else None
+        self.APP_PATH = join(binPath, application.id) if application else None
+        self.RT_PATH = join(binPath, runtime.id) if runtime else None
+        self.APP_ABSPATH = join(absBin, application.id) if application else ""
+        self.RT_ABSPATH = join(absBin, runtim.id) if runtim else ""
 
 class Launcher(QObject):
     started = Signal(str)
