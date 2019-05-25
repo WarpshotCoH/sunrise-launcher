@@ -64,13 +64,7 @@ if __name__ == "__main__":
     selectPage(0)
 
     # Initialize background data fetching pools
-    autoPatchPool = None
-
     pool = ManifestPool(store)
-
-    if store.settings.get("autoPatch"):
-        autoPatchPool = WatcherPool()
-        patcher = Patcher("https://url.to.the.patcher.endpoint/manifest.xml", autoPatchPool)
 
     # Initialize the application launcher
     launcher = Launcher(store)
@@ -98,15 +92,17 @@ if __name__ == "__main__":
 
     application.aboutToQuit.connect(pool.shutdown)
 
-    if autoPatchPool:
-        application.aboutToQuit.connect(autoPatchPool.shutdown)
-
     # Connect to theme selection
     # TODO: This requires a key existance check. User may have deleted the theme between runs
     store.settings.connectKey("theme", lambda _: store.themes[store.settings.get("theme")].activate(application))
 
     # Load any settings store for the user
     store.load()
+
+    if store.settings.get("autoPatch"):
+        autoPatchPool = WatcherPool()
+        application.aboutToQuit.connect(autoPatchPool.shutdown)
+        patcher = Patcher("https://s3.amazonaws.com/e-launcher/manifest1.xml", autoPatchPool)
 
     # pool.add("manifests/manifest1.xml")
     # pool.add("manifests/manifest2.xml")

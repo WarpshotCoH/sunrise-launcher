@@ -1,4 +1,13 @@
+import os
+
 from PySide2.QtCore import QObject, QThread, Slot, Signal
+
+from helpers import logger
+from httpdownloader import HTTPDownloader
+from manifest import Application
+from settings import SunriseSettings
+
+log = logger("main.patcher")
 
 class Patcher(QObject):
     patched = Signal()
@@ -12,22 +21,28 @@ class Patcher(QObject):
         self.thread = QThread()
         self.downloader = None
 
-        self.thread.start()
+        pool.updated.connect(self.update)
+        pool.add(endpoint)
 
     @Slot(str, str)
     def update(self, url, data):
         # Sanity check in case we get passed an in use pool
         if url == self.endpoint:
+            log.info("Preparing to download patch")
             self.shutdown() # Ensure we are not processing anything before starting
-            update = True # TODO: Impl data parsing
 
-            self.downloader = Downloader([channel], "./tmp")
+            application = Application("sunrise.v1-beta", "tool", "v1-beta", None, False, "", "", "", [], None, None, [], [])
+
+            self.downloader = HTTPDownloader([application], os.path.join(SunriseSettings.settingsPath, "patch", application.id))
             self.downloader.moveToThread(self.thread)
-            self.downloader.stateChange(self.onStateChange)
+            self.thread.started.connect(self.downloader.download)
+            self.downloader.stateChange.connect(self.onStateChange)
 
-            self.downloader.download()
+            self.thread.start()
+            log.info("Started downloading %s path to %s", application.id, os.path.join(SunriseSettings.settingsPath, "patch", application.id))
 
     def onStateChange(self, state, filename = None):
+        log.debug("Patch state transition %s %s", state, filename)
         True
 
         # TODO: On complete copy tmp over top of the existing install

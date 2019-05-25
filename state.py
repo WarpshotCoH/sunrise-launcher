@@ -42,19 +42,23 @@ class Store(QObject):
                 self.config = json.loads(config)
 
         except Exception:
+            log.error("App config initialization failure")
             log.error(sys.exc_info())
             pass
 
         try:
             dirs = list(os.walk(os.path.abspath("themes")))
-            for themeId in dirs[0][1]:
-                log.info("Adding theme from %s", themeId)
-                theme = Theme.fromPath(os.path.join("themes", themeId))
 
-                if theme.props and "name" in theme.props:
-                    self.themes[theme.props["name"]] = theme
+            if len(dirs) > 0:
+                for themeId in dirs[0][1]:
+                    log.info("Adding theme from %s", themeId)
+                    theme = Theme.fromPath(os.path.join("themes", themeId))
+
+                    if theme.props and "name" in theme.props:
+                        self.themes[theme.props["name"]] = theme
 
         except Exception:
+            log.error("Default theme initialization failure")
             log.error(sys.exc_info())
             pass
 
@@ -65,19 +69,23 @@ class Store(QObject):
                 self.strings = json.loads(stringConfig)
 
         except Exception:
+            log.error("Strings initialization failure")
             log.error(sys.exc_info())
             pass
 
         try:
             dirs = list(os.walk(os.path.join(SunriseSettings.settingsPath, "themes")))
-            for themeId in dirs[0][1]:
-                log.info("Adding user theme from %s", themeId)
-                theme = Theme.fromPath(os.path.join(SunriseSettings.settingsPath, "themes", themeId))
 
-                if theme.props and "name" in theme.props:
-                    self.themes[theme.props["name"]] = theme
+            if len(dirs) > 0:
+                for themeId in dirs[0][1]:
+                    log.info("Adding user theme from %s", themeId)
+                    theme = Theme.fromPath(os.path.join(SunriseSettings.settingsPath, "themes", themeId))
+
+                    if theme.props and "name" in theme.props:
+                        self.themes[theme.props["name"]] = theme
 
         except Exception:
+            log.error("User theme initialization failure")
             log.error(sys.exc_info())
             pass
 

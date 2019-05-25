@@ -1,4 +1,5 @@
-from os.path import join, abspath, normpath
+from os import makedirs, symlink
+from os.path import join, abspath, normpath, basename, dirname, isdir, isfile
 import subprocess
 import sys
 import threading
@@ -47,6 +48,30 @@ class ApplicationArgs:
         self.APP_ABSPATH = join(absBin, application.id) if application else ""
         self.RT_ABSPATH = join(absBin, runtim.id) if runtim else ""
 
+class Link:
+    def __init__(self, store):
+        self.store = store
+
+    def link(self, application):
+        containers = [application]
+        paths = self.store.settings.get("paths")
+
+        if application.runtime:
+            if self.store.runtimes.get(application.runtime):
+                containers = [self.store.runtimes.get(application.runtime)] + containers
+
+        for container in containers:
+            log.info("Linking %s", container.id)
+            for file in container.files:
+                fileName = join(paths.runPath, file.name)
+                filePath = join(paths.runPath, dirname(file.name))
+
+                if not isdir(filePath):
+                    makedirs(filePath)
+
+                log.info("Link %s", file.name)
+                symlink(join(paths.binPath, container.id, file.name), fileName)
+
 class Launcher(QObject):
     started = Signal(str)
     exited = Signal(str)
@@ -57,9 +82,17 @@ class Launcher(QObject):
         self.store = store
 
     def getApplicationCmd(self, application):
-        runPath = os.path.abspath(os.path.join(self.store.settings.get("paths").binPath, application.runtime if application.runtime else application.id))
+        paths = self.store.settings.get("paths")
+        path = paths.runPath if self.store.f("use_symlinks") else paths.binPath
 
-        cmd = os.path.join(runPath, application.launcher.exec)
+        paths = self.store.settings.get("paths")
+
+        if self.store.f("use_symlinks"):
+            runPath = abspath(paths.runPath)
+        else:
+            runPath = abspath(join(paths.binPath, application.runtime if application.runtime else application.id))
+
+        cmd = join(runPath, application.launcher.exec)
 
         if application.launcher.params:
             cmd = cmd + " " + application.launcher.params
@@ -75,9 +108,14 @@ class Launcher(QObject):
         else:
             ex = application.launcher.exec
 
-        runPath = os.path.abspath(os.path.join(self.store.settings.get("paths").binPath, application.runtime if application.runtime else application.id))
+        paths = self.store.settings.get("paths")
 
-        cmd = os.path.join(runPath, ex)
+        if self.store.f("use_symlinks"):
+            runPath = abspath(paths.runPath)
+        else:
+            runPath = abspath(join(paths.binPath, application.runtime if application.runtime else application.id))
+
+        cmd = join(runPath, ex)
 
         if application.launcher.params:
             cmd = cmd + " " + application.launcher.params
@@ -116,8 +154,12 @@ class Launcher(QObject):
                 self.store.settings.set("recentServers", recentList)
                 self.store.settings.commit()
 
-            log.debug("Run command: %s %s", cmd, path)
-            # popenAndCall(lambda: self.started.emit(id), lambda: self.exited.emit(id), cmd.split(" "), cwd=path)
+                if self.store.f("use_symlinks"):
+                    link = Link(self.store)
+                    link.link(self.store.applications.get(server.application))
+
+                log.debug("Run command: %s %s", cmd, path)
+                popenAndCall(lambda: self.started.emit(id), lambda: self.exited.emit(id), cmd.split(" "), cwd=path)
 
 # https://stackoverflow.com/questions/2581817/python-subprocess-callback-when-cmd-exits
 def popenAndCall(onStart, onExit, *popenArgs, **popenKWArgs):

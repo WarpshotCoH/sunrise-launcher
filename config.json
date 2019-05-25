@@ -5,6 +5,7 @@
         "source_url": ""
     },
     "flags": {
-        "add_theme": true
+        "add_theme": true,
+        "use_symlinks": true
     }
 }
