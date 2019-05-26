@@ -112,7 +112,10 @@ class Store(QObject):
                 self.settings.set("paths", PathSettings("bin", "run"))
                 self.settings.set("recentServers", RecentServers())
                 self.settings.set("hiddenServers", uList())
-                self.settings.set("theme", list(self.themes.keys())[0])
+
+                if (len(self.themes.keys()) > 0):
+                   self.settings.set("theme", list(self.themes.keys())[0])
+
                 self.settings.set("manifestList", uList())
 
             self.settings.commit()

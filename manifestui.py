@@ -1,7 +1,7 @@
 from PySide2.QtCore import Slot, QSize
 from PySide2.QtWidgets import QListWidgetItem, QLabel, QPushButton
 
-from helpers import createWidget, logger
+from helpers import createWidget, logger, uList
 
 log = logger("main.ui.manifests")
 
@@ -42,6 +42,10 @@ class ManifestUI:
     def addManifestSource(self):
         if len(self.ui.manifestSourceInput.text()) > 0:
             mList = self.store.settings.get("manifestList")
+
+            if not mList:
+                mList = uList()
+
             mList.push(self.ui.manifestSourceInput.text())
             self.store.settings.set("manifestList", mList)
             self.store.settings.commit()

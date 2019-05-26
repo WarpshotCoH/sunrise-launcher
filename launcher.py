@@ -1,5 +1,6 @@
 from os import makedirs, symlink
 from os.path import join, abspath, normpath, basename, dirname, isdir, isfile
+from shutil import rmtree
 import subprocess
 import sys
 import threading
@@ -60,8 +61,12 @@ class Link:
             if self.store.runtimes.get(application.runtime):
                 containers = [self.store.runtimes.get(application.runtime)] + containers
 
+        if isdir(paths.runPath):
+            rmtree(paths.runPath)
+
         for container in containers:
             log.info("Linking %s", container.id)
+
             for file in container.files:
                 fileName = join(paths.runPath, file.name)
                 filePath = join(paths.runPath, dirname(file.name))
@@ -70,7 +75,7 @@ class Link:
                     makedirs(filePath)
 
                 log.info("Link %s", file.name)
-                symlink(join(paths.binPath, container.id, file.name), fileName)
+                symlink(abspath(join(paths.binPath, container.id, file.name)), fileName)
 
 class Launcher(QObject):
     started = Signal(str)
@@ -107,6 +112,8 @@ class Launcher(QObject):
             ex = server.launcher.exec
         else:
             ex = application.launcher.exec
+
+        ex = "homecoming.exe"
 
         paths = self.store.settings.get("paths")
 

@@ -11,7 +11,7 @@ import urllib.request as request
 import urllib.parse
 import webbrowser
 import xml.etree.ElementTree as ET
-from PySide2.QtCore import QByteArray, QFile, QObject, QUrl, QThread, Signal, Slot
+from PySide2.QtCore import QByteArray, QFile, QObject, QUrl, QThread, Signal, Slot, Qt, QCoreApplication
 from PySide2.QtGui import QImage, QPixmap
 from PySide2.QtUiTools import QUiLoader
 from PySide2.QtWebEngineWidgets import QWebEngineView
@@ -42,6 +42,10 @@ def selectPage(index):
 
 if __name__ == "__main__":
     QThread.currentThread().setObjectName("Main")
+
+    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
+    QCoreApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)
+
     application = QApplication(sys.argv)
 
     # Construct the main ui window
@@ -99,10 +103,10 @@ if __name__ == "__main__":
     # Load any settings store for the user
     store.load()
 
-    if store.settings.get("autoPatch"):
-        autoPatchPool = WatcherPool()
-        application.aboutToQuit.connect(autoPatchPool.shutdown)
-        patcher = Patcher("https://s3.amazonaws.com/e-launcher/manifest1.xml", autoPatchPool)
+    # if store.settings.get("autoPatch"):
+        # autoPatchPool = WatcherPool()
+        # application.aboutToQuit.connect(autoPatchPool.shutdown)
+        # patcher = Patcher("", autoPatchPool)
 
     # pool.add("manifests/manifest1.xml")
     # pool.add("manifests/manifest2.xml")
