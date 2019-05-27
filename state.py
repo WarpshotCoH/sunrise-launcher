@@ -109,7 +109,7 @@ class Store(QObject):
             else:
                 self.settings.set("autoPatch", True)
                 self.settings.set("containerSettings", {})
-                self.settings.set("paths", PathSettings("bin", "run"))
+                self.settings.set("paths", PathSettings("bin", "run", "fdb"))
                 self.settings.set("recentServers", RecentServers())
                 self.settings.set("hiddenServers", uList())
 

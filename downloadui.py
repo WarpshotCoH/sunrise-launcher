@@ -3,6 +3,7 @@ import os
 from PySide2.QtCore import QObject, QThread, Slot, Signal
 
 from downloader import DownloaderState
+from fdbdownloader import FDBDownloader
 from httpdownloader import HTTPDownloader
 from manifest import Application, Runtime, Server
 from helpers import createWidget, logger
@@ -80,7 +81,12 @@ class DownloadUI(QObject):
 
     def verifyDownload(self):
         self.shutdown()
-        self.downloader = HTTPDownloader([self.containers[-1]], self.store.settings.get("paths").binPath)
+
+        if self.store.f("file_db"):
+            self.downloader = FDBDownloader([self.containers[-1]], self.store.settings.get("paths").fdbPath)
+        else:
+            self.downloader = HTTPDownloader([self.containers[-1]], self.store.settings.get("paths").binPath)
+
         self.runInBackground(self.downloader.verify)
         self.show()
 
@@ -88,7 +94,12 @@ class DownloadUI(QObject):
         # Before verifying or downloading, make sure existing downloaders and
         # threads have been cleaned up
         self.shutdown()
-        self.downloader = HTTPDownloader(self.containers, self.store.settings.get("paths").binPath)
+
+        if self.store.f("file_db"):
+            self.downloader = FDBDownloader(self.containers, self.store.settings.get("paths").fdbPath)
+        else:
+            self.downloader = HTTPDownloader(self.containers, self.store.settings.get("paths").binPath)
+
         self.runInBackground(self.downloader.download)
         self.show()
 

@@ -74,16 +74,13 @@ class Link:
                 if not isdir(filePath):
                     makedirs(filePath)
 
-                log.info("Link %s %s", abspath(fileName), abspath(join(paths.binPath, container.id, file.name)))
 
-                # Works
-                # subprocess.call(["mklink", "/H", abspath(fileName), abspath(join(paths.binPath, container.id, file.name))], shell = True)
-
-                # Does not work
-                # subprocess.call(["mklink", abspath(fileName), abspath(join(paths.binPath, container.id, file.name))], shell = True)
-
-                # Does not work
-                link(abspath(join(paths.binPath, container.id, file.name)), abspath(fileName))
+                if self.store.f("file_db"):
+                    log.info("Link %s %s", abspath(fileName), abspath(join(paths.fdbPath, file.check)))
+                    link(abspath(join(paths.fdbPath, file.check)), abspath(fileName))
+                else:
+                    log.info("Link %s %s", abspath(fileName), abspath(join(paths.binPath, container.id, file.name)))
+                    link(abspath(join(paths.binPath, container.id, file.name)), abspath(fileName))
 
 class Launcher(QObject):
     started = Signal(str)

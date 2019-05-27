@@ -1,6 +1,7 @@
 # App data
 applications
 bin
+fdb
 run
 runtimes
 store

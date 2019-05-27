@@ -14,9 +14,10 @@ class SunriseSettings:
     settingsPath = user_data_dir(APP_NAME, APP_AUTHOR)
 
 class PathSettings:
-    def __init__(self, binPath, runPath):
+    def __init__(self, binPath, runPath, fdbPath):
         self.binPath = binPath
         self.runPath = runPath
+        self.fdbPath = fdbPath
 
 class ContainerSettings:
     def __init__(self, id, autoPatch = False, customParams = None):
