@@ -1,4 +1,4 @@
-from os import makedirs, symlink
+from os import makedirs, symlink, link
 from os.path import join, abspath, normpath, basename, dirname, isdir, isfile
 from shutil import rmtree
 import subprocess
@@ -74,8 +74,16 @@ class Link:
                 if not isdir(filePath):
                     makedirs(filePath)
 
-                log.info("Link %s", file.name)
-                symlink(abspath(join(paths.binPath, container.id, file.name)), fileName)
+                log.info("Link %s %s", abspath(fileName), abspath(join(paths.binPath, container.id, file.name)))
+
+                # Works
+                # subprocess.call(["mklink", "/H", abspath(fileName), abspath(join(paths.binPath, container.id, file.name))], shell = True)
+
+                # Does not work
+                # subprocess.call(["mklink", abspath(fileName), abspath(join(paths.binPath, container.id, file.name))], shell = True)
+
+                # Does not work
+                link(abspath(join(paths.binPath, container.id, file.name)), abspath(fileName))
 
 class Launcher(QObject):
     started = Signal(str)
@@ -128,7 +136,7 @@ class Launcher(QObject):
             cmd = cmd + " " + application.launcher.params
 
         if server and server.launcher and server.launcher.params:
-            cmd = cmd + " " + server.launcher.params
+            cmd = cmd + " " + server.launcher.params + " -console"
 
         return (cmd, runPath)
 
