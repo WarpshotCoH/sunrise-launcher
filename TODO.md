@@ -6,6 +6,7 @@
 * Finish impl global settings
 * Details view. News / website / etc
 * Impl Sunrise auto-patching
+* Implement uninstaller / remover for containers
 * Launching on non-Windows
 * User setting persistance / loading (something safe)
 * Background patch server, application, runtime on selection (filedb may make this a non-issue)
