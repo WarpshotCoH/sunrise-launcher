@@ -1,0 +1,12 @@
+{
+    "about": {
+        "about_button_1_url": "",
+        "about_button_2_url": "",
+        "source_url": ""
+    },
+    "flags": {
+        "add_theme": true,
+        "use_symlinks": true,
+        "file_db": true
+    }
+}

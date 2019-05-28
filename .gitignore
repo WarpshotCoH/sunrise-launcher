@@ -1,6 +1,11 @@
 # App data
 applications
+bin
+fdb
+run
 runtimes
+store
+themes
 
 # Python
 __pycache__
@@ -9,6 +14,7 @@ venv
 # Temporary, deal with later
 docs
 manifest.xml
+manifests
 
 # Debris
 [Tt]humbs.db

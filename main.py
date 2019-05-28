@@ -11,114 +11,110 @@ import urllib.request as request
 import urllib.parse
 import webbrowser
 import xml.etree.ElementTree as ET
-from PySide2.QtCore import QByteArray, QFile, QObject, QUrl, QThread, Signal, Slot
+from PySide2.QtCore import QByteArray, QFile, QObject, QUrl, QThread, Signal, Slot, Qt, QCoreApplication
 from PySide2.QtGui import QImage, QPixmap
 from PySide2.QtUiTools import QUiLoader
 from PySide2.QtWebEngineWidgets import QWebEngineView
-from PySide2.QtWidgets import QApplication, QMainWindow, QPushButton, QListWidget, QListWidgetItem
+from PySide2.QtWidgets import QWidget, QApplication, QProgressBar, QMainWindow, QVBoxLayout, QPushButton, QListWidget, QListWidgetItem
 
+from detailsui import DetailsUI
 from downloadui import DownloadUI
+from gamelistui import GameListUI
+from headerui import HeaderUI
+from helpers import createWidget
+from serverlistui import ServerListUI
+from settingsui import SettingsUI
+
+from launcher import Launcher
+from manifestpool import ManifestPool
+from patcher import Patcher
+from state import Store
+from watcher import WatcherPool
 
 from manifest import fromXML
 
-class Form(QObject):
-    def __init__(self, ui_file, parent=None):
-        super(Form, self).__init__(parent)
+@Slot(int)
+def selectPage(index):
+    for page in pages:
+        page.hide()
 
-        # Init the download background thread
-        self.downloadThread = QThread()
-
-        ui_file = QFile(ui_file)
-        ui_file.open(QFile.ReadOnly)
-
-        loader = QUiLoader()
-        self.window = loader.load(ui_file)
-        ui_file.close()
-
-def projectSelected():
-    app = manifest.applications[mainForm.window.projectsListWidget.currentRow()]
-
-    runtime = manifest.runtimes.get(app.runtime)
-    downloadUI.load(runtime.files, './runtimes/' + runtime.id)
-
-    if len(app.websites) > 1:
-        home = next(w for w in app.websites if w.type == "home")
-
-        if home:
-            buttonUrl = home.address
-        else:
-           buttonUrl = app.websites[0].address
-    elif len(app.websites) == 1:
-        buttonUrl = app.websites[0].address
-
-    if app.name:
-        mainForm.window.projectNameLabel.setText(app.name)
-
-    if app.publisher:
-        mainForm.window.projectPublisherLabel.setText(app.publisher)
-
-    mainForm.window.projectUptimeLabel.setText("Uptime Unknown") # TODO: handle this... servers will have to provide a query service, specified in the manifest?
-
-    # TODO: How do we disconnect if we don't have apriori knowledge of connections
-    try:
-        mainForm.window.projectWebsiteButton.clicked.disconnect()
-    except Exception:
-        pass
-
-    if buttonUrl:
-        mainForm.window.projectWebsiteButton.clicked.connect(lambda: webbrowser.open(buttonUrl))
-
-    try:
-        if app.icon:
-           projectIconData = requests.get(app.icon, stream=True, allow_redirects=True).content # TODO: handle 404/missing icon?
-           projectIconImage = QImage.fromData(projectIconData)
-           mainForm.window.projectIconLabel.setPixmap(QPixmap.fromImage(projectIconImage))
-    except Exception:
-        pass
-
-    print("Selected Project: %s" % app.id)
+    pages[index].show()
 
 if __name__ == "__main__":
+    QThread.currentThread().setObjectName("Main")
+
+    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
+    QCoreApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)
+
     application = QApplication(sys.argv)
 
-    mainForm = Form("sunrise.ui")
-    settingsForm = Form("settings-dialog.ui")
-    #runtimesForm = Form("runtimes-dialog.ui")
+    # Construct the main ui window
+    window = createWidget("ui/sunrise-v3.ui")
 
-    downloadUI = DownloadUI(
-        mainForm.window.overallProgressBar,
-        mainForm.window.fileProgressBar,
-        mainForm.window.progressLabel,
-        mainForm.window.playButton
-    )
+    # Boot the initial data store
+    store = Store()
 
-    # clear out the placeholder labels
-    placeholdersToClear = [
-        mainForm.window.progressLabel,
-        mainForm.window.projectNameLabel,
-        mainForm.window.projectPublisherLabel,
-        mainForm.window.projectUptimeLabel
-    ]
-    for placeholder in placeholdersToClear:
-        placeholder.setText("")
+    # Initialize the global UI elements
+    headerUI = HeaderUI(store, window.gridLayout)
 
-    manifest = fromXML("manifest.xml")
+    # Initialize the main pages
+    serverListUI = ServerListUI(store, window.gridLayout)
+    gameListUI = GameListUI(store, window.gridLayout)
+    settingsUI = SettingsUI(store, window.gridLayout)
 
-    for app in manifest.applications:
-        QListWidgetItem(app.name, mainForm.window.projectsListWidget)
+    pages = [serverListUI, gameListUI, settingsUI]
 
-    mainForm.window.projectsListWidget.setCurrentRow(0)
-    projectSelected()
+    # Show the first page by default
+    selectPage(0)
 
-    mainForm.window.projectsListWidget.itemSelectionChanged.connect(projectSelected)
+    # Initialize background data fetching pools
+    pool = ManifestPool(store)
 
-    # bind button clicks
-    mainForm.window.settingsButton.clicked.connect(settingsForm.window.show)
-    # mainForm.window.runtimesButton.clicked.connect(runtimesForm.window.show)
+    # Initialize the application launcher
+    launcher = Launcher(store)
 
-    # things are ready, show the main window
-    mainForm.window.show()
+    # Wire the inidivudal components together
 
-    application.aboutToQuit.connect(downloadUI.shutdown)
+    # Connect the main header buttons to their pages
+    headerUI.itemSelected.connect(selectPage)
+
+    # Update the state store when a manifest update is received
+    pool.updated.connect(store.loadManifest)
+
+    # Connect the store to the launcher so a list of running applications
+    # can be maintained
+    launcher.started.connect(store.addRunning)
+    launcher.exited.connect(store.removeRunning)
+
+    # Connect the list views to the launcher
+    serverListUI.launch.connect(launcher.launch)
+    gameListUI.launch.connect(launcher.launch)
+
+    # Bind shutdown handlers for closing out background threads
+    application.aboutToQuit.connect(serverListUI.shutdown)
+    application.aboutToQuit.connect(gameListUI.shutdown)
+
+    application.aboutToQuit.connect(pool.shutdown)
+
+    # Connect to theme selection
+    # TODO: This requires a key existance check. User may have deleted the theme between runs
+    store.settings.connectKey("theme", lambda _: store.themes[store.settings.get("theme")].activate(application))
+
+    # Load any settings store for the user
+    store.load()
+
+    # if store.settings.get("autoPatch"):
+        # autoPatchPool = WatcherPool()
+        # application.aboutToQuit.connect(autoPatchPool.shutdown)
+        # patcher = Patcher("", autoPatchPool)
+
+    # pool.add("manifests/manifest1.xml")
+    # pool.add("manifests/manifest2.xml")
+    # pool.add("manifests/manifest3.xml")
+
+    window.setWindowTitle(store.s("ABOUT_TITLE"))
+
+    # Show the application
+    window.show()
 
     sys.exit(application.exec_())

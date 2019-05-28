@@ -11,41 +11,54 @@ import urllib.parse
 import requests
 
 from manifest import algoMap
+from helpers import logger
 
-# TODO: Refactor to take a File from manifest and a writePath as constructor args
+log = logger("main.downloader.file")
+
 class FileDownload():
-    def __init__(self, writePath, urls, name, size, check, algo):
+    def __init__(self, file, writePath, mirror = None):
+        self.file = file
         self.path = writePath
-        self.urls = urls
-        self.name = name
-        self.size = size
-        self.check = check
-        self.algo = algoMap[algo]
+        self.mirror = mirror
         self.interrupt = False
+        self.skipHashCheck = False
+
+    def toggleHashCheck(self, state = None):
+        if state == None:
+            self.skipHashCheck = not self.skipHashCheck
+        else:
+            self.skipHashCheck = state
 
     def start(self, init, progress):
-        print("Start file download")
-        urlNumToTry = random.randint(0, len(self.urls) - 1)
+        log.info("Start file download")
+
+        # First try downloading from the designated mirror
+        if self.mirror:
+            log.debug("%s mirror selected. Attempting to download from mirror first", self.mi)
+            if self.downloadUrl(self.mirror + self.file.name, init, progress):
+                return True
+
+        urlNumToTry = random.randint(0, len(self.file.urls) - 1)
         downloaded = False
         tries = 0
 
-        while (not downloaded and tries < len(self.urls)):
+        while (not downloaded and tries < len(self.file.urls)):
 
             # Allow downloads to be interrupted
             if self.interrupt:
                 return downloaded
 
-            print(downloaded, urlNumToTry, tries, self.urls[urlNumToTry])
+            log.debug("%s %s %s %s", downloaded, urlNumToTry, tries, self.file.urls[urlNumToTry])
 
-            if (tries > len(self.urls) - 1):
-                print("Ran out of tries")
+            if (tries > len(self.file.urls) - 1):
+                log.warning("Ran out of tries")
                 return downloaded
 
-            url = self.urls[urlNumToTry]
+            url = self.file.urls[urlNumToTry]
             downloaded = self.downloadUrl(url, init, progress)
             urlNumToTry += 1
 
-            if (urlNumToTry > len(self.urls) - 1):
+            if (urlNumToTry > len(self.file.urls) - 1):
                 urlNumToTry = 0
 
             tries += 1
@@ -53,26 +66,26 @@ class FileDownload():
         return downloaded
 
     def downloadUrl(self, url, init, progress):
-        print("Start url download", url)
+        log.info("Start url download %s", url)
 
         complete = False
 
         try:
-            r = requests.get(url, stream=True)
+            r = requests.get(url, stream=True, timeout=5)
 
             remoteFilename = posixpath.basename(urllib.parse.urlparse(url).path)
             # TODO: Handle Transfer-Encoding: chunked; unable to know the remote filesize there.
-            remoteFilesize = int(r.headers['Content-Length'])
+            remoteFilesize = int(r.headers['Content-Length']) if 'Content-Length' in r.headers else self.file.size
 
             init.emit(0, 0, remoteFilesize, remoteFilename)
 
-            print("Downloading %s from: %s" % (remoteFilename, url))
+            log.info("Downloading %s from: %s", remoteFilename, url)
 
             fileProgress = 0
 
             with r:
                 r.raise_for_status()
-                with open(self.path, 'wb') as f:
+                with open(self.path, 'wb+') as f:
                     for chunk in r.iter_content(chunk_size=8192):
                         # Allow downloads to be interrupted
                         if self.interrupt:
@@ -88,26 +101,33 @@ class FileDownload():
                 complete = True
 
         except:
-          print(sys.exc_info())
+            log.error("Download error %s", self.file.name)
+            log.error(sys.exc_info())
 
         return complete
 
 
     def verify(self, verify, progress):
+        multiplier = 128
         verified = False
 
-        chunks = math.ceil(self.size/4096)
+        chunks = math.ceil(self.file.size / (65536 * multiplier))
 
-        verify.emit(0, 0, chunks, self.name)
+        verify.emit(0, 0, chunks, self.file.name)
 
         hashProgress = 0
 
         try:
-            if (os.path.getsize(self.path) == self.size):
+            if (os.path.getsize(self.path) == self.file.size):
+                if self.skipHashCheck:
+                    log.debug("Skip hash check")
+                    progress.emit(chunks)
+                    return True
+
                 # filesize matches, so check the hash; size + hash is more secure than hash alone
                 with open(self.path, 'rb+') as f:
-                    hasher = self.algo()
-                    for chunk in iter(lambda: f.read(4096), b''):
+                    hasher = algoMap[self.file.algo]()
+                    for chunk in iter(lambda: f.read(65536 * multiplier), b''):
                         # Allow downloads to be interrupted
                         if self.interrupt:
                             return verified
@@ -117,14 +137,14 @@ class FileDownload():
                         progress.emit(hashProgress)
                     check = hasher.hexdigest()
 
-                if (check == self.check):
+                if (check == self.file.check):
                     verified = True
                 else:
-                    print("Hash mismatch")
+                    log.warning("Hash mismatch")
             else:
-                print("Filesize mismatch")
+                log.warning("Filesize mismatch")
         except Exception:
-            print(sys.exc_info())
+            log.error(sys.exc_info())
 
         return verified
 
