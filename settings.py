@@ -1,17 +1,10 @@
 from copy import deepcopy
 
-from appdirs import user_data_dir, user_log_dir
 from PySide2.QtCore import QObject, QThread, Slot, Signal
 
 from helpers import logger
 
-APP_NAME = "Sunrise"
-APP_AUTHOR = "Sunrise"
-
 log = logger("main.state.settings")
-
-class SunriseSettings:
-    settingsPath = user_data_dir(APP_NAME, APP_AUTHOR)
 
 class PathSettings:
     def __init__(self, binPath, runPath, fdbPath):

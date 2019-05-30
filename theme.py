@@ -4,7 +4,7 @@ from zipfile import ZipFile
 
 from PySide2.QtGui import QFontDatabase
 
-from settings import SunriseSettings
+from helpers import SunriseSettings
 
 class Theme:
     def __init__(self, props = None, css = None):

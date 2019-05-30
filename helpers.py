@@ -2,9 +2,16 @@ import logging
 import os
 import sys
 
-from appdirs import user_log_dir
+from appdirs import user_data_dir, user_log_dir
 from PySide2.QtCore import QFile
 from PySide2.QtUiTools import QUiLoader
+
+APP_NAME = "Sunrise"
+APP_AUTHOR = "Sunrise"
+
+class SunriseSettings:
+    settingsPath = user_data_dir(APP_NAME, APP_AUTHOR)
+    logsPath = user_log_dir(APP_NAME, APP_AUTHOR)
 
 def logger(name):
     l = logging.getLogger(name)
@@ -19,7 +26,10 @@ def logger(name):
         console.setLevel(logging.DEBUG)
         l.addHandler(console)
 
-        file = logging.FileHandler(os.path.join(user_log_dir("Sunrise", "Sunrise"), "sunrise.log"))
+        if not os.path.isdir(os.path.join(SunriseSettings.logsPath)):
+            os.makedirs(os.path.join(SunriseSettings.logsPath))
+
+        file = logging.FileHandler(os.path.join(SunriseSettings.logsPath, "sunrise.log"))
         file.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
         file.setLevel(logging.INFO)
 
