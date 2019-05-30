@@ -26,7 +26,7 @@ class SettingsUI(QObject):
         self.tabs = [
             GeneralSettingsUI(store, self.ui.settingsBodyLayout).ui,
             ManifestUI(store, self.ui.settingsBodyLayout).ui,
-            AboutUI(store, self.ui.settingsBodyLayout).ui,
+            None,
             AboutUI(store, self.ui.settingsBodyLayout).ui
         ]
 
@@ -39,6 +39,9 @@ class SettingsUI(QObject):
         self.store.settings.committed.connect(self.update)
 
         self.layoutText()
+
+        # Disabled until server settings are implemented
+        self.header.settingsServerButton.hide()
 
         parent.addWidget(self.ui)
 
@@ -56,9 +59,11 @@ class SettingsUI(QObject):
 
     def selectTab(self, index):
         for tab in self.tabs:
-            tab.hide()
+            if tab:
+                tab.hide()
 
-        self.tabs[index].show()
+        if self.tabs[index]:
+            self.tabs[index].show()
 
     @Slot(Settings)
     def update(self, settings):
