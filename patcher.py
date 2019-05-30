@@ -2,10 +2,9 @@ import os
 
 from PySide2.QtCore import QObject, QThread, Slot, Signal
 
-from helpers import logger
+from helpers import logger, SunriseSettings
 from httpdownloader import HTTPDownloader
 from manifest import Application
-from settings import SunriseSettings
 
 log = logger("main.patcher")
 

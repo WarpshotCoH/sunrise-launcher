@@ -6,9 +6,9 @@ import xml.etree.ElementTree as ET
 
 from PySide2.QtCore import QObject, Slot, Signal
 
-from helpers import uList
+from helpers import uList, SunriseSettings
 from manifest import fromXML, fromXMLString, Manifest
-from settings import Settings, PathSettings, ContainerSettings, RecentServers, SunriseSettings
+from settings import Settings, PathSettings, ContainerSettings, RecentServers
 from theme import Loader, Theme
 
 from helpers import logger
