@@ -77,6 +77,8 @@ class ListViewUI(QObject):
 
     @Slot(Application, Runtime, Server)
     def loadDetails(self, application = None, runtime = None, server = None):
+        self.action2.setVisible(server == None)
+
         if server:
             self.ui.detailsName.setText(server.name)
             self.ui.detailsSubname1.setText(application.name)
