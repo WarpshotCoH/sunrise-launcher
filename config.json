@@ -6,7 +6,6 @@
     },
     "flags": {
         "add_theme": false,
-        "use_symlinks": false,
-        "file_db": false
+        "use_symlinks": false
     }
 }

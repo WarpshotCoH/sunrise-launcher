@@ -14,12 +14,11 @@ from helpers import logger
 log = logger("main.downloader.http")
 
 class FDBDownloader(QObject):
-    fileStart = Signal(int, int, int, str)
+    fileStarted = Signal(int, int, int, str)
     fileProgress = Signal(int)
-    fileVerify = Signal(int, int, int, str)
     start = Signal(str, int, int, int)
     progress = Signal(int)
-    stateChange = Signal(DownloaderState, str)
+    stateChange = Signal(DownloaderState, (str, str))
 
     def __init__(self, containers, installPath, fastCheck = False, parent=None):
         super(FDBDownloader, self).__init__(parent)
@@ -98,13 +97,13 @@ class FDBDownloader(QObject):
 
                     if os.path.isfile(path):
                         log.debug("File exists. Verifying %s", path)
-                        status = self.currentFile.verify(self.fileVerify, self.fileProgress)
+                        status = self.currentFile.verify(self.fileStarted, self.fileProgress)
 
                         if not status:
                             # Do not fail the file if the user has requested a pause
                             if not self.isStopped():
                                 log.info("Verification failed %s mismatch", path)
-                                self.changeState(DownloaderState.VERIFICATION_FAILED, fileName)
+                                self.changeState(DownloaderState.VERIFICATION_FAILED)
 
                             return
                         else:
@@ -112,7 +111,7 @@ class FDBDownloader(QObject):
                             self.progress.emit(index + 1)
                     else:
                         log.info("Verification failed %s missing", path)
-                        self.changeState(DownloaderState.VERIFICATION_FAILED, fileName)
+                        self.changeState(DownloaderState.VERIFICATION_FAILED)
                         return
 
             self.changeState(DownloaderState.COMPLETE)
@@ -164,33 +163,34 @@ class FDBDownloader(QObject):
 
                     if os.path.isfile(path):
                         log.info("File already exists. Verifying %s", path)
-                        status = self.currentFile.verify(self.fileVerify, self.fileProgress)
+                        status = self.currentFile.verify(self.fileStarted, self.fileProgress)
                     else:
                         status = False
 
                     if not status:
-                        status = self.currentFile.start(self.fileStart, self.fileProgress)
+                        status = self.currentFile.start(self.fileStarted, self.fileProgress)
 
                     if not status:
                         # Do not fail the file if the user has requested a pause
                         if not self.isStopped():
-                            self.changeState(DownloaderState.DOWNLOAD_FAILED, fileName)
+                            self.changeState(DownloaderState.DOWNLOAD_FAILED)
 
                         return
                     else:
                         log.info("Download complete %s", fileName)
-                        status = self.currentFile.verify(self.fileVerify, self.fileProgress)
+                        status = self.currentFile.verify(self.fileStarted, self.fileProgress)
 
                         if not status:
                             # Do not fail the file if the user has requested a pause
                             if not self.isStopped():
-                                self.changeState(DownloaderState.VERIFICATION_FAILED, fileName)
+                                self.changeState(DownloaderState.VERIFICATION_FAILED)
 
                             return
 
                     if status:
                         log.info("Verfification complete %s", fileName)
                         self.progress.emit(index + 1)
+
 
             self.changeState(DownloaderState.COMPLETE)
         except Exception:

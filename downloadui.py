@@ -6,7 +6,7 @@ from downloader import DownloaderState
 from fdbdownloader import FDBDownloader
 from httpdownloader import HTTPDownloader
 from manifest import Application, Runtime, Server
-from helpers import createWidget, logger
+from helpers import createWidget, logger, uList
 
 log = logger("main.ui.download")
 
@@ -82,10 +82,7 @@ class DownloadUI(QObject):
     def verifyDownload(self):
         self.shutdown()
 
-        if self.store.f("file_db"):
-            self.downloader = FDBDownloader([self.containers[-1]], self.store.settings.get("paths").fdbPath)
-        else:
-            self.downloader = HTTPDownloader([self.containers[-1]], self.store.settings.get("paths").binPath)
+        self.downloader = HTTPDownloader([self.containers[-1]], self.store.settings.get("paths").binPath)
 
         self.runInBackground(self.downloader.verify)
         self.show()
@@ -95,10 +92,7 @@ class DownloadUI(QObject):
         # threads have been cleaned up
         self.shutdown()
 
-        if self.store.f("file_db"):
-            self.downloader = FDBDownloader(self.containers, self.store.settings.get("paths").fdbPath)
-        else:
-            self.downloader = HTTPDownloader(self.containers, self.store.settings.get("paths").binPath)
+        self.downloader = HTTPDownloader(self.containers, self.store.settings.get("paths").binPath, self.store.settings.get("fileMap"))
 
         self.runInBackground(self.downloader.download)
         self.show()
@@ -123,12 +117,12 @@ class DownloadUI(QObject):
         # Connect up to the files progress events
         self.downloader.start.connect(self.onStart)
         self.downloader.progress.connect(self.onProgress)
-        self.downloader.stateChange.connect(self.onDownloaderStateChange)
+        self.downloader.stateChanged.connect(self.onDownloaderStateChange)
 
         # Connect up to the file progress events
-        self.downloader.fileStart.connect(self.onFileStart)
+        self.downloader.fileStarted.connect(self.onFileStart)
         self.downloader.fileProgress.connect(self.onFileProgress)
-        self.downloader.fileVerify.connect(self.onFileStart)
+        self.downloader.fileCompleted.connect(self.onFileComplete)
 
         # Move the download manager to the background thread
         self.downloader.moveToThread(self.downloadThread)
@@ -179,9 +173,9 @@ class DownloadUI(QObject):
         self.cur = i
         self.progressBar.setValue(i)
 
-    @Slot(DownloaderState, str)
-    def onDownloaderStateChange(self, state, filename = None):
-        log.debug("Change state %s", state)
+    @Slot(DownloaderState, tuple)
+    def onDownloaderStateChange(self, state, file):
+        log.debug("Change state %s : %s", state, file)
         self.disableButton()
 
         # TODO: Button/label for non-runnable targets
@@ -234,12 +228,12 @@ class DownloadUI(QObject):
                 if not state == DownloaderState.VERIFYING:
                     self.enableButton()
 
-            if state == DownloaderState.DOWNLOAD_FAILED and filename:
-                self.progressBar.setFormat("Failed to download {}".format(filename))
+            if state == DownloaderState.DOWNLOAD_FAILED and file[1]:
+                self.progressBar.setFormat("Failed to download {}".format(file[1]))
                 self.fileBar.hide()
 
-            if state == DownloaderState.VERIFICATION_FAILED and filename:
-                self.progressBar.setFormat("Failed to verify {}".format(filename))
+            if state == DownloaderState.VERIFICATION_FAILED and file[1]:
+                self.progressBar.setFormat("Failed to verify {}".format(file[1]))
                 self.fileBar.hide()
 
             # On a pause, complete, or missing we clear out any progress text
@@ -258,3 +252,17 @@ class DownloadUI(QObject):
     @Slot(int)
     def onFileProgress(self, i):
         self.fileBar.setValue(i)
+
+    @Slot(tuple)
+    def onFileComplete(self, file):
+        fMap = self.store.settings.get("fileMap")
+
+        if not fMap.get(file[0]):
+            fMap[file[0]] = uList()
+
+        fMap[file[0]].push(file[1])
+
+        self.store.settings.set("fileMap", fMap)
+        self.store.settings.commit()
+
+        log.debug("File completed %s", file)

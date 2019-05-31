@@ -74,13 +74,8 @@ class Link:
                 if not isdir(filePath):
                     makedirs(filePath)
 
-
-                if self.store.f("file_db"):
-                    log.info("Link %s %s", abspath(fileName), abspath(join(paths.fdbPath, file.check)))
-                    link(abspath(join(paths.fdbPath, file.check)), abspath(fileName))
-                else:
-                    log.info("Link %s %s", abspath(fileName), abspath(join(paths.binPath, container.id, file.name)))
-                    link(abspath(join(paths.binPath, container.id, file.name)), abspath(fileName))
+                log.info("Link %s %s", abspath(fileName), abspath(join(paths.binPath, container.id, file.name)))
+                link(abspath(join(paths.binPath, container.id, file.name)), abspath(fileName))
 
 class Launcher(QObject):
     started = Signal(str)

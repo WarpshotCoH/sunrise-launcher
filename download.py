@@ -106,6 +106,12 @@ class FileDownload():
 
         return complete
 
+    def copyFrom(self, path, started, progress):
+        # started.emit(0, 0, remoteFilesize, remoteFilename)
+
+        log.debug("Copying from %s to %s", path, os.path.join(self.path, self.file.name))
+
+        return False
 
     def verify(self, verify, progress):
         multiplier = 128

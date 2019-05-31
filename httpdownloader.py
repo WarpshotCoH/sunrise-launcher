@@ -14,25 +14,33 @@ from helpers import logger
 log = logger("main.downloader.http")
 
 class HTTPDownloader(QObject):
-    fileStart = Signal(int, int, int, str)
+    fileStarted = Signal(int, int, int, str)
     fileProgress = Signal(int)
-    fileVerify = Signal(int, int, int, str)
+    fileCompleted = Signal(tuple)
     start = Signal(str, int, int, int)
     progress = Signal(int)
-    stateChange = Signal(DownloaderState, str)
+    stateChanged = Signal(DownloaderState, tuple)
 
-    def __init__(self, containers, installPath, fastCheck = False, parent=None):
+    def __init__(self, containers, installPath, fileMap = None, fastCheck = False, parent=None):
         super(HTTPDownloader, self).__init__(parent)
 
         self.state = DownloaderState.NEW
         self.containers = containers
         self.installPath = installPath
-        self.currentFile = None
+        self.fileMap = fileMap
         self.fastCheck = fastCheck
+        self.currentFile = None
 
-    def changeState(self, state, msg = None):
+    def changeState(self, state, fileName = None):
         self.state = state
-        self.stateChange.emit(state, msg)
+
+        if self.currentFile:
+            self.stateChanged.emit(
+                state,
+                (self.currentFile.file.check, fileName)
+            )
+        else:
+            self.stateChanged.emit(state, None)
 
     def pause(self):
         self.changeState(DownloaderState.PAUSED)
@@ -99,23 +107,25 @@ class HTTPDownloader(QObject):
 
                     if os.path.isfile(path):
                         log.debug("File exists. Verifying %s", path)
-                        status = self.currentFile.verify(self.fileVerify, self.fileProgress)
+                        status = self.currentFile.verify(self.fileStarted, self.fileProgress)
 
                         if not status:
                             # Do not fail the file if the user has requested a pause
                             if not self.isStopped():
                                 log.info("Verification failed %s mismatch", path)
-                                self.changeState(DownloaderState.VERIFICATION_FAILED, fileName)
+                                self.changeState(DownloaderState.VERIFICATION_FAILED, path)
 
                             return
                         else:
                             log.info("Verfification complete %s", fileName)
                             self.progress.emit(index + 1)
+                            self.fileCompleted.emit((self.currentFile.file.check, path))
                     else:
                         log.info("Verification failed %s missing", path)
-                        self.changeState(DownloaderState.VERIFICATION_FAILED, fileName)
+                        self.changeState(DownloaderState.VERIFICATION_FAILED, path)
                         return
 
+            self.currentFile = None
             self.changeState(DownloaderState.COMPLETE)
         except Exception:
             log.error(sys.exc_info())
@@ -166,27 +176,41 @@ class HTTPDownloader(QObject):
 
                     if os.path.isfile(path):
                         log.info("File already exists. Verifying %s", path)
-                        status = self.currentFile.verify(self.fileVerify, self.fileProgress)
+                        status = self.currentFile.verify(self.fileStarted, self.fileProgress)
                     else:
                         status = False
 
                     if not status:
-                        status = self.currentFile.start(self.fileStart, self.fileProgress)
+                        # If we don't already have the file locally, check the fileMap to
+                        # see if it has been downloaded already by someone else
+                        if self.currentFile.file.check in self.fileMap:
+                            exitingFiles = self.fileMap[self.currentFile.check]
+
+                            log.info("Found %s existing files for %s : %s", len(existingFiles), self.currentFile.check, path)
+
+                            while not status and file in existingFiles:
+                                status = self.currentFile.copyFrom(file, self.fileStarted, self.fileProgress)
+                        else:
+                            log.debug("Failed to find %s in existing file map", self.currentFile.file.check)
+
+                        if not status:
+                            # We do not have any local copies, download the file
+                            status = self.currentFile.start(self.fileStarted, self.fileProgress)
 
                     if not status:
                         # Do not fail the file if the user has requested a pause
                         if not self.isStopped():
-                            self.changeState(DownloaderState.DOWNLOAD_FAILED, fileName)
+                            self.changeState(DownloaderState.DOWNLOAD_FAILED, path)
 
                         return
                     else:
                         log.info("Download complete %s", fileName)
-                        status = self.currentFile.verify(self.fileVerify, self.fileProgress)
+                        status = self.currentFile.verify(self.fileStarted, self.fileProgress)
 
                         if not status:
                             # Do not fail the file if the user has requested a pause
                             if not self.isStopped():
-                                self.changeState(DownloaderState.VERIFICATION_FAILED, fileName)
+                                self.changeState(DownloaderState.VERIFICATION_FAILED, path)
 
                             return
 
@@ -203,7 +227,9 @@ class HTTPDownloader(QObject):
                             copyfile(os.path.abspath(path), os.path.abspath(os.path.join(dstDir, fileName)))
 
                         self.progress.emit(index + 1)
+                        self.fileCompleted.emit((self.currentFile.file.check, path))
 
+            self.currentFile = None
             self.changeState(DownloaderState.COMPLETE)
         except Exception:
             log.error(sys.exc_info())

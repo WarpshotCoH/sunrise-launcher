@@ -106,16 +106,29 @@ class Store(QObject):
             if os.path.isfile(settingsFile):
                 f = open(settingsFile, "rb")
                 self.settings.load(pickle.load(f))
-            else:
+
+            if not self.settings.get("autoPatch"):
                 self.settings.set("autoPatch", True)
+
+            if not self.settings.get("autoPatch"):
                 self.settings.set("containerSettings", {})
+
+            if not self.settings.get("autoPatch"):
                 self.settings.set("paths", PathSettings("bin", "run", "fdb"))
+
+            if not self.settings.get("autoPatch"):
                 self.settings.set("recentServers", RecentServers())
+
+            if not self.settings.get("autoPatch"):
                 self.settings.set("hiddenServers", uList())
 
-                if (len(self.themes.keys()) > 0):
-                   self.settings.set("theme", list(self.themes.keys())[0])
+            if not self.settings.get("autoPatch"):
+                self.settings.set("fileMap", {})
 
+            if (len(self.themes.keys()) > 0):
+               self.settings.set("theme", list(self.themes.keys())[0])
+
+            if not self.settings.get("autoPatch"):
                 self.settings.set("manifestList", uList())
 
             self.settings.commit()
