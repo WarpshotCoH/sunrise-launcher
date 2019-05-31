@@ -16,6 +16,7 @@ log = logger("main.ui.details")
 #       Does that work with signals and slots?
 class ListViewUI(QObject):
     selected = Signal(Application, Runtime, Server)
+    verificationRequested = Signal()
 
     def __init__(self, store, parent):
         super(ListViewUI, self).__init__(parent)
@@ -25,6 +26,7 @@ class ListViewUI(QObject):
 
         menu = RightAlignQMenu(self.ui.detailSettings)
         self.action1 = QAction(self.store.s("GAMES_DETAILS_SETTINGS_VERIFY"))
+        self.action1.triggered.connect(lambda: self.verificationRequested.emit())
         self.action2 = QAction(self.store.s("GAMES_DETAILS_SETTINGS_UNINSTALL"))
         menu.addAction(self.action1)
         menu.addAction(self.action2)
@@ -47,6 +49,8 @@ class ListViewUI(QObject):
 
         self.selected.connect(self.downloadUI.load)
         self.selected.connect(self.loadDetails)
+
+        self.verificationRequested.connect(self.downloadUI.fullVerifyDownload)
 
         parent.addWidget(self.ui)
 
