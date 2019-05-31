@@ -158,8 +158,8 @@ class DownloadUI(QObject):
 
     @Slot(str, int, int, int)
     def onStart(self, name, pMin, pStart, pMax):
-        log.info("Downloader Start")
-        log.info("%s %s %s %s", name, pMin, pStart, pMax)
+        log.info("Continer download started for %s", name)
+        log.info("Min: %s Start: %s Max: %s", pMin, pStart, pMax)
         self.min = pMin
         self.max = pMax
         self.progressBar.setFormat("({}) %p%".format(name))

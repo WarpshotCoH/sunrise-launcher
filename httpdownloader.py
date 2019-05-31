@@ -184,12 +184,13 @@ class HTTPDownloader(QObject):
                         # If we don't already have the file locally, check the fileMap to
                         # see if it has been downloaded already by someone else
                         if self.currentFile.file.check in self.fileMap:
-                            exitingFiles = self.fileMap[self.currentFile.check]
+                            existingFiles = self.fileMap[self.currentFile.file.check]
 
-                            log.info("Found %s existing files for %s : %s", len(existingFiles), self.currentFile.check, path)
+                            log.info("Found %s existing file(s) for %s : %s", len(existingFiles), self.currentFile.file.check, path)
 
-                            while not status and file in existingFiles:
-                                status = self.currentFile.copyFrom(file, self.fileStarted, self.fileProgress)
+                            for file in existingFiles:
+                                if not status:
+                                    status = self.currentFile.copyFrom(file, self.fileStarted, self.fileProgress)
                         else:
                             log.debug("Failed to find %s in existing file map", self.currentFile.file.check)
 

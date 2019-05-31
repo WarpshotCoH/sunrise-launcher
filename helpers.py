@@ -68,6 +68,9 @@ class uList:
         if item in self.list:
             self.list.remove(item)
 
+    def __len__(self):
+        return len(self.list)
+
     def __iter__(self):
         return iter(self.list)
 

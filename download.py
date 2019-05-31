@@ -3,6 +3,7 @@ import math
 import os
 import posixpath
 import random
+from shutil import copyfile
 import sys
 import time
 import urllib.request as request
@@ -107,11 +108,16 @@ class FileDownload():
         return complete
 
     def copyFrom(self, path, started, progress):
-        # started.emit(0, 0, remoteFilesize, remoteFilename)
+        started.emit(0, 0, 1, os.path.basename(path))
 
-        log.debug("Copying from %s to %s", path, os.path.join(self.path, self.file.name))
+        log.debug("Copying from %s to %s", path, self.path)
 
-        return False
+        try:
+            copyfile(os.path.abspath(path), os.path.abspath(self.path))
+            return True
+        except:
+            log.error(sys.exc_info())
+            return False
 
     def verify(self, verify, progress):
         multiplier = 128
