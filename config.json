@@ -5,8 +5,8 @@
         "source_url": ""
     },
     "flags": {
-        "add_theme": true,
-        "use_symlinks": true,
-        "file_db": true
+        "add_theme": false,
+        "use_symlinks": false,
+        "file_db": false
     }
 }
