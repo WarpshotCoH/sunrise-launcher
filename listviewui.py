@@ -3,11 +3,14 @@ import sys
 import requests
 from PySide2.QtCore import QObject, Signal, Slot, QSize, Qt
 from PySide2.QtGui import QImage, QPixmap
-from PySide2.QtWidgets import QListWidgetItem, QLabel
+from PySide2.QtWidgets import QListWidgetItem, QLabel, QToolButton, QMenu, QAction
 
 from downloadui import DownloadUI
-from helpers import createWidget
+from helpers import createWidget, logger
 from manifest import Server, Application, Runtime
+from widgets.rightalignqmenu import RightAlignQMenu
+
+log = logger("main.ui.details")
 
 # TODO: Can / should this be abstract? Is that idomatic in Python?
 #       Does that work with signals and slots?
@@ -19,6 +22,16 @@ class ListViewUI(QObject):
 
         self.store = store
         self.ui = createWidget("ui/listview.ui")
+
+        menu = RightAlignQMenu(self.ui.detailSettings)
+        self.action1 = QAction("Verify")
+        self.action2 = QAction("Uninstall")
+        menu.addAction(self.action1)
+        menu.addAction(self.action2)
+
+        self.menu = menu
+
+        self.ui.detailSettings.setMenu(self.menu)
 
         self.listUI = createWidget("ui/list.ui")
         self.ui.serverListLayout.addWidget(self.listUI)
@@ -38,6 +51,9 @@ class ListViewUI(QObject):
         self.store.updated.connect(self.reload)
 
     # TODO: Implement updating the details section on selection
+
+    def logMenu(self):
+        log.info(self.ui.detailSettings.menu())
 
     def show(self):
         self.ui.show()
