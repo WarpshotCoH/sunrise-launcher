@@ -24,14 +24,17 @@ class ListViewUI(QObject):
         self.ui = createWidget("ui/listview.ui")
 
         menu = RightAlignQMenu(self.ui.detailSettings)
-        self.action1 = QAction("Verify")
-        self.action2 = QAction("Uninstall")
+        self.action1 = QAction(self.store.s("GAMES_DETAILS_SETTINGS_VERIFY"))
+        self.action2 = QAction(self.store.s("GAMES_DETAILS_SETTINGS_UNINSTALL"))
         menu.addAction(self.action1)
         menu.addAction(self.action2)
 
         self.menu = menu
 
         self.ui.detailSettings.setMenu(self.menu)
+        self.ui.detailSettings.setToolTip(self.store.s("GAMES_DETAILS_SETTINGS_BUTTON"))
+
+        self.ui.detailWebsite.setToolTip(self.store.s("GAMES_DETAILS_WEBSITE_BUTTON"))
 
         self.listUI = createWidget("ui/list.ui")
         self.ui.serverListLayout.addWidget(self.listUI)
@@ -51,9 +54,6 @@ class ListViewUI(QObject):
         self.store.updated.connect(self.reload)
 
     # TODO: Implement updating the details section on selection
-
-    def logMenu(self):
-        log.info(self.ui.detailSettings.menu())
 
     def show(self):
         self.ui.show()
