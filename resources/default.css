@@ -15,6 +15,7 @@ QDialog {
 
 /* Buttons and combo boxes. */
 QPushButton,
+QToolButton,
 QComboBox {
     padding: 4px 6px;
     background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #888, stop:1 #555);
@@ -24,8 +25,13 @@ QComboBox {
 }
 
 QPushButton:hover,
+QToolButton:hover,
 QComboBox:hover {
     background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #999, stop:1 #666);
+}
+
+QPushButton::menu-indicator {
+    image: none;
 }
 
 QComboBox::dropdown {
