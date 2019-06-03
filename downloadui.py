@@ -87,6 +87,17 @@ class DownloadUI(QObject):
         self.runInBackground(self.downloader.verify)
         self.show()
 
+    def fullVerifyDownload(self):
+        self.shutdown()
+
+        if self.store.f("file_db"):
+            self.downloader = FDBDownloader(self.containers, self.store.settings.get("paths").fdbPath)
+        else:
+            self.downloader = HTTPDownloader(self.containers, self.store.settings.get("paths").binPath)
+
+        self.runInBackground(self.downloader.verify)
+        self.show()
+
     def startDownload(self):
         # Before verifying or downloading, make sure existing downloaders and
         # threads have been cleaned up

@@ -1,24 +1,46 @@
 import sys
+import webbrowser
 
 import requests
 from PySide2.QtCore import QObject, Signal, Slot, QSize, Qt
 from PySide2.QtGui import QImage, QPixmap
-from PySide2.QtWidgets import QListWidgetItem, QLabel
+from PySide2.QtWidgets import QListWidgetItem, QLabel, QToolButton, QMenu, QAction
 
 from downloadui import DownloadUI
-from helpers import createWidget
+from helpers import createWidget, logger
 from manifest import Server, Application, Runtime
+from widgets.rightalignqmenu import RightAlignQMenu
+
+log = logger("main.ui.details")
+
+def bindUrl(action, url):
+    try:
+        action.triggered.disconnect()
+    except Exception:
+        pass
+
+    action.triggered.connect(lambda: openExternalSite(url))
+
+def openExternalSite(url):
+    webbrowser.open_new_tab(url)
 
 # TODO: Can / should this be abstract? Is that idomatic in Python?
 #       Does that work with signals and slots?
 class ListViewUI(QObject):
     selected = Signal(Application, Runtime, Server)
+    verificationRequested = Signal()
 
     def __init__(self, store, parent):
         super(ListViewUI, self).__init__(parent)
 
         self.store = store
         self.ui = createWidget("ui/listview.ui")
+
+        self.websiteMenu = None
+        self.websiteActions = []
+
+        self.auxMenu = None
+        self.auxActions = []
 
         self.listUI = createWidget("ui/list.ui")
         self.ui.serverListLayout.addWidget(self.listUI)
@@ -31,6 +53,8 @@ class ListViewUI(QObject):
 
         self.selected.connect(self.downloadUI.load)
         self.selected.connect(self.loadDetails)
+
+        self.verificationRequested.connect(self.downloadUI.fullVerifyDownload)
 
         parent.addWidget(self.ui)
 
@@ -93,6 +117,58 @@ class ListViewUI(QObject):
                 # item list and we are just going to ignore it
                 if runtime.icon and self.store.cache.get(runtime.icon):
                     self.ui.icon.setPixmap(self.store.cache.get(runtime.icon))
+
+        self.configureDetailButtons(application, runtime, server)
+
+    def configureDetailButtons(self, application = None, runtime = None, server = None):
+
+        # Setup the website linking button
+        self.websiteMenu = RightAlignQMenu(self.ui.detailWebsite)
+        self.websiteActions = []
+
+        self.ui.detailWebsite.setMenu(self.websiteMenu)
+        self.ui.detailWebsite.hide()
+
+        if server:
+            if server.websites and len(server.websites) > 0:
+                for website in server.websites:
+                    webAction = QAction(website.type[0].upper() + website.type[1:])
+                    bindUrl(webAction, website.address)
+
+                    self.websiteMenu.addAction(webAction)
+                    self.websiteActions.append(webAction)
+
+                self.ui.detailWebsite.show()
+        elif application:
+            if application.websites and len(application.websites) > 0:
+                for website in application.websites:
+                    webAction = QAction(website.type[0].upper() + website.type[1:])
+                    bindUrl(webAction, website.address)
+
+                    self.websiteMenu.addAction(webAction)
+                    self.websiteActions.append(webAction)
+
+                self.ui.detailWebsite.show()
+
+        self.ui.detailWebsite.setToolTip(self.store.s("GAMES_DETAILS_WEBSITE_BUTTON"))
+
+        # Set up auxillary controls button
+        self.auxMenu = RightAlignQMenu(self.ui.detailSettings)
+        self.auxActions = []
+
+        self.ui.detailSettings.setMenu(self.auxMenu)
+
+        verifyAction = QAction(self.store.s("GAMES_DETAILS_SETTINGS_VERIFY"))
+        verifyAction.triggered.connect(lambda: self.verificationRequested.emit())
+        self.auxMenu.addAction(verifyAction)
+        self.auxActions.append(verifyAction)
+
+        if not server:
+            uninstallAction = QAction(self.store.s("GAMES_DETAILS_SETTINGS_UNINSTALL"))
+            self.auxMenu.addAction(uninstallAction)
+            self.auxActions.append(uninstallAction)
+
+        self.ui.detailSettings.setToolTip(self.store.s("GAMES_DETAILS_SETTINGS_BUTTON"))
 
     def addHeader(self, label):
         header = QLabel()
