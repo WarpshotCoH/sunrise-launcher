@@ -30,6 +30,7 @@ class HTTPDownloader(QObject):
         self.fileMap = fileMap
         self.fastCheck = fastCheck
         self.currentFile = None
+        self.fileMap = {}
 
     def changeState(self, state, fileName = None):
         self.state = state
@@ -148,7 +149,6 @@ class HTTPDownloader(QObject):
                 log.info("Downloading container %s", container.name)
 
                 self.start.emit(container.name, 0, 0, len(container.files))
-                log.debug("Emit runtime size")
 
                 mirror = self.selectMirror(container)
 

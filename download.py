@@ -35,7 +35,7 @@ class FileDownload():
 
         # First try downloading from the designated mirror
         if self.mirror:
-            log.debug("%s mirror selected. Attempting to download from mirror first", self.mi)
+            log.debug("%s mirror selected. Attempting to download from mirror first", self.mirror)
             if self.downloadUrl(self.mirror + self.file.name, init, progress):
                 return True
 
@@ -149,7 +149,7 @@ class FileDownload():
                         progress.emit(hashProgress)
                     check = hasher.hexdigest()
 
-                if (check == self.file.check):
+                if (check.lower() == self.file.check.lower()):
                     verified = True
                 else:
                     log.warning("Hash mismatch")

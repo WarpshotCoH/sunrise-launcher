@@ -60,7 +60,7 @@ class Source:
         if tag == "torrent":
             tag.attrib["magnet"] = self.src
         else:
-            tag.attrib["url"] = self.url
+            tag.attrib["url"] = self.src
 
         return tag
 
@@ -182,7 +182,7 @@ class Application:
             None if app.find("launcher") == None else Launcher.fromXML(app.find("launcher")),
             None if app.find("news") == None else News.fromXML(app.find("news")),
             list(map(File.fromXML, app.findall(".//files/file"))),
-            list(map(Source.fromXML, app.find("sources").getChildren() if app.find("sources") else [])),
+            list(map(Source.fromXML, app.findall(".//sources/*") if app.find("sources") else [])),
         )
 
     def toXML(self):
@@ -295,7 +295,7 @@ class Runtime:
             "" if runtime.find("publisher") == None else runtime.find("publisher").text,
             None if runtime.find("icon") == None else runtime.find("icon").text,
             list(map(File.fromXML, runtime.findall(".//files/file"))),
-            list(map(Source.fromXML, runtime.find("sources").getChildren() if runtime.find("sources") else [])),
+            list(map(Source.fromXML, runtime.findall(".//sources/*") if runtime.find("sources") else [])),
         )
 
     def toXML(self):

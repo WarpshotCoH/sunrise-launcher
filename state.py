@@ -89,8 +89,8 @@ class Store(QObject):
             log.error(sys.exc_info())
             pass
 
-        self.settings.committed.connect(self.saveSettings)
-        self.updated.connect(self.saveManifests)
+        # self.settings.committed.connect(self.saveSettings)
+        # self.updated.connect(self.saveManifests)
 
     def f(self, key):
         return self.config['flags'].get(key)
@@ -106,29 +106,30 @@ class Store(QObject):
             if os.path.isfile(settingsFile):
                 f = open(settingsFile, "rb")
                 self.settings.load(pickle.load(f))
+                self.settings.commit()
 
             if not self.settings.get("autoPatch"):
                 self.settings.set("autoPatch", True)
 
-            if not self.settings.get("autoPatch"):
+            if not self.settings.get("containerSettings"):
                 self.settings.set("containerSettings", {})
 
-            if not self.settings.get("autoPatch"):
+            if not self.settings.get("paths"):
                 self.settings.set("paths", PathSettings("bin", "run", "fdb"))
 
-            if not self.settings.get("autoPatch"):
+            if not self.settings.get("recentServers"):
                 self.settings.set("recentServers", RecentServers())
 
-            if not self.settings.get("autoPatch"):
+            if not self.settings.get("hiddenServers"):
                 self.settings.set("hiddenServers", uList())
 
-            if not self.settings.get("autoPatch"):
+            if not self.settings.get("fileMap"):
                 self.settings.set("fileMap", {})
 
-            if (len(self.themes.keys()) > 0):
+            if not self.settings.get("theme") and len(self.themes.keys()) > 0:
                self.settings.set("theme", list(self.themes.keys())[0])
 
-            if not self.settings.get("autoPatch"):
+            if not self.settings.get("manifestList"):
                 self.settings.set("manifestList", uList())
 
             self.settings.commit()
@@ -211,8 +212,12 @@ class Store(QObject):
         if not os.path.isdir(SunriseSettings.settingsPath):
             os.makedirs(SunriseSettings.settingsPath)
 
+        log.debug("Writing %s to settings file",  self.settings.getData())
+
         f = open(os.path.join(SunriseSettings.settingsPath, "settings.pickle"), "wb+")
         settingsOutput = pickle.dump(self.settings.getData(), f)
+
+        log.debug("Wrote settings file")
 
         f.close()
 
@@ -225,4 +230,7 @@ class Store(QObject):
 
         f = open(os.path.join(SunriseSettings.settingsPath, "manifests.xml"), "wb+")
         f.write(manifestOutput)
+
+        log.debug("Wrote local manifest file")
+
         f.close()
