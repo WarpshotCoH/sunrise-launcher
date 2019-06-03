@@ -11,6 +11,22 @@ algoMap = {
     Algos.SHA512: hashlib.sha512
 }
 
+class Exclusion:
+    def __init__(self, name):
+        self.name = name
+
+    @staticmethod
+    def fromXML(exclusion):
+        return Exclusion(
+            exclusion.attrib["name"]
+        )
+
+    def toXML(self):
+        exclusion = ET.Element("exclude")
+        exclusion.attrib["name"] = self.name
+
+        return exclusion
+
 class File:
     def __init__(self, name, size, check, algo, urls):
         self.name = name
@@ -151,7 +167,7 @@ class News:
         return news
 
 class Application:
-    def __init__(self, id, type, version, runtime, custom, name, publisher, icon, websites, launcher, news, files, sources):
+    def __init__(self, id, type, version, runtime, custom, name, publisher, icon, websites, launcher, news, files, sources, standalone, exclusions):
         self.id = id
         self.type = type
         self.version = version
@@ -165,6 +181,8 @@ class Application:
         self.news = news
         self.files = files
         self.sources = sources
+        self.standalone = standalone
+        self.exclusions = exclusions
 
     @staticmethod
     def fromXML(app):
@@ -183,6 +201,8 @@ class Application:
             None if app.find("news") == None else News.fromXML(app.find("news")),
             list(map(File.fromXML, app.findall(".//files/file"))),
             list(map(Source.fromXML, app.findall(".//sources/*") if app.find("sources") else [])),
+            app.attrib.get("standalone", False) == "true",
+            list(map(Exclusion.fromXML, app.findall(".//files/exclude")))
         )
 
     def toXML(self):
@@ -219,6 +239,8 @@ class Application:
         files = ET.Element("files")
         for f in map(lambda f: f.toXML(), self.files):
             files.append(f)
+        for e in map(lambda e: e.toXML(), self.exclusions):
+            files.append(e)
 
         application.append(files)
 
@@ -286,6 +308,8 @@ class Runtime:
         self.icon = icon
         self.files = files
         self.sources = sources
+        # TODO: Should this be implemented? Technically files blocks allows exclude, but we ignore them
+        self.exclusions = []
 
     @staticmethod
     def fromXML(runtime):

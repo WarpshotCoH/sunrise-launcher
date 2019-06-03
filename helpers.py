@@ -1,5 +1,6 @@
 import logging
 import os
+import shutil
 import sys
 
 from appdirs import user_data_dir, user_log_dir
@@ -74,4 +75,15 @@ class uList:
     def __iter__(self):
         return iter(self.list)
 
+def copyDir(src, dst):
+    if not os.path.exists(dst):
+        os.makedirs(dst)
 
+    for item in os.listdir(src):
+        srcItem = os.path.join(src, item)
+        dstItem = os.path.join(dst, item)
+
+        if os.path.isdir(s):
+            copytree(srcItem, dstItem)
+        else:
+            shutil.copy2(srcItem, dstItem)

@@ -1,3 +1,4 @@
+from functools import reduce
 import os
 import posixpath
 import random
@@ -9,7 +10,7 @@ from PySide2.QtCore import QThread, QObject, Signal
 
 from downloader import DownloaderState
 from download import FileDownload
-from helpers import logger
+from helpers import logger, copyDir
 
 log = logger("main.downloader.http")
 
@@ -145,14 +146,38 @@ class HTTPDownloader(QObject):
 
             self.changeState(DownloaderState.DOWNLOADING)
 
+            # TODO: Compute an exclusion list
+            exclusions = reduce(
+                lambda ex, cur: ex + cur.exclusions,
+                self.containers,
+                []
+            )
+
+            log.debug("Computed exclusion list %s", exclusions)
+
             for container in self.containers:
+                if hasattr(container, "runtime"):
+                    if container.standalone:
+                        # This is a standalone container and it needs a copy of its runtime
+                        copyDir(
+                            os.path.join(self.installPath, self.containers[0].id),
+                            os.path.join(self.installPath, container.id)
+                        )
+
                 log.info("Downloading container %s", container.name)
 
-                self.start.emit(container.name, 0, 0, len(container.files))
+                if hasattr(container, "runtime"):
+                    files = container.files
+                else:
+                    files = list(filter(lambda f: not f.name in exclusions, container.files))
+
+                log.debug("Computed download list %s", files)
+
+                self.start.emit(container.name, 0, 0, len(files))
 
                 mirror = self.selectMirror(container)
 
-                for index, file in enumerate(container.files):
+                for index, file in enumerate(files):
                     if self.isStopped():
                         log.info("Exit download early from pause")
                         return
@@ -219,13 +244,14 @@ class HTTPDownloader(QObject):
                         log.info("Verfification complete %s", fileName)
 
                         if hasattr(container, "runtime"):
-                            dstDir = os.path.abspath(os.path.normpath(os.path.join(self.installPath, container.runtime, filePath)))
-                            dstFile = os.path.join(dstDir, fileName)
+                            if not container.standalone:
+                                dstDir = os.path.abspath(os.path.normpath(os.path.join(self.installPath, container.runtime, filePath)))
+                                dstFile = os.path.join(dstDir, fileName)
 
-                            if not os.path.isdir(dstDir):
-                                os.makedirs(dstDir)
+                                if not os.path.isdir(dstDir):
+                                    os.makedirs(dstDir)
 
-                            copyfile(os.path.abspath(path), os.path.abspath(os.path.join(dstDir, fileName)))
+                                copyfile(os.path.abspath(path), os.path.abspath(os.path.join(dstDir, fileName)))
 
                         self.progress.emit(index + 1)
                         self.fileCompleted.emit((self.currentFile.file.check, path))
