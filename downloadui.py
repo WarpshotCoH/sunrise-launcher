@@ -49,6 +49,8 @@ class DownloadUI(QObject):
         if application == None and runtime == None and server == None:
             self.shutdown()
             self.hide()
+        else:
+            self.show()
 
         self.min = self.max = self.cur = 0
         self.containers = []
@@ -130,6 +132,7 @@ class DownloadUI(QObject):
         self.downloader.fileStarted.connect(self.onFileStart)
         self.downloader.fileProgress.connect(self.onFileProgress)
         self.downloader.fileCompleted.connect(self.onFileComplete)
+        self.downloader.invalidMapFileFound.connect(self.onInvalidMapFile)
 
         # Move the download manager to the background thread
         self.downloader.moveToThread(self.downloadThread)
@@ -255,6 +258,19 @@ class DownloadUI(QObject):
         self.fileBar.setMaximum(pMax)
         self.fileBar.setFormat("{}/{} - {}".format(self.cur, self.max, filename))
         self.fileBar.show()
+
+    @Slot(str, str)
+    def onInvalidMapFile(check, file):
+        fMap = self.store.settings.get("fileMap")
+
+        if check in fMap:
+            files = fMap.get(check)
+
+            if file in files:
+                files.remove(file)
+
+                self.store.settings.set("fileMap", fMap)
+                self.store.settings.commit()
 
     @Slot(int)
     def onFileProgress(self, i):

@@ -21,6 +21,7 @@ class HTTPDownloader(QObject):
     start = Signal(str, int, int, int)
     progress = Signal(int)
     stateChanged = Signal(DownloaderState, tuple)
+    invalidMapFileFound = Signal(str, str)
 
     def __init__(self, containers, installPath, fileMap = None, fastCheck = False, parent=None):
         super(HTTPDownloader, self).__init__(parent)
@@ -148,7 +149,7 @@ class HTTPDownloader(QObject):
 
             # TODO: Compute an exclusion list
             exclusions = reduce(
-                lambda ex, cur: ex + cur.exclusions,
+                lambda ex, cur: ex + list(map(lambda e: e.name, cur.exclusions)),
                 self.containers,
                 []
             )
@@ -156,15 +157,15 @@ class HTTPDownloader(QObject):
             log.debug("Computed exclusion list %s", exclusions)
 
             for container in self.containers:
-                if hasattr(container, "runtime"):
-                    if container.standalone:
-                        # This is a standalone container and it needs a copy of its runtime
-                        copyDir(
-                            os.path.join(self.installPath, self.containers[0].id),
-                            os.path.join(self.installPath, container.id)
-                        )
 
-                log.info("Downloading container %s", container.name)
+                # TODO: Is this necessary for standalones?
+                # if hasattr(container, "runtime"):
+                #     if container.standalone:
+                #         # This is a standalone container and it needs a copy of its runtime
+                #         copyDir(
+                #             os.path.join(self.installPath, self.containers[0].id),
+                #             os.path.join(self.installPath, container.id)
+                #         )
 
                 if hasattr(container, "runtime"):
                     files = container.files
@@ -177,6 +178,17 @@ class HTTPDownloader(QObject):
 
                 mirror = self.selectMirror(container)
 
+                # Set up the default install path
+                dstPath = os.path.join(self.installPath, container.id)
+
+                # If we downloading a non-standalone application, then it should be installed
+                # to the runtime directory
+                if hasattr(container, "runtime"):
+                    if not container.standalone:
+                        dstPath = os.path.join(self.installPath, self.containers[0].id)
+
+                log.info("Downloading container %s to %s", container.name, dstPath)
+
                 for index, file in enumerate(files):
                     if self.isStopped():
                         log.info("Exit download early from pause")
@@ -186,8 +198,8 @@ class HTTPDownloader(QObject):
                     fileName = os.path.basename(file.name)
                     filePath = os.path.dirname(file.name)
 
-                    path = os.path.normpath(os.path.join(self.installPath, container.id, file.name))
-                    dirPath = os.path.normpath(os.path.join(self.installPath, container.id, filePath))
+                    path = os.path.normpath(os.path.join(dstPath, file.name))
+                    dirPath = os.path.normpath(os.path.join(dstPath, filePath))
 
                     if not os.path.isdir(dirPath):
                         log.info("Create download path %s", dirPath)
@@ -216,6 +228,9 @@ class HTTPDownloader(QObject):
                             for file in existingFiles:
                                 if not status:
                                     status = self.currentFile.copyFrom(file, self.fileStarted, self.fileProgress)
+
+                                    if not status:
+                                        self.invalidMapFileFound.emit(self.currentFile.file.check, file)
                         else:
                             log.debug("Failed to find %s in existing file map", self.currentFile.file.check)
 
@@ -243,15 +258,15 @@ class HTTPDownloader(QObject):
                     if status:
                         log.info("Verfification complete %s", fileName)
 
-                        if hasattr(container, "runtime"):
-                            if not container.standalone:
-                                dstDir = os.path.abspath(os.path.normpath(os.path.join(self.installPath, container.runtime, filePath)))
-                                dstFile = os.path.join(dstDir, fileName)
+                        # if hasattr(container, "runtime"):
+                        #     if not container.standalone:
+                        #         dstDir = os.path.abspath(os.path.normpath(os.path.join(self.installPath, container.runtime, filePath)))
+                        #         dstFile = os.path.join(dstDir, fileName)
 
-                                if not os.path.isdir(dstDir):
-                                    os.makedirs(dstDir)
+                        #         if not os.path.isdir(dstDir):
+                        #             os.makedirs(dstDir)
 
-                                copyfile(os.path.abspath(path), os.path.abspath(os.path.join(dstDir, fileName)))
+                        #         copyfile(os.path.abspath(path), os.path.abspath(os.path.join(dstDir, fileName)))
 
                         self.progress.emit(index + 1)
                         self.fileCompleted.emit((self.currentFile.file.check, path))

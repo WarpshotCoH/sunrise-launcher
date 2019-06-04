@@ -81,4 +81,7 @@ class ServerListUI(ListViewUI):
                 if server.id in hidden:
                     item.hide()
 
-            self.list.setCurrentRow(newIndex)
+            if newIndex > 0:
+                self.list.setCurrentRow(newIndex)
+            else:
+                self.list.setCurrentRow(0)
