@@ -289,14 +289,14 @@ class DownloadUI(QObject):
     def onFileProgress(self, i):
         self.fileBar.setValue(i)
 
-    @Slot(tuple)
+    @Slot(list)
     def onFileComplete(self, file):
         fMap = self.store.cache.get("fileMap")
 
         if not fMap.get(file[0]):
             fMap[file[0]] = uList()
 
-        fMap[file[0]].push((file[1], file[2]))
+        fMap[file[0]].push([file[1], file[2]])
 
         self.store.cache.set("fileMap", fMap)
         self.store.cache.commit()

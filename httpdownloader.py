@@ -17,7 +17,7 @@ log = logger("main.downloader.http")
 class HTTPDownloader(QObject):
     fileStarted = Signal(int, int, int, str)
     fileProgress = Signal(int)
-    fileCompleted = Signal(tuple)
+    fileCompleted = Signal(list)
     start = Signal(str, int, int, int)
     progress = Signal(int)
     stateChanged = Signal(DownloaderState, tuple)
@@ -206,9 +206,15 @@ class HTTPDownloader(QObject):
                     if status:
                         log.info("Verfification complete %s", fileName)
                         self.progress.emit(index + 1)
-                        self.fileCompleted.emit((self.currentFile.file.check, path, os.path.getmtime(path)))
+                        self.fileCompleted.emit([self.currentFile.file.check, path, os.path.getmtime(path)])
 
             self.currentFile = None
             self.changeState(DownloaderState.COMPLETE)
         except Exception:
-            log.error(sys.exc_info())
+
+            # TODO: We may hit an error were we attempted to access self.currentFile after
+            # it has been destroyed by shutdown. It can safely be ignored as we wanted to
+            # terminate processing anyway. This should be addressed when this code is
+            # refactored into a better form
+
+            log.warn(sys.exc_info())

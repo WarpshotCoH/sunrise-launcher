@@ -1,12 +1,11 @@
 import json
 import os
-import pickle
 import sys
 import xml.etree.ElementTree as ET
 
 from PySide2.QtCore import QObject, Slot, Signal
 
-from helpers import uList, SunriseSettings
+from helpers import serialize, unserialize, uList, SunriseSettings
 from manifest import fromXML, fromXMLString, Manifest
 from settings import Settings, PathSettings, ContainerSettings, RecentServers
 from theme import Loader, Theme
@@ -89,8 +88,8 @@ class Store(QObject):
             log.error(sys.exc_info())
             pass
 
-        self.settings.committed.connect(self.saveSettings)
-        self.updated.connect(self.saveManifests)
+        # self.settings.committed.connect(self.saveSettings)
+        # self.updated.connect(self.saveManifests)
 
     def f(self, key):
         return self.config['flags'].get(key)
@@ -100,11 +99,11 @@ class Store(QObject):
 
     def load(self):
         try:
-            cacheFile = os.path.join(SunriseSettings.cachePath, "cache.pickle")
+            cacheFile = os.path.join(SunriseSettings.cachePath, "cache.json")
 
             if os.path.isfile(cacheFile):
-                f = open(cacheFile, "rb")
-                self.cache.load(pickle.load(f))
+                f = open(cacheFile, "r")
+                self.cache.load(unserialize(json.load(f)).store)
                 self.cache.commit()
 
             if not self.cache.get("fileMap"):
@@ -116,11 +115,11 @@ class Store(QObject):
             pass
 
         try:
-            settingsFile = os.path.join(SunriseSettings.settingsPath, "settings.pickle")
+            settingsFile = os.path.join(SunriseSettings.settingsPath, "settings.json")
 
             if os.path.isfile(settingsFile):
-                f = open(settingsFile, "rb")
-                self.settings.load(pickle.load(f))
+                f = open(settingsFile, "r")
+                self.settings.load(unserialize(json.load(f)).store)
                 self.settings.commit()
 
             if not self.settings.get("autoPatch"):
@@ -150,8 +149,11 @@ class Store(QObject):
             pass
 
         try:
-            storedManifests = open(os.path.join(SunriseSettings.settingsPath, "manifests.xml"), "r").read()
-            self.loadManifest(LOCAL_MANIFEST_URL, storedManifests)
+            manifestFile = os.path.join(SunriseSettings.settingsPath, "manifests.xml")
+
+            if os.path.isfile(manifestFile):
+                f = open(manifestFile, "r")
+                self.loadManifest(LOCAL_MANIFEST_URL, f.read())
         except Exception:
             log.error(sys.exc_info())
             pass
@@ -189,11 +191,11 @@ class Store(QObject):
         containerSettings = self.settings.get("containerSettings")
 
         for app in self.applications.values():
-            if not app.id in containerSettings:
+            if not app.id in containerSettings.keys():
                 containerSettings[app.id] = ContainerSettings(app.id)
 
         for runtime in self.runtimes.values():
-            if not runtime.id in containerSettings:
+            if not runtime.id in containerSettings.keys():
                 containerSettings[runtime.id] = ContainerSettings(runtime.id)
 
         self.settings.set("containerSettings", containerSettings)
@@ -224,10 +226,10 @@ class Store(QObject):
         if not os.path.isdir(SunriseSettings.cachePath):
             os.makedirs(SunriseSettings.cachePath)
 
-        log.debug("Writing %s to cache file",  self.cache.getData())
+        log.debug("Writing %s to cache file", serialize(self.cache))
 
-        f = open(os.path.join(SunriseSettings.cachePath, "cache.pickle"), "wb+")
-        cacheOutput = pickle.dump(self.cache.getData(), f)
+        f = open(os.path.join(SunriseSettings.cachePath, "cache.json"), "w+")
+        cacheOutput = json.dump(serialize(self.cache), f)
 
         log.debug("Wrote cache file")
 
@@ -237,10 +239,10 @@ class Store(QObject):
         if not os.path.isdir(SunriseSettings.settingsPath):
             os.makedirs(SunriseSettings.settingsPath)
 
-        log.debug("Writing %s to settings file",  self.settings.getData())
+        log.debug("Writing %s to settings file", serialize(self.settings))
 
-        f = open(os.path.join(SunriseSettings.settingsPath, "settings.pickle"), "wb+")
-        settingsOutput = pickle.dump(self.settings.getData(), f)
+        f = open(os.path.join(SunriseSettings.settingsPath, "settings.json"), "w+")
+        settingsOutput = json.dump(serialize(self.settings), f)
 
         log.debug("Wrote settings file")
 

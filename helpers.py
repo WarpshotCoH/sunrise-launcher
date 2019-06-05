@@ -39,6 +39,53 @@ def logger(name):
 
     return l
 
+log = logger("main.helpers")
+
+class Serde:
+    reg = {}
+
+    @staticmethod
+    def register(tag, c):
+        Serde.reg[tag] = c
+
+def serialize(obj):
+    if hasattr(obj, "serialize"):
+        return obj.serialize()
+
+    if type(obj) is dict:
+        newObj = {}
+
+        for k, v in obj.items():
+            newObj[k] = serialize(v)
+
+        return newObj
+
+    if type(obj) is list:
+        return list(map(serialize, obj))
+
+    return obj
+
+def unserialize(obj):
+    if type(obj) is dict and "type" in obj:
+        for t, c in Serde.reg.items():
+            o = c.unserialize(obj)
+
+            if not o == None:
+                return o
+
+    if type(obj) is dict:
+        newObj = {}
+
+        for k, v in obj.items():
+            newObj[k] = unserialize(v)
+
+        return newObj
+
+    if type(obj) is list:
+        return list(map(unserialize, obj))
+
+    return obj
+
 def isInstalled(store, id):
     installPath = store.settings.get("paths").binPath
     path = os.path.normpath(os.path.join(installPath, id))
@@ -55,12 +102,26 @@ def createWidget(ui_file):
 
     return widget
 
+def copyDir(src, dst):
+    if not os.path.exists(dst):
+        os.makedirs(dst)
+
+    for item in os.listdir(src):
+        srcItem = os.path.join(src, item)
+        dstItem = os.path.join(dst, item)
+
+        if os.path.isdir(s):
+            copytree(srcItem, dstItem)
+        else:
+            shutil.copy2(srcItem, dstItem)
+
 class uList:
-    def __init__(self):
-        self.list = []
+    def __init__(self, data = None):
+        self.list = data if data else []
 
     def push(self, item):
         if not item in self.list:
+            log.debug("%s is not in list %s", item, self.list)
             self.list.insert(0, item)
 
     def swap(self, index1, index2):
@@ -76,15 +137,18 @@ class uList:
     def __iter__(self):
         return iter(self.list)
 
-def copyDir(src, dst):
-    if not os.path.exists(dst):
-        os.makedirs(dst)
+    def serialize(self):
+        rep = {}
+        rep["type"] = "uList"
+        rep["data"] = self.list
 
-    for item in os.listdir(src):
-        srcItem = os.path.join(src, item)
-        dstItem = os.path.join(dst, item)
+        return rep
 
-        if os.path.isdir(s):
-            copytree(srcItem, dstItem)
-        else:
-            shutil.copy2(srcItem, dstItem)
+    @staticmethod
+    def unserialize(obj):
+        if type(obj) is dict and "type" in obj and obj["type"] == "uList" and "data" in obj and type(obj["data"]) is list:
+            return uList(list(map(unserialize, obj["data"])))
+
+        return None
+
+Serde.register("uList", uList)

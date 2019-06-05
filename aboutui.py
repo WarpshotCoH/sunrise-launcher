@@ -8,7 +8,7 @@ from helpers import createWidget, logger
 from licenseui import LicenseUI
 from listviewui import ListViewUI
 
-log = logger("main.ui.about")
+log = logger("main.ui.settings.about")
 
 def bindUrl(button, url):
     try:

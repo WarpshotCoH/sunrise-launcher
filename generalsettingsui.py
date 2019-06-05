@@ -1,9 +1,9 @@
 from PySide2.QtCore import Slot, Qt
 from PySide2.QtWidgets import QFileDialog
 
-from helpers import createWidget, logger
+from helpers import createWidget, logger, serialize, unserialize
 
-log = logger("main.ui.settings")
+log = logger("main.ui.settings.general")
 
 class GeneralSettingsUI:
     def __init__(self, store, parent):
