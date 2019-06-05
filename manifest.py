@@ -170,6 +170,7 @@ class Application:
     def __init__(self, id, type, version, runtime, custom, name, publisher, icon, websites, launcher, news, files, sources, standalone, exclusions):
         self.id = id
         self.type = type
+        self.ctype = "application"
         self.version = version
         self.runtime = runtime
         self.custom = custom
@@ -255,6 +256,7 @@ class Application:
 class Server:
     def __init__(self, id, application, name, publisher, icon, websites, launcher):
         self.id = id
+        self.ctype = "Server"
         self.application = application
         self.name = name
         self.publisher = publisher
@@ -303,6 +305,7 @@ class Server:
 class Runtime:
     def __init__(self, id, name, publisher, icon, files, sources):
         self.id = id
+        self.ctype = "runtime"
         self.name = name
         self.publisher = publisher
         self.icon = icon

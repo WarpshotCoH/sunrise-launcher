@@ -23,16 +23,15 @@ class HTTPDownloader(QObject):
     stateChanged = Signal(DownloaderState, tuple)
     invalidMapFileFound = Signal(str, str)
 
-    def __init__(self, containers, installPath, fileMap = None, fastCheck = False, parent=None):
+    def __init__(self, containers, installPath, fileMap = None, fullVerify = False, parent=None):
         super(HTTPDownloader, self).__init__(parent)
 
         self.state = DownloaderState.NEW
         self.containers = containers
         self.installPath = installPath
         self.fileMap = fileMap
-        self.fastCheck = fastCheck
+        self.fullVerify = fullVerify
         self.currentFile = None
-        self.fileMap = {}
 
     def changeState(self, state, fileName = None):
         self.state = state
@@ -75,64 +74,6 @@ class HTTPDownloader(QObject):
 
         return True
 
-    def verify(self):
-        try:
-            assert not QThread.currentThread().objectName() == "Main", "Verifiction running on main thread"
-
-            self.changeState(DownloaderState.VERIFYING)
-
-            if not self.checkForContainerInstalls():
-                return
-
-            for container in self.containers:
-                log.info("Verifying container %s", container.name)
-
-                self.start.emit(container.name, 0, 0, len(container.files))
-                log.debug("Emit runtime size")
-
-                for index, file in enumerate(container.files):
-                    if self.isStopped():
-                        log.info("Exit verification early from pause")
-                        return
-
-                    log.debug("Verify %s", index)
-                    fileName = posixpath.basename(file.name)
-                    filePath = file.name
-
-                    path = os.path.normpath(os.path.join(self.installPath, container.id, filePath))
-
-                    log.debug("Verify from %s", path)
-
-                    self.currentFile = FileDownload(file, path)
-                    self.currentFile.toggleHashCheck(self.fastCheck)
-
-                    log.debug("Constructed file %s", fileName)
-
-                    if os.path.isfile(path):
-                        log.debug("File exists. Verifying %s", path)
-                        status = self.currentFile.verify(self.fileStarted, self.fileProgress)
-
-                        if not status:
-                            # Do not fail the file if the user has requested a pause
-                            if not self.isStopped():
-                                log.info("Verification failed %s mismatch", path)
-                                self.changeState(DownloaderState.VERIFICATION_FAILED, path)
-
-                            return
-                        else:
-                            log.info("Verfification complete %s", fileName)
-                            self.progress.emit(index + 1)
-                            self.fileCompleted.emit((self.currentFile.file.check, path))
-                    else:
-                        log.info("Verification failed %s missing", path)
-                        self.changeState(DownloaderState.VERIFICATION_FAILED, path)
-                        return
-
-            self.currentFile = None
-            self.changeState(DownloaderState.COMPLETE)
-        except Exception:
-            log.error(sys.exc_info())
-
     def selectMirror(self, container):
         mirrors = list(filter(lambda s: s.tag == "http", container.sources))
 
@@ -141,13 +82,18 @@ class HTTPDownloader(QObject):
 
         return None
 
+    def verify(self):
+        self.processContainers(download = False)
+
     def download(self):
+        self.processContainers(download = True)
+
+    def processContainers(self, download = False):
         try:
             assert not QThread.currentThread().objectName() == "Main", "Download running on main thread"
 
             self.changeState(DownloaderState.DOWNLOADING)
 
-            # TODO: Compute an exclusion list
             exclusions = reduce(
                 lambda ex, cur: ex + list(map(lambda e: e.name, cur.exclusions)),
                 self.containers,
@@ -158,17 +104,16 @@ class HTTPDownloader(QObject):
 
             for container in self.containers:
 
-                # TODO: Is this necessary for standalones?
-                # if hasattr(container, "runtime"):
-                #     if container.standalone:
-                #         # This is a standalone container and it needs a copy of its runtime
-                #         copyDir(
-                #             os.path.join(self.installPath, self.containers[0].id),
-                #             os.path.join(self.installPath, container.id)
-                #         )
+                # Set up the default install path
+                dstPath = os.path.join(self.installPath, container.id)
 
-                if hasattr(container, "runtime"):
+                if container.ctype == "application":
                     files = container.files
+
+                    # If we downloading a non-standalone application, then it should be installed
+                    # to the runtime directory
+                    if not container.standalone:
+                        dstPath = os.path.join(self.installPath, self.containers[0].id)
                 else:
                     files = list(filter(lambda f: not f.name in exclusions, container.files))
 
@@ -177,15 +122,6 @@ class HTTPDownloader(QObject):
                 self.start.emit(container.name, 0, 0, len(files))
 
                 mirror = self.selectMirror(container)
-
-                # Set up the default install path
-                dstPath = os.path.join(self.installPath, container.id)
-
-                # If we downloading a non-standalone application, then it should be installed
-                # to the runtime directory
-                if hasattr(container, "runtime"):
-                    if not container.standalone:
-                        dstPath = os.path.join(self.installPath, self.containers[0].id)
 
                 log.info("Downloading container %s to %s", container.name, dstPath)
 
@@ -209,67 +145,68 @@ class HTTPDownloader(QObject):
 
                     self.currentFile = FileDownload(file, path, mirror)
 
+                    # File status always starts as false
+                    status = False
+
                     log.debug("Constructed file %s", fileName)
 
                     if os.path.isfile(path):
                         log.info("File already exists. Verifying %s", path)
-                        status = self.currentFile.verify(self.fileStarted, self.fileProgress)
-                    else:
-                        status = False
 
-                    if not status:
-                        # If we don't already have the file locally, check the fileMap to
-                        # see if it has been downloaded already by someone else
-                        if self.currentFile.file.check in self.fileMap:
-                            existingFiles = self.fileMap[self.currentFile.file.check]
-
-                            log.info("Found %s existing file(s) for %s : %s", len(existingFiles), self.currentFile.file.check, path)
-
-                            for file in existingFiles:
-                                if not status:
-                                    status = self.currentFile.copyFrom(file, self.fileStarted, self.fileProgress)
-
+                        # Before verifying the hash, perform a quick check if the file is in
+                        # the file map
+                        if not self.fullVerify:
+                            if self.currentFile.file.check in self.fileMap:
+                                for file in self.fileMap[self.currentFile.file.check]:
                                     if not status:
-                                        self.invalidMapFileFound.emit(self.currentFile.file.check, file)
-                        else:
-                            log.debug("Failed to find %s in existing file map", self.currentFile.file.check)
+                                        status = file[0] == path and self.currentFile.check(file[1])
 
                         if not status:
-                            # We do not have any local copies, download the file
-                            status = self.currentFile.start(self.fileStarted, self.fileProgress)
+                            status = self.currentFile.verify(self.fileStarted, self.fileProgress)
 
-                    if not status:
-                        # Do not fail the file if the user has requested a pause
-                        if not self.isStopped():
-                            self.changeState(DownloaderState.DOWNLOAD_FAILED, path)
+                    if download:
+                        if not status:
+                            # If we don't already have the file locally, check the fileMap to
+                            # see if it has been downloaded already by someone else
+                            if self.currentFile.file.check in self.fileMap:
+                                existingFiles = self.fileMap[self.currentFile.file.check]
 
-                        return
-                    else:
-                        log.info("Download complete %s", fileName)
-                        status = self.currentFile.verify(self.fileStarted, self.fileProgress)
+                                log.info("Found %s existing file(s) for %s : %s", len(existingFiles), self.currentFile.file.check, path)
+
+                                for file in existingFiles:
+                                    if not status:
+                                        status = self.currentFile.copyFrom(file[0], self.fileStarted, self.fileProgress)
+
+                                        if not status:
+                                            self.invalidMapFileFound.emit(self.currentFile.file.check, file[0])
+                            else:
+                                log.debug("Failed to find %s in existing file map", self.currentFile.file.check)
+
+                            if not status:
+                                # We do not have any local copies, download the file
+                                status = self.currentFile.start(self.fileStarted, self.fileProgress)
 
                         if not status:
                             # Do not fail the file if the user has requested a pause
                             if not self.isStopped():
-                                self.changeState(DownloaderState.VERIFICATION_FAILED, path)
+                                self.changeState(DownloaderState.DOWNLOAD_FAILED, path)
 
                             return
+                        else:
+                            log.info("Download complete %s", fileName)
+                            status = self.currentFile.verify(self.fileStarted, self.fileProgress)
+
+                    if not status:
+                        # Do not fail the file if the user has requested a pause
+                        if not self.isStopped():
+                            self.changeState(DownloaderState.VERIFICATION_FAILED, path)
+
+                        return
 
                     if status:
                         log.info("Verfification complete %s", fileName)
-
-                        # if hasattr(container, "runtime"):
-                        #     if not container.standalone:
-                        #         dstDir = os.path.abspath(os.path.normpath(os.path.join(self.installPath, container.runtime, filePath)))
-                        #         dstFile = os.path.join(dstDir, fileName)
-
-                        #         if not os.path.isdir(dstDir):
-                        #             os.makedirs(dstDir)
-
-                        #         copyfile(os.path.abspath(path), os.path.abspath(os.path.join(dstDir, fileName)))
-
                         self.progress.emit(index + 1)
-                        self.fileCompleted.emit((self.currentFile.file.check, path))
+                        self.fileCompleted.emit((self.currentFile.file.check, path, os.path.getmtime(path)))
 
             self.currentFile = None
             self.changeState(DownloaderState.COMPLETE)

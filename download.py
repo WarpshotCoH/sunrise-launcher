@@ -119,6 +119,10 @@ class FileDownload():
             log.error(sys.exc_info())
             return False
 
+    def check(self, modifiedTimestamp):
+        log.debug("File timestamp check for %s is %s", self.path, os.path.getmtime(self.path) == modifiedTimestamp)
+        return os.path.getmtime(self.path) == modifiedTimestamp
+
     def verify(self, verify, progress):
         multiplier = 128
         verified = False

@@ -83,7 +83,11 @@ class DownloadUI(QObject):
     def verifyDownload(self):
         self.shutdown()
 
-        self.downloader = HTTPDownloader([self.containers[-1]], self.store.settings.get("paths").binPath)
+        self.downloader = HTTPDownloader(
+            self.containers,
+            self.store.settings.get("paths").binPath,
+            self.store.settings.get("fileMap")
+        )
 
         self.runInBackground(self.downloader.verify)
         self.show()
@@ -91,7 +95,12 @@ class DownloadUI(QObject):
     def fullVerifyDownload(self):
         self.shutdown()
 
-        self.downloader = HTTPDownloader(self.containers, self.store.settings.get("paths").binPath)
+        self.downloader = HTTPDownloader(
+            self.containers,
+            self.store.settings.get("paths").binPath,
+            self.store.settings.get("fileMap"),
+            fullVerify = True
+        )
 
         self.runInBackground(self.downloader.verify)
         self.show()
@@ -101,7 +110,11 @@ class DownloadUI(QObject):
         # threads have been cleaned up
         self.shutdown()
 
-        self.downloader = HTTPDownloader(self.containers, self.store.settings.get("paths").binPath, self.store.settings.get("fileMap"))
+        self.downloader = HTTPDownloader(
+            self.containers,
+            self.store.settings.get("paths").binPath,
+            self.store.settings.get("fileMap")
+        )
 
         self.runInBackground(self.downloader.download)
         self.show()
@@ -283,7 +296,7 @@ class DownloadUI(QObject):
         if not fMap.get(file[0]):
             fMap[file[0]] = uList()
 
-        fMap[file[0]].push(file[1])
+        fMap[file[0]].push((file[1], file[2]))
 
         self.store.settings.set("fileMap", fMap)
         self.store.settings.commit()
