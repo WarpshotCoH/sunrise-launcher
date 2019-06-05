@@ -89,8 +89,8 @@ class Store(QObject):
             log.error(sys.exc_info())
             pass
 
-        # self.settings.committed.connect(self.saveSettings)
-        # self.updated.connect(self.saveManifests)
+        self.settings.committed.connect(self.saveSettings)
+        self.updated.connect(self.saveManifests)
 
     def f(self, key):
         return self.config['flags'].get(key)
