@@ -86,7 +86,7 @@ class DownloadUI(QObject):
         self.downloader = HTTPDownloader(
             self.containers,
             self.store.settings.get("paths").binPath,
-            self.store.settings.get("fileMap")
+            self.store.cache.get("fileMap")
         )
 
         self.runInBackground(self.downloader.verify)
@@ -98,7 +98,7 @@ class DownloadUI(QObject):
         self.downloader = HTTPDownloader(
             self.containers,
             self.store.settings.get("paths").binPath,
-            self.store.settings.get("fileMap"),
+            self.store.cache.get("fileMap"),
             fullVerify = True
         )
 
@@ -113,7 +113,7 @@ class DownloadUI(QObject):
         self.downloader = HTTPDownloader(
             self.containers,
             self.store.settings.get("paths").binPath,
-            self.store.settings.get("fileMap")
+            self.store.cache.get("fileMap")
         )
 
         self.runInBackground(self.downloader.download)
@@ -274,7 +274,7 @@ class DownloadUI(QObject):
 
     @Slot(str, str)
     def onInvalidMapFile(check, file):
-        fMap = self.store.settings.get("fileMap")
+        fMap = self.store.cache.get("fileMap")
 
         if check in fMap:
             files = fMap.get(check)
@@ -282,8 +282,8 @@ class DownloadUI(QObject):
             if file in files:
                 files.remove(file)
 
-                self.store.settings.set("fileMap", fMap)
-                self.store.settings.commit()
+                self.store.cache.set("fileMap", fMap)
+                self.store.cache.commit()
 
     @Slot(int)
     def onFileProgress(self, i):
@@ -291,14 +291,14 @@ class DownloadUI(QObject):
 
     @Slot(tuple)
     def onFileComplete(self, file):
-        fMap = self.store.settings.get("fileMap")
+        fMap = self.store.cache.get("fileMap")
 
         if not fMap.get(file[0]):
             fMap[file[0]] = uList()
 
         fMap[file[0]].push((file[1], file[2]))
 
-        self.store.settings.set("fileMap", fMap)
-        self.store.settings.commit()
+        self.store.cache.set("fileMap", fMap)
+        self.store.cache.commit()
 
         log.debug("File completed %s", file)

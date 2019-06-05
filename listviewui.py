@@ -91,8 +91,10 @@ class ListViewUI(QObject):
             # We do not need to load here as the icon is either in the cache
             # from being loaded by the item list or it failed to load in the
             # item list and we are just going to ignore it
-            if server.icon and self.store.cache.get(server.icon):
-                self.ui.icon.setPixmap(self.store.cache.get(server.icon))
+
+            # TODO: Impl icon handling
+            # if server.icon and self.store.cache.get(server.icon):
+            #     self.ui.icon.setPixmap(self.store.cache.get(server.icon))
         elif application:
             if application:
                 self.ui.detailsName.setText(application.name)
@@ -104,8 +106,10 @@ class ListViewUI(QObject):
                 # We do not need to load here as the icon is either in the cache
                 # from being loaded by the item list or it failed to load in the
                 # item list and we are just going to ignore it
-                if application.icon and self.store.cache.get(application.icon):
-                    self.ui.icon.setPixmap(self.store.cache.get(application.icon))
+
+                # TODO: Impl icon handling
+                # if application.icon and self.store.cache.get(application.icon):
+                #     self.ui.icon.setPixmap(self.store.cache.get(application.icon))
         elif runtime:
             if runtime:
                 self.ui.detailsName.setText(runtime.name)
@@ -115,8 +119,10 @@ class ListViewUI(QObject):
                 # We do not need to load here as the icon is either in the cache
                 # from being loaded by the item list or it failed to load in the
                 # item list and we are just going to ignore it
-                if runtime.icon and self.store.cache.get(runtime.icon):
-                    self.ui.icon.setPixmap(self.store.cache.get(runtime.icon))
+
+                # TODO: Impl icon handling
+                # if runtime.icon and self.store.cache.get(runtime.icon):
+                #     self.ui.icon.setPixmap(self.store.cache.get(runtime.icon))
 
         self.configureDetailButtons(application, runtime, server)
 
@@ -194,12 +200,14 @@ class ListViewUI(QObject):
 
         # TODO: Move off-thread for slow loading. Maybe an image loading pool?
         if icon:
-            if not self.store.cache.get(icon):
-                data = requests.get(icon, stream=True, allow_redirects=True).content # TODO: handle 404/missing icon?
-                qImage = QImage.fromData(data)
-                self.store.cache[icon] = QPixmap.fromImage(qImage)
+            # TODO: Impl icon handling
+            # if not self.store.cache.get(icon):
+            #     data = requests.get(icon, stream=True, allow_redirects=True).content # TODO: handle 404/missing icon?
+            #     qImage = QImage.fromData(data)
+            #     self.store.cache[icon] = QPixmap.fromImage(qImage)
 
-            w.findChild(QLabel, "icon").setPixmap(self.store.cache.get(icon))
+            # w.findChild(QLabel, "icon").setPixmap(self.store.cache.get(icon))
+            True
 
         listItem = QListWidgetItem()
         self.list.addItem(listItem)

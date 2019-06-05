@@ -29,7 +29,7 @@ class Store(QObject):
         self.applications = {}
         self.runtimes = {}
         self.servers = {}
-        self.cache = {}
+        self.cache = Settings()
         self.settings = Settings()
         self.running = []
         self.themes = {}
@@ -99,6 +99,21 @@ class Store(QObject):
         return self.strings.get(key)
 
     def load(self):
+        try:
+            cacheFile = os.path.join(SunriseSettings.cachePath, "cache.pickle")
+
+            if os.path.isfile(cacheFile):
+                f = open(cacheFile, "rb")
+                self.cache.load(pickle.load(f))
+                self.cache.commit()
+
+            if not self.cache.get("fileMap"):
+                self.cache.set("fileMap", {})
+
+            self.cache.commit()
+        except Exception:
+            log.error(sys.exc_info())
+            pass
 
         try:
             settingsFile = os.path.join(SunriseSettings.settingsPath, "settings.pickle")
@@ -115,16 +130,13 @@ class Store(QObject):
                 self.settings.set("containerSettings", {})
 
             if not self.settings.get("paths"):
-                self.settings.set("paths", PathSettings("bin", "run", "fdb"))
+                self.settings.set("paths", PathSettings("bin", "run"))
 
             if not self.settings.get("recentServers"):
                 self.settings.set("recentServers", RecentServers())
 
             if not self.settings.get("hiddenServers"):
                 self.settings.set("hiddenServers", uList())
-
-            if not self.settings.get("fileMap"):
-                self.settings.set("fileMap", {})
 
             if not self.settings.get("theme") and len(self.themes.keys()) > 0:
                self.settings.set("theme", list(self.themes.keys())[0])
@@ -207,6 +219,19 @@ class Store(QObject):
     def removeRunning(self, id):
         log.debug("Removing %s to running list", id)
         self.running.remove(id)
+
+    def saveCache(self):
+        if not os.path.isdir(SunriseSettings.cachePath):
+            os.makedirs(SunriseSettings.cachePath)
+
+        log.debug("Writing %s to cache file",  self.cache.getData())
+
+        f = open(os.path.join(SunriseSettings.cachePath, "cache.pickle"), "wb+")
+        cacheOutput = pickle.dump(self.cache.getData(), f)
+
+        log.debug("Wrote cache file")
+
+        f.close()
 
     def saveSettings(self):
         if not os.path.isdir(SunriseSettings.settingsPath):

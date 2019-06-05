@@ -7,10 +7,9 @@ from helpers import logger
 log = logger("main.state.settings")
 
 class PathSettings:
-    def __init__(self, binPath, runPath, fdbPath):
+    def __init__(self, binPath, runPath):
         self.binPath = binPath
         self.runPath = runPath
-        self.fdbPath = fdbPath
 
 class ContainerSettings:
     def __init__(self, id, autoPatch = False, customParams = None):

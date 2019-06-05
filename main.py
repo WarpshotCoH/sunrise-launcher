@@ -97,6 +97,7 @@ if __name__ == "__main__":
     application.aboutToQuit.connect(pool.shutdown)
 
     # Save application data on quit
+    application.aboutToQuit.connect(pool.store.saveCache)
     application.aboutToQuit.connect(pool.store.saveSettings)
     application.aboutToQuit.connect(pool.store.saveManifests)
 
