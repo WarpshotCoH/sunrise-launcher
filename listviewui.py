@@ -7,7 +7,7 @@ from PySide2.QtGui import QImage, QPixmap
 from PySide2.QtWidgets import QListWidgetItem, QLabel, QToolButton, QMenu, QAction
 
 from downloadui import DownloadUI
-from helpers import createWidget, logger
+from helpers import createWidget, logger, isInstalled, InstallState
 from manifest import Server, Application, Runtime
 from widgets.rightalignqmenu import RightAlignQMenu
 
@@ -195,10 +195,15 @@ class ListViewUI(QObject):
 
         self.list.setItemWidget(listItem, header)
 
-    def addListItem(self, name, label, icon = None):
+    def addListItem(self, id, name, label, icon = None):
         w = createWidget("ui/listview-item.ui")
         w.findChild(QLabel, "name").setText(name)
         w.findChild(QLabel, "label").setText(label)
+
+        state = isInstalled(self.store, id)
+
+        if not state == InstallState.UPDATEAVAILABLE:
+            w.updateIndicator.hide()
 
         # TODO: Move off-thread for slow loading. Maybe an image loading pool?
         if icon:

@@ -82,7 +82,7 @@ class ServerListUI(ListViewUI):
 
                 application = self.store.applications.get(server.application)
 
-                self.addListItem(server.name, application.name, application.icon)
+                self.addListItem(application.id, server.name, application.name, application.icon)
 
                 if server.id in hidden:
                     item.hide()

@@ -5,7 +5,7 @@ from PySide2.QtCore import QObject, QThread, Slot, Signal
 from downloader import DownloaderState
 from httpdownloader import HTTPDownloader
 from manifest import Application, Runtime, Server
-from helpers import createWidget, logger, uList
+from helpers import createWidget, logger, uList, isInstalled, InstallState, disconnect
 
 log = logger("main.ui.download")
 
@@ -46,6 +46,8 @@ class DownloadUI(QObject):
 
     @Slot(Application, Runtime, Server)
     def load(self, application = None, runtime = None, server = None):
+        log.info("Loading %s %s %s", application, runtime, server)
+
         if application == None and runtime == None and server == None:
             self.shutdown()
             self.hide()
@@ -70,17 +72,25 @@ class DownloadUI(QObject):
             self.containers.append(application)
 
         if len(self.containers) > 0:
-            if not self.store.settings.get("containerSettings").get(self.containers[-1].id).autoPatch:
-                if os.path.isdir(self.store.settings.get("paths").binPath):
-                    self.verifyDownload()
-            else:
+            log.debug("Found containers %s to handle", self.containers)
+
+            if self.store.settings.get("containerSettings").get(self.containers[-1].id).autoPatch:
                 self.startDownload()
+            else:
+                if not isInstalled(self.store, self.containers[-1].id) == InstallState.NOTINSTALLED:
+                    self.verifyDownload()
+                else:
+                    disconnect(self.button.clicked)
+                    self.button.setText(self.getButtonLabel(DownloaderState.NEW))
+                    self.button.clicked.connect(self.getButtonAction(DownloaderState.NEW))
 
     def run(self):
         if self.launchId:
             self.launch.emit(self.launchId)
 
     def verifyDownload(self):
+        log.debug("Triggered verification for %s", self.containers)
+
         self.shutdown()
 
         self.downloader = HTTPDownloader(
@@ -93,6 +103,8 @@ class DownloadUI(QObject):
         self.show()
 
     def fullVerifyDownload(self):
+        log.debug("Triggered full verification for %s", self.containers)
+
         self.shutdown()
 
         self.downloader = HTTPDownloader(
@@ -106,6 +118,8 @@ class DownloadUI(QObject):
         self.show()
 
     def startDownload(self):
+        log.debug("Triggered download for %s", self.containers)
+
         # Before verifying or downloading, make sure existing downloaders and
         # threads have been cleaned up
         self.shutdown()
@@ -176,11 +190,45 @@ class DownloadUI(QObject):
 
     def shutdown(self):
         if self.downloader:
+            log.debug("Shutting down downloader")
             self.downloader.shutdown()
 
         if self.downloadThread:
+            log.debug("Shutting down download thread")
             self.downloadThread.quit()
             self.downloadThread.wait()
+
+    def getButtonLabel(self, state):
+
+        # TODO: Button/label for non-runnable targets
+        buttonLabel = {
+            DownloaderState.NEW: self.store.s("DOWNLOAD_INSTALL"),
+            DownloaderState.DOWNLOADING: self.store.s("DOWNLOAD_PAUSE"),
+            DownloaderState.VERIFYING: self.store.s("DOWNLOAD_PLAY"),
+            DownloaderState.PAUSED: self.store.s("DOWNLOAD_RESUME"),
+            DownloaderState.COMPLETE: self.store.s("DOWNLOAD_PLAY"),
+            DownloaderState.DOWNLOAD_FAILED: self.store.s("DOWNLOAD_DOWNLOAD"),
+            DownloaderState.VERIFICATION_FAILED: self.store.s("DOWNLOAD_REPAIR"),
+            DownloaderState.MISSING: self.store.s("DOWNLOAD_INSTALL"),
+        }
+
+        return buttonLabel[state]
+
+    def getButtonAction(self, state):
+
+        # TODO: Button/label for non-runnable targets
+        buttonAction = {
+            DownloaderState.NEW: self.startDownload,
+            DownloaderState.DOWNLOADING: self.pauseDownload,
+            DownloaderState.VERIFYING: self.pauseDownload,
+            DownloaderState.PAUSED: self.startDownload,
+            DownloaderState.COMPLETE: self.run,
+            DownloaderState.DOWNLOAD_FAILED: self.startDownload,
+            DownloaderState.VERIFICATION_FAILED: self.startDownload,
+            DownloaderState.MISSING: self.startDownload,
+        }
+
+        return buttonAction[state]
 
     @Slot(str, int, int, int)
     def onStart(self, name, pMin, pStart, pMax):
@@ -204,37 +252,13 @@ class DownloadUI(QObject):
         log.debug("Change state %s : %s", state, file)
         self.disableButton()
 
-        # TODO: Button/label for non-runnable targets
-
-        buttonLabel = {
-            DownloaderState.NEW: self.store.s("DOWNLOAD_INSTALL"),
-            DownloaderState.DOWNLOADING: self.store.s("DOWNLOAD_PAUSE"),
-            DownloaderState.VERIFYING: self.store.s("DOWNLOAD_PLAY"),
-            DownloaderState.PAUSED: self.store.s("DOWNLOAD_RESUME"),
-            DownloaderState.COMPLETE: self.store.s("DOWNLOAD_PLAY"),
-            DownloaderState.DOWNLOAD_FAILED: self.store.s("DOWNLOAD_DOWNLOAD"),
-            DownloaderState.VERIFICATION_FAILED: self.store.s("DOWNLOAD_REPAIR"),
-            DownloaderState.MISSING: self.store.s("DOWNLOAD_INSTALL"),
-        }
-
-        buttonAction = {
-            DownloaderState.NEW: self.startDownload,
-            DownloaderState.DOWNLOADING: self.pauseDownload,
-            DownloaderState.VERIFYING: self.pauseDownload,
-            DownloaderState.PAUSED: self.startDownload,
-            DownloaderState.COMPLETE: self.run,
-            DownloaderState.DOWNLOAD_FAILED: self.startDownload,
-            DownloaderState.VERIFICATION_FAILED: self.startDownload,
-            DownloaderState.MISSING: self.startDownload,
-        }
-
         # Ignore the shutdown state. Currently it means the application is
         # shutting down or we are transitioning to another list item
         if not state == DownloaderState.SHUTDOWN:
-            log.debug("Setting button label to %s", buttonLabel[state])
-            self.button.setText(buttonLabel[state])
+            log.debug("Setting button label to %s", self.getButtonLabel(state))
+            self.button.setText(self.getButtonLabel(state))
             self.button.clicked.disconnect()
-            self.button.clicked.connect(buttonAction[state])
+            self.button.clicked.connect(self.getButtonAction(state))
 
             if state == DownloaderState.DOWNLOADING or state == DownloaderState.VERIFYING:
                 self.progressBar.show()
@@ -261,11 +285,9 @@ class DownloadUI(QObject):
 
             if state == DownloaderState.VERIFICATION_FAILED and file[1]:
                 log.info("Failed to verify %s", file[1])
-                self.progressBar.setFormat("Update available")
-                self.fileBar.hide()
 
             # On a pause, complete, or missing we clear out any progress text
-            if state == DownloaderState.PAUSED or state == DownloaderState.COMPLETE or state == DownloaderState.MISSING:
+            if state == DownloaderState.PAUSED or state == DownloaderState.COMPLETE or state == DownloaderState.MISSING or state == DownloaderState.VERIFICATION_FAILED:
                 self.progressBar.hide()
                 self.fileBar.hide()
 
@@ -301,10 +323,11 @@ class DownloadUI(QObject):
         if not fMap.get(file[0]):
             fMap[file[0]] = uList()
 
-        fMap[file[0]].push([file[1], file[2]])
+        if not [file[1], file[2]] in fMap[file[0]]:
+            fMap[file[0]].push([file[1], file[2]])
 
-        self.store.cache.set("fileMap", fMap)
-        self.store.cache.commit()
+            self.store.cache.set("fileMap", fMap)
+            self.store.cache.commit()
 
         log.debug("File completed %s", file)
 

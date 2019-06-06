@@ -185,6 +185,9 @@ class Application:
         self.standalone = standalone
         self.exclusions = exclusions
 
+    def getExcludedFileNames(self):
+        return list(map(lambda e: e.name, self.exclusions))
+
     @staticmethod
     def fromXML(app):
         return Application(

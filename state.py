@@ -213,10 +213,10 @@ class Store(QObject):
         # When these two values differ we know we need to update
         checks = self.cache.get("containerChecks", {})
 
-        for cid, app in self.applications.items():
+        for cid, runtime in self.runtimes.items():
             h = sha512()
 
-            for f in app.files:
+            for f in runtime.files:
                 h.update(bytes(f.check, "utf-8"))
 
             if not cid in checks.keys():
@@ -224,10 +224,18 @@ class Store(QObject):
 
             checks[cid]["remote"] = h.hexdigest()
 
-        for cid, runtime in self.runtimes.items():
+        for cid, app in self.applications.items():
             h = sha512()
 
-            for f in runtime.files:
+            if app.runtime in self.runtimes:
+                runtime = self.runtimes.get(app.runtime)
+                exclusions = app.getExcludedFileNames()
+
+                for f in runtime.files:
+                    if not f.name in exclusions:
+                        h.update(bytes(f.check, "utf-8"))
+
+            for f in app.files:
                 h.update(bytes(f.check, "utf-8"))
 
             if not cid in checks.keys():

@@ -104,9 +104,9 @@ class HTTPDownloader(QObject):
 
             log.debug("Computed exclusion list %s", exclusions)
 
-            for container in self.containers:
+            containerCheck = sha512()
 
-                containerCheck = sha512()
+            for container in self.containers:
 
                 # Set up the default install path
                 dstPath = os.path.join(self.installPath, container.id)
@@ -205,17 +205,18 @@ class HTTPDownloader(QObject):
                         if not self.isStopped():
                             self.changeState(DownloaderState.VERIFICATION_FAILED, path)
 
-                        return
+                            # Emit the progress so far on the container
+                            self.containerCompleted.emit((container.id, containerCheck.hexdigest()))
 
-                    if status:
+                            return
+                    else:
                         log.info("Verfification complete %s", fileName)
                         self.progress.emit(index + 1)
                         self.fileCompleted.emit([self.currentFile.file.check, path, os.path.getmtime(path)])
                         containerCheck.update(bytes(self.currentFile.file.check, "utf-8"))
 
-                # Container is complete, emit the install hash
-                # TODO: Emit containerCheck.hexdigest()
-                self.containerCompleted.emit((container.id, containerCheck.hexdigest()))
+            # Container is complete, emit the install hash
+            self.containerCompleted.emit((container.id, containerCheck.hexdigest()))
 
             self.currentFile = None
             self.changeState(DownloaderState.COMPLETE)

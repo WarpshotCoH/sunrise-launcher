@@ -158,6 +158,10 @@ QProgressBar::chunk {
     text-transform: uppercase;
 }
 
+#updateIndicator {
+    border-radius: 6px;
+}
+
 /* Info section. */
 #detailsName {
     font-size: 20px;

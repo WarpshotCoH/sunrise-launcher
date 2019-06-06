@@ -165,3 +165,9 @@ class uList:
         return None
 
 Serde.register("uList", uList)
+
+def disconnect(signal):
+    try:
+        signal.disconnect()
+    except Exception:
+        pass

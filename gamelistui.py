@@ -29,12 +29,12 @@ class GameListUI(ListViewUI):
 
     @Slot(int)
     def selectItem(self, row):
-        log.info("Offsets %s", self.offsets)
+        log.debug("Offsets %s", self.offsets)
         if row > -1:
             for i, group in enumerate(self.offsets):
                 if group[0] <= row and row <= group[1]:
                     index = row - group[0]
-                    log.info("Selected games index %s", index)
+                    log.debug("Selected games index %s", index)
 
                     if i == 0:
                         tools = self.store.getTools()
@@ -66,6 +66,8 @@ class GameListUI(ListViewUI):
                             self.currentSelectedContainerId = runtime.id
                             return
 
+        log.info("Empty selection from games list")
+
         # Fall through to none case
         self.selected.emit(None, None, None)
 
@@ -92,7 +94,7 @@ class GameListUI(ListViewUI):
                 reselectIndex = self.list.count()
 
             installState = isInstalled(self.store, mod.id)
-            self.addListItem(mod.name, installMsg(self.store, installState))
+            self.addListItem(mod.id, mod.name, installMsg(self.store, installState))
 
         self.offsets[0] = (1, len(mods))
 
@@ -102,7 +104,7 @@ class GameListUI(ListViewUI):
                 reselectIndex = self.list.count()
 
             installState = isInstalled(self.store, client.id)
-            self.addListItem(client.name, installMsg(self.store, installState))
+            self.addListItem(client.id, client.name, installMsg(self.store, installState))
 
         self.offsets[1] = (self.offsets[0][1] + 2, self.offsets[0][1] + 1 + len(clients))
 
@@ -112,7 +114,7 @@ class GameListUI(ListViewUI):
                 reselectIndex = self.list.count()
 
             installState = isInstalled(self.store, runtime.id)
-            self.addListItem(runtime.name, installMsg(self.store, installState))
+            self.addListItem(runtime.id, runtime.name, installMsg(self.store, installState))
 
         self.offsets[2] = (self.offsets[1][1] + 2, self.offsets[1][1] + 1 + len(self.store.runtimes))
 
