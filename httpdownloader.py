@@ -1,4 +1,5 @@
 from functools import reduce
+from hashlib import sha512
 import os
 import posixpath
 import random
@@ -18,6 +19,7 @@ class HTTPDownloader(QObject):
     fileStarted = Signal(int, int, int, str)
     fileProgress = Signal(int)
     fileCompleted = Signal(list)
+    containerCompleted = Signal(tuple)
     start = Signal(str, int, int, int)
     progress = Signal(int)
     stateChanged = Signal(DownloaderState, tuple)
@@ -104,6 +106,8 @@ class HTTPDownloader(QObject):
 
             for container in self.containers:
 
+                containerCheck = sha512()
+
                 # Set up the default install path
                 dstPath = os.path.join(self.installPath, container.id)
 
@@ -141,7 +145,7 @@ class HTTPDownloader(QObject):
                         log.info("Create download path %s", dirPath)
                         os.makedirs(dirPath)
 
-                    log.info("Write to %s", path)
+                    log.info("Begin work on %s", path)
 
                     self.currentFile = FileDownload(file, path, mirror)
 
@@ -207,6 +211,11 @@ class HTTPDownloader(QObject):
                         log.info("Verfification complete %s", fileName)
                         self.progress.emit(index + 1)
                         self.fileCompleted.emit([self.currentFile.file.check, path, os.path.getmtime(path)])
+                        containerCheck.update(bytes(self.currentFile.file.check, "utf-8"))
+
+                # Container is complete, emit the install hash
+                # TODO: Emit containerCheck.hexdigest()
+                self.containerCompleted.emit((container.id, containerCheck.hexdigest()))
 
             self.currentFile = None
             self.changeState(DownloaderState.COMPLETE)
@@ -216,5 +225,4 @@ class HTTPDownloader(QObject):
             # it has been destroyed by shutdown. It can safely be ignored as we wanted to
             # terminate processing anyway. This should be addressed when this code is
             # refactored into a better form
-
-            log.warn(sys.exc_info())
+            log.warn(sys.exc_info(), exc_info = True)

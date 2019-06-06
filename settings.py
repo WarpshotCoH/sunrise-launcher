@@ -83,8 +83,13 @@ class Settings(QObject):
         self.store = data if data else {}
         self.pending = {}
 
-    def get(self, k):
-        return deepcopy(self.store.get(k))
+    def get(self, k, default = None):
+        item = self.store.get(k)
+
+        if item:
+            return deepcopy(item)
+        else:
+            return default
 
     def getPending(self, k):
         return self.pending.get(k)

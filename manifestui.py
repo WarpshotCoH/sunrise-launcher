@@ -32,7 +32,7 @@ class ManifestUI:
         log.debug("Reload manifest list")
         self.list.clear()
 
-        for url in self.store.settings.get("manifestList"):
+        for url in self.store.settings.get("manifestList", []):
             self.addListItem(
                 self.store.manifestNames[url] if url in self.store.manifestNames else "",
                 url

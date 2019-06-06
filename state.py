@@ -1,3 +1,4 @@
+from hashlib import sha512
 import json
 import os
 import sys
@@ -188,7 +189,7 @@ class Store(QObject):
         self.runtimes.update(manifest.runtimes)
         self.servers.update(manifest.servers)
 
-        containerSettings = self.settings.get("containerSettings")
+        containerSettings = self.settings.get("containerSettings", {})
 
         for app in self.applications.values():
             if not app.id in containerSettings.keys():
@@ -207,6 +208,36 @@ class Store(QObject):
 
             self.settings.set("manifestList", manifests)
 
+        # TODO: Compute and store new hexdigests for the combined hashes of files in cache
+        # { containerId: { remote: $manifestCheck, local: $localCheck } }
+        # When these two values differ we know we need to update
+        checks = self.cache.get("containerChecks", {})
+
+        for cid, app in self.applications.items():
+            h = sha512()
+
+            for f in app.files:
+                h.update(bytes(f.check, "utf-8"))
+
+            if not cid in checks.keys():
+                checks[cid] = {}
+
+            checks[cid]["remote"] = h.hexdigest()
+
+        for cid, runtime in self.runtimes.items():
+            h = sha512()
+
+            for f in runtime.files:
+                h.update(bytes(f.check, "utf-8"))
+
+            if not cid in checks.keys():
+                checks[cid] = {}
+
+            checks[cid]["remote"] = h.hexdigest()
+
+        self.cache.set("containerChecks", checks)
+
+        self.cache.commit()
         self.settings.commit()
         log.info("Committed container settings for %s", url)
 

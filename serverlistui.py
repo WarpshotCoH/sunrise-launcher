@@ -52,6 +52,12 @@ class ServerListUI(ListViewUI):
     @Slot(str)
     def reload(self, key = None):
         log.debug("Reload server list")
+
+        try:
+            self.list.currentRowChanged.disconnect()
+        except Exception:
+            pass
+
         order = self.computeServerOrder()
         servers = sorted(self.store.servers.values(), key = lambda s: order.index(s.id))
 
@@ -60,15 +66,15 @@ class ServerListUI(ListViewUI):
         else:
             selectedServer = None
 
-        hidden = self.store.settings.get("hiddenServers")
+        hidden = self.store.settings.get("hiddenServers", [])
 
         self.list.clear()
+
+        newIndex = -1
 
         # Now we sync the new order up to the actual displayed UI
         if len(servers) > 0:
             self.addHeader(self.store.s("SERVERS_LIST_SERVERS"))
-
-            newIndex = -1
 
             for i, server in enumerate(servers):
                 if selectedServer and selectedServer.id == server.id and not server.id in hidden:
@@ -81,7 +87,7 @@ class ServerListUI(ListViewUI):
                 if server.id in hidden:
                     item.hide()
 
-            if newIndex > 0:
-                self.list.setCurrentRow(newIndex)
-            else:
-                self.list.setCurrentRow(0)
+        self.list.currentRowChanged.connect(self.selectServer)
+
+        if newIndex > 0:
+            self.list.setCurrentRow(newIndex)

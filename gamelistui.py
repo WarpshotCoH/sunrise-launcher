@@ -1,10 +1,22 @@
 from PySide2.QtCore import Slot
 
-from helpers import isInstalled, logger
+from helpers import InstallState, isInstalled, logger
 from listviewui import ListViewUI
 from manifest import Server, Application, Runtime
 
 log = logger("main.ui.gamelist")
+
+def installMsg(store, state):
+    if state == InstallState.NOTINSTALLED:
+        return store.s("GAMES_LIST_NOT_INSTALLED")
+    if state == InstallState.INSTALLED:
+        return store.s("GAMES_LIST_INSTALLED")
+    if state == InstallState.UPDATEAVAILABLE:
+        return store.s("GAMES_LIST_UPDATE_AVAILABLE")
+    if state == InstallState.UPDATING:
+        return store.s("GAMES_LIST_UPDATING")
+
+    return ""
 
 class GameListUI(ListViewUI):
     def __init__(self, store, parent):
@@ -12,6 +24,7 @@ class GameListUI(ListViewUI):
 
         self.header.hide()
         self.list.currentRowChanged.connect(self.selectItem)
+        self.currentSelectedContainerId = None
         self.offsets = [[0, 0], [0, 0], [0, 0]]
 
     @Slot(int)
@@ -32,6 +45,7 @@ class GameListUI(ListViewUI):
 
                             if runtime:
                                 self.selected.emit(tool, runtime, None)
+                                self.currentSelectedContainerId = tool.id
                                 return
                     elif i == 1:
                         clients = self.store.getClients()
@@ -42,12 +56,14 @@ class GameListUI(ListViewUI):
 
                             if runtime:
                                 self.selected.emit(client, runtime, None)
+                                self.currentSelectedContainerId = client.id
                                 return
                     elif i == 2:
                         runtime = list(self.store.runtimes.values())[index]
 
                         if runtime:
                             self.selected.emit(None, runtime, None)
+                            self.currentSelectedContainerId = runtime.id
                             return
 
         # Fall through to none case
@@ -57,25 +73,50 @@ class GameListUI(ListViewUI):
     def reload(self, key = None):
         log.debug("Reload games list")
 
+        try:
+            self.list.currentRowChanged.disconnect()
+        except Exception:
+            pass
+
         self.list.clear()
+
+        reselectIndex = -1
+        log.debug("%s should be reselected after reload", self.currentSelectedContainerId)
 
         mods = self.store.getTools()
         clients = self.store.getClients()
 
         self.addHeader(self.store.s("GAMES_LIST_MODS_TOOLS"))
         for i, mod in enumerate(mods):
-            self.addListItem(mod.name, self.store.s("GAMES_LIST_INSTALLED") if isInstalled(self.store, mod.id) else self.store.s("GAMES_LIST_NOT_INSTALLED"))
+            if mod.id == self.currentSelectedContainerId:
+                reselectIndex = self.list.count()
+
+            installState = isInstalled(self.store, mod.id)
+            self.addListItem(mod.name, installMsg(self.store, installState))
 
         self.offsets[0] = (1, len(mods))
 
         self.addHeader(self.store.s("GAMES_LIST_CLIENTS"))
         for i, client in enumerate(clients):
-            self.addListItem(client.name, self.store.s("GAMES_LIST_INSTALLED") if isInstalled(self.store, client.id) else self.store.s("GAMES_LIST_NOT_INSTALLED"))
+            if client.id == self.currentSelectedContainerId:
+                reselectIndex = self.list.count()
+
+            installState = isInstalled(self.store, client.id)
+            self.addListItem(client.name, installMsg(self.store, installState))
 
         self.offsets[1] = (self.offsets[0][1] + 2, self.offsets[0][1] + 1 + len(clients))
 
         self.addHeader(self.store.s("GAMES_LIST_RUNTIMES"))
         for i, runtime in enumerate(self.store.runtimes.values()):
-            self.addListItem(runtime.name, self.store.s("GAMES_LIST_INSTALLED") if isInstalled(self.store, runtime.id) else self.store.s("GAMES_LIST_NOT_INSTALLED"))
+            if runtime.id == self.currentSelectedContainerId:
+                reselectIndex = self.list.count()
+
+            installState = isInstalled(self.store, runtime.id)
+            self.addListItem(runtime.name, installMsg(self.store, installState))
 
         self.offsets[2] = (self.offsets[1][1] + 2, self.offsets[1][1] + 1 + len(self.store.runtimes))
+
+        self.list.currentRowChanged.connect(self.selectItem)
+
+        log.debug("Reselecting index %s", reselectIndex)
+        self.list.setCurrentRow(reselectIndex)

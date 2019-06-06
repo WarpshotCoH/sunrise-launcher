@@ -1,3 +1,4 @@
+from enum import Enum
 import logging
 import os
 import shutil
@@ -9,6 +10,12 @@ from PySide2.QtUiTools import QUiLoader
 
 APP_NAME = "Sunrise"
 APP_AUTHOR = "Sunrise"
+
+class InstallState(Enum):
+    NOTINSTALLED = 1
+    INSTALLED = 2
+    UPDATEAVAILABLE = 3
+    UPDATING = 4
 
 class SunriseSettings:
     cachePath = user_cache_dir(APP_NAME, APP_AUTHOR)
@@ -87,10 +94,16 @@ def unserialize(obj):
     return obj
 
 def isInstalled(store, id):
-    installPath = store.settings.get("paths").binPath
-    path = os.path.normpath(os.path.join(installPath, id))
+    checks = store.cache.get("containerChecks", {})
 
-    return os.path.isdir(path)
+    if id in checks:
+        if "local" in checks[id] and "remote" in checks[id]:
+            if checks[id]["local"] == checks[id]["remote"]:
+                return InstallState.INSTALLED
+            else:
+                return InstallState.UPDATEAVAILABLE
+
+    return InstallState.NOTINSTALLED
 
 def createWidget(ui_file):
     ui_file = QFile(ui_file)

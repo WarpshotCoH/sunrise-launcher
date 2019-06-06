@@ -58,6 +58,8 @@ class ListViewUI(QObject):
 
         parent.addWidget(self.ui)
 
+        self.store.cache.connectKey("containerChecks", self.reload)
+
         # Refresh the server manager list when manifests update
         self.store.updated.connect(self.reload)
 

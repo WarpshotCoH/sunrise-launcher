@@ -86,7 +86,7 @@ class DownloadUI(QObject):
         self.downloader = HTTPDownloader(
             self.containers,
             self.store.settings.get("paths").binPath,
-            self.store.cache.get("fileMap")
+            self.store.cache.get("fileMap", {})
         )
 
         self.runInBackground(self.downloader.verify)
@@ -98,7 +98,7 @@ class DownloadUI(QObject):
         self.downloader = HTTPDownloader(
             self.containers,
             self.store.settings.get("paths").binPath,
-            self.store.cache.get("fileMap"),
+            self.store.cache.get("fileMap", {}),
             fullVerify = True
         )
 
@@ -113,7 +113,7 @@ class DownloadUI(QObject):
         self.downloader = HTTPDownloader(
             self.containers,
             self.store.settings.get("paths").binPath,
-            self.store.cache.get("fileMap")
+            self.store.cache.get("fileMap", {})
         )
 
         self.runInBackground(self.downloader.download)
@@ -146,6 +146,9 @@ class DownloadUI(QObject):
         self.downloader.fileProgress.connect(self.onFileProgress)
         self.downloader.fileCompleted.connect(self.onFileComplete)
         self.downloader.invalidMapFileFound.connect(self.onInvalidMapFile)
+
+        # Connect up to the container progress event
+        self.downloader.containerCompleted.connect(self.onContainerComplete)
 
         # Move the download manager to the background thread
         self.downloader.moveToThread(self.downloadThread)
@@ -252,11 +255,13 @@ class DownloadUI(QObject):
                     self.enableButton()
 
             if state == DownloaderState.DOWNLOAD_FAILED and file[1]:
+                log.info("Failed to download %s", file[1])
                 self.progressBar.setFormat("Failed to download {}".format(file[1]))
                 self.fileBar.hide()
 
             if state == DownloaderState.VERIFICATION_FAILED and file[1]:
-                self.progressBar.setFormat("Failed to verify {}".format(file[1]))
+                log.info("Failed to verify %s", file[1])
+                self.progressBar.setFormat("Update available")
                 self.fileBar.hide()
 
             # On a pause, complete, or missing we clear out any progress text
@@ -274,7 +279,7 @@ class DownloadUI(QObject):
 
     @Slot(str, str)
     def onInvalidMapFile(check, file):
-        fMap = self.store.cache.get("fileMap")
+        fMap = self.store.cache.get("fileMap", {})
 
         if check in fMap:
             files = fMap.get(check)
@@ -291,7 +296,7 @@ class DownloadUI(QObject):
 
     @Slot(list)
     def onFileComplete(self, file):
-        fMap = self.store.cache.get("fileMap")
+        fMap = self.store.cache.get("fileMap", {})
 
         if not fMap.get(file[0]):
             fMap[file[0]] = uList()
@@ -302,3 +307,18 @@ class DownloadUI(QObject):
         self.store.cache.commit()
 
         log.debug("File completed %s", file)
+
+    @Slot(tuple)
+    def onContainerComplete(self, info):
+        checks = self.store.cache.get("containerChecks", {})
+
+        if not info[0] in checks.keys():
+            checks[info[0]] = {}
+
+        if not ("local" in checks[info[0]] and checks[info[0]]["local"] == info[1]):
+            checks[info[0]]["local"] = info[1]
+
+            self.store.cache.set("containerChecks", checks)
+            self.store.cache.commit()
+
+            log.debug("Local check for %s set to %s", info[0], info[1])
