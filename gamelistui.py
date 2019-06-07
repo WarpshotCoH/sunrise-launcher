@@ -1,6 +1,6 @@
 from PySide2.QtCore import Slot
 
-from helpers import InstallState, isInstalled, logger
+from helpers import InstallState, isInstalled, logger, disconnect
 from listviewui import ListViewUI
 from manifest import Server, Application, Runtime
 
@@ -75,10 +75,7 @@ class GameListUI(ListViewUI):
     def reload(self, key = None):
         log.debug("Reload games list")
 
-        try:
-            self.list.currentRowChanged.disconnect()
-        except Exception:
-            pass
+        disconnect(self.list.currentRowChanged)
 
         self.list.clear()
 

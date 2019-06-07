@@ -93,7 +93,7 @@ class Store(QObject):
         # self.updated.connect(self.saveManifests)
 
     def f(self, key):
-        return self.config['flags'].get(key)
+        return self.config["flags"].get(key, False)
 
     def s(self, key):
         return self.strings.get(key)
@@ -123,28 +123,7 @@ class Store(QObject):
                 self.settings.load(unserialize(json.load(f)).store)
                 self.settings.commit()
 
-            if not self.settings.get("autoPatch"):
-                self.settings.set("autoPatch", True)
-
-            if not self.settings.get("containerSettings"):
-                self.settings.set("containerSettings", {})
-
-            if not self.settings.get("paths"):
-                self.settings.set("paths", PathSettings("bin", "run"))
-
-            if not self.settings.get("recentServers"):
-                self.settings.set("recentServers", RecentServers())
-
-            if not self.settings.get("hiddenServers"):
-                self.settings.set("hiddenServers", uList())
-
-            if not self.settings.get("theme") and len(self.themes.keys()) > 0:
-               self.settings.set("theme", list(self.themes.keys())[0])
-
-            if not self.settings.get("manifestList"):
-                self.settings.set("manifestList", uList())
-
-            self.settings.commit()
+            self.initSettings()
         except Exception:
             log.error(sys.exc_info())
             pass
@@ -164,6 +143,30 @@ class Store(QObject):
 
         self.updated.emit()
 
+    def initSettings(self):
+        if not self.settings.get("autoPatch"):
+            self.settings.set("autoPatch", True)
+
+        if not self.settings.get("containerSettings"):
+            self.settings.set("containerSettings", {})
+
+        if not self.settings.get("paths"):
+            self.settings.set("paths", PathSettings("bin", "run"))
+
+        if not self.settings.get("recentServers"):
+            self.settings.set("recentServers", RecentServers())
+
+        if not self.settings.get("hiddenServers"):
+            self.settings.set("hiddenServers", uList())
+
+        if not self.settings.get("theme") and len(self.themes.keys()) > 0:
+           self.settings.set("theme", list(self.themes.keys())[0])
+
+        if not self.settings.get("manifestList"):
+            self.settings.set("manifestList", uList())
+
+        self.settings.commit()
+
     def getTools(self):
         return list(filter(lambda a: a.type == "mod", self.applications.values()))
 
@@ -178,6 +181,10 @@ class Store(QObject):
             self.settings.set("theme", theme.props["name"])
             self.settings.commit()
             self.updated.emit()
+
+    def enableDevMode(self):
+        self.config["flags"]["dev"] = True
+        self.updated.emit()
 
     @Slot(str, str)
     def loadManifest(self, url, data):
@@ -208,9 +215,15 @@ class Store(QObject):
 
             self.settings.set("manifestList", manifests)
 
-        # TODO: Compute and store new hexdigests for the combined hashes of files in cache
-        # { containerId: { remote: $manifestCheck, local: $localCheck } }
-        # When these two values differ we know we need to update
+        self.cache.set("containerChecks", self.computeRemoteChecks())
+
+        self.cache.commit()
+        self.settings.commit()
+        log.info("Committed container settings for %s", url)
+
+        self.updated.emit()
+
+    def computeRemoteChecks(self):
         checks = self.cache.get("containerChecks", {})
 
         for cid, runtime in self.runtimes.items():
@@ -243,13 +256,7 @@ class Store(QObject):
 
             checks[cid]["remote"] = h.hexdigest()
 
-        self.cache.set("containerChecks", checks)
-
-        self.cache.commit()
-        self.settings.commit()
-        log.info("Committed container settings for %s", url)
-
-        self.updated.emit()
+        return checks
 
     @Slot(str)
     def addRunning(self, id):
@@ -260,6 +267,18 @@ class Store(QObject):
     def removeRunning(self, id):
         log.debug("Removing %s to running list", id)
         self.running.remove(id)
+
+    def delCache(self):
+        try:
+            cacheFile = os.path.join(SunriseSettings.cachePath, "cache.json")
+
+            if os.path.exists(cacheFile):
+                os.remove(cacheFile)
+                self.cache.clear()
+                self.cache.set("containerChecks", self.computeRemoteChecks())
+                self.cache.commit()
+        except Exception:
+            pass
 
     def saveCache(self):
         if not os.path.isdir(SunriseSettings.cachePath):
@@ -273,6 +292,17 @@ class Store(QObject):
         log.debug("Wrote cache file")
 
         f.close()
+
+    def delSettings(self):
+        try:
+            settingsFile = os.path.join(SunriseSettings.settingsPath, "settings.json")
+
+            if os.path.exists(settingsFile):
+                os.remove(settingsFile)
+                self.settings.clear()
+                self.initSettings()
+        except Exception:
+            pass
 
     def saveSettings(self):
         if not os.path.isdir(SunriseSettings.settingsPath):

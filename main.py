@@ -103,7 +103,7 @@ if __name__ == "__main__":
 
     # Connect to theme selection
     # TODO: This requires a key existance check. User may have deleted the theme between runs
-    store.settings.connectKey("theme", lambda _: store.themes[store.settings.get("theme")].activate(application))
+    store.settings.connectKey("theme", lambda _: store.settings.get("theme") and store.themes[store.settings.get("theme")].activate(application))
 
     # Load any settings store for the user
     store.load()

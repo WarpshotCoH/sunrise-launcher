@@ -74,7 +74,9 @@ class DownloadUI(QObject):
         if len(self.containers) > 0:
             log.debug("Found containers %s to handle", self.containers)
 
-            if self.store.settings.get("containerSettings").get(self.containers[-1].id).autoPatch:
+            cSettings = self.store.settings.get("containerSettings", {}).get(self.containers[-1].id);
+
+            if cSettings and cSettings.autoPatch:
                 self.startDownload()
             else:
                 if not isInstalled(self.store, self.containers[-1].id) == InstallState.NOTINSTALLED:
@@ -335,8 +337,12 @@ class DownloadUI(QObject):
     def onContainerComplete(self, info):
         checks = self.store.cache.get("containerChecks", {})
 
+        log.debug("Checks available for %s", checks.keys())
+
         if not info[0] in checks.keys():
             checks[info[0]] = {}
+        else:
+            log.debug("Existing check for %s: %s", info[0], checks[info[0]])
 
         if not ("local" in checks[info[0]] and checks[info[0]]["local"] == info[1]):
             checks[info[0]]["local"] = info[1]

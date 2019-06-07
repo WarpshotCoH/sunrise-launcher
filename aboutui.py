@@ -1,6 +1,6 @@
 import webbrowser
 
-from PySide2.QtCore import QObject, Signal, Slot, QSize, Qt
+from PySide2.QtCore import QObject, Signal, Slot, QSize, Qt, QEvent
 from PySide2.QtGui import QImage, QPixmap
 from PySide2.QtWidgets import QListWidgetItem, QLabel
 
@@ -25,8 +25,18 @@ class AboutUI(QObject):
     def __init__(self, store, parent):
         super(AboutUI, self).__init__(parent)
 
+        self.logoClicks = 0
+
         self.store = store
         self.ui = createWidget("ui/settings-about.ui")
+
+        self.ui.clearCache.clicked.connect(self.store.delCache)
+        self.ui.resetSettings.clicked.connect(self.store.delSettings)
+        self.updateDevControlDisplay()
+        self.store.updated.connect(self.updateDevControlDisplay)
+
+        self.ui.logo.installEventFilter(self)
+
         self.licenses = LicenseUI(store).ui
 
         self.bindButtons()
@@ -60,6 +70,19 @@ class AboutUI(QObject):
         bindUrl(self.ui.sourceButton, self.store.config['about']['source_url'])
 
         self.ui.licenseButton.clicked.connect(lambda: self.licenses.show())
+
+    def eventFilter(self, obj, event):
+        if obj == self.ui.logo:
+            if event.type() == QEvent.MouseButtonRelease:
+                self.logoClicks = self.logoClicks + 1
+
+                if self.logoClicks == 15:
+                    self.store.enableDevMode()
+
+        return False
+
+    def updateDevControlDisplay(self):
+        self.ui.devControls.setVisible(self.store.f("dev"))
 
     @Slot()
     def displayLicenses(self, key = None):

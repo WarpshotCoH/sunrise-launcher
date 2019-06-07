@@ -154,9 +154,16 @@ class Settings(QObject):
         self.cancelled.emit()
         self.pending = {}
 
-    def destroy(self):
+    def clear(self):
+        keys = self.store.keys()
+
         self.store = {}
         self.pending = {}
+
+        for k in keys:
+            self.changed.emit(k)
+
+        self.commited.emit(self.store)
 
     def connectKey(self, k, fn):
         self.changed.connect(lambda updatedKey: fn(k) if k == updatedKey else None)

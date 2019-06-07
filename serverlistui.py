@@ -4,6 +4,7 @@ from listviewui import ListViewUI
 from manifest import Server, Application, Runtime
 
 from helpers import logger
+from settings import RecentServers
 
 log = logger("main.ui.serverlist")
 
@@ -18,7 +19,7 @@ class ServerListUI(ListViewUI):
         self.store.settings.connectKey("hiddenServers", self.reload)
 
     def computeServerOrder(self):
-        recentSettings = self.store.settings.get("recentServers")
+        recentSettings = self.store.settings.get("recentServers", RecentServers())
 
         if recentSettings:
             order = recentSettings.recent
