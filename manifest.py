@@ -215,7 +215,7 @@ class Application:
         application.attrib["id"] = self.id
         application.attrib["type"] = self.type
         application.attrib["runtime"] = self.runtime
-        application.attrib["standalone"] = self.standalone
+        application.attrib["standalone"] = "true" if self.standalone else "false"
 
         if self.custom:
             application.attrib["custom-server"] = "true"

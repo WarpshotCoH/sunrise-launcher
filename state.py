@@ -274,10 +274,13 @@ class Store(QObject):
 
             if os.path.exists(cacheFile):
                 os.remove(cacheFile)
-                self.cache.clear()
-                self.cache.set("containerChecks", self.computeRemoteChecks())
-                self.cache.commit()
+
+            self.cache.clear()
+            log.debug("Reseting remote container checks to %s", self.computeRemoteChecks())
+            self.cache.set("containerChecks", self.computeRemoteChecks())
+            self.cache.commit()
         except Exception:
+            log.error(sys.exc_info(), exc_info = True)
             pass
 
     def saveCache(self):
@@ -299,9 +302,11 @@ class Store(QObject):
 
             if os.path.exists(settingsFile):
                 os.remove(settingsFile)
-                self.settings.clear()
-                self.initSettings()
+
+            self.settings.clear()
+            self.initSettings()
         except Exception:
+            log.error(sys.exc_info(), exc_info = True)
             pass
 
     def saveSettings(self):

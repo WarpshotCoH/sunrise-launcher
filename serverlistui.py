@@ -3,7 +3,7 @@ from PySide2.QtCore import Slot
 from listviewui import ListViewUI
 from manifest import Server, Application, Runtime
 
-from helpers import logger
+from helpers import logger, isInstalled, InstallState
 from settings import RecentServers
 
 log = logger("main.ui.serverlist")
@@ -92,3 +92,19 @@ class ServerListUI(ListViewUI):
 
         if newIndex > 0:
             self.list.setCurrentRow(newIndex)
+
+    @Slot(str)
+    def updateIndicators(self, key = None):
+        for i in range(self.list.count()):
+            item = self.list.item(i)
+            widget = self.list.itemWidget(item)
+
+            containerId = widget.property("containerId")
+
+            if containerId:
+                installState = isInstalled(self.store, containerId)
+
+                if isInstalled(self.store, containerId) == InstallState.UPDATEAVAILABLE:
+                    widget.updateIndicator.show()
+                else:
+                    widget.updateIndicator.hide()

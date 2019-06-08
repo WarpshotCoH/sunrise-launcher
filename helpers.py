@@ -97,7 +97,12 @@ def isInstalled(store, id):
     checks = store.cache.get("containerChecks", {})
 
     if id in checks:
+        log.debug("Checking install state of %s", id)
+        log.debug("%s local check: %s", id, "local" in checks[id])
+        log.debug("%s remote check: %s", id, "remote" in checks[id])
         if "local" in checks[id] and "remote" in checks[id]:
+            log.debug("%s : %s", checks[id]["local"], checks[id]["remote"])
+
             if checks[id]["local"] == checks[id]["remote"]:
                 return InstallState.INSTALLED
             else:

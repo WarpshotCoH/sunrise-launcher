@@ -58,7 +58,7 @@ class ListViewUI(QObject):
 
         parent.addWidget(self.ui)
 
-        self.store.cache.connectKey("containerChecks", self.reload)
+        self.store.cache.connectKey("containerChecks", self.updateIndicators)
 
         # Refresh the server manager list when manifests update
         self.store.updated.connect(self.reload)
@@ -178,11 +178,19 @@ class ListViewUI(QObject):
 
         self.ui.detailSettings.setToolTip(self.store.s("GAMES_DETAILS_SETTINGS_BUTTON"))
 
+    def getHeaderSize(self):
+        w = createWidget("ui/listview-item-header.ui")
+        return w.sizeHint()
+
+    def getItemSize(self):
+        w = createWidget("ui/listview-item.ui")
+        return w.sizeHint()
+
     def addHeader(self, label):
-        header = QLabel()
-        header.setText(label)
-        header.setProperty("ListSubhead", True)
-        header.setAlignment(Qt.AlignVCenter)
+        w = createWidget("ui/listview-item-header.ui")
+        w.listHeader.setText(label)
+        w.listHeader.setProperty("ListSubhead", True)
+        w.listHeader.setAlignment(Qt.AlignVCenter)
 
         listItem = QListWidgetItem()
         listItem.setFlags(listItem.flags() & ~Qt.ItemIsSelectable)
@@ -191,18 +199,18 @@ class ListViewUI(QObject):
         # TODO: Supposed to be able to get the size hint from the custom
         #       widget and assign it here, but I can not seem to figure
         #       it out
-        listItem.setSizeHint(QSize(-1, 24))
+        listItem.setSizeHint(w.sizeHint())
 
-        self.list.setItemWidget(listItem, header)
+        self.list.setItemWidget(listItem, w)
+
+        return listItem
 
     def addListItem(self, id, name, label, icon = None):
         w = createWidget("ui/listview-item.ui")
         w.findChild(QLabel, "name").setText(name)
         w.findChild(QLabel, "label").setText(label)
 
-        state = isInstalled(self.store, id)
-
-        if not state == InstallState.UPDATEAVAILABLE:
+        if not isInstalled(self.store, id) == InstallState.UPDATEAVAILABLE:
             w.updateIndicator.hide()
 
         # TODO: Move off-thread for slow loading. Maybe an image loading pool?
@@ -217,6 +225,10 @@ class ListViewUI(QObject):
             True
 
         listItem = QListWidgetItem()
+        w.setProperty("containerId", id)
+        w.setProperty("containerName", name)
+        w.setProperty("containerLabel", label)
+
         self.list.addItem(listItem)
 
         listItem.setSizeHint(w.sizeHint())

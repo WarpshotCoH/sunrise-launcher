@@ -163,7 +163,7 @@ class Settings(QObject):
         for k in keys:
             self.changed.emit(k)
 
-        self.commited.emit(self.store)
+        self.committed.emit(self.store)
 
     def connectKey(self, k, fn):
         self.changed.connect(lambda updatedKey: fn(k) if k == updatedKey else None)

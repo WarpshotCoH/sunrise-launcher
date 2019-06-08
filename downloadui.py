@@ -95,29 +95,35 @@ class DownloadUI(QObject):
 
         self.shutdown()
 
-        self.downloader = HTTPDownloader(
-            self.containers,
-            self.store.settings.get("paths").binPath,
-            self.store.cache.get("fileMap", {})
-        )
+        paths = self.store.settings.get("paths")
 
-        self.runInBackground(self.downloader.verify)
-        self.show()
+        if paths:
+            self.downloader = HTTPDownloader(
+                self.containers,
+                paths.binPath,
+                self.store.cache.get("fileMap", {})
+            )
+
+            self.runInBackground(self.downloader.verify)
+            self.show()
 
     def fullVerifyDownload(self):
         log.debug("Triggered full verification for %s", self.containers)
 
         self.shutdown()
 
-        self.downloader = HTTPDownloader(
-            self.containers,
-            self.store.settings.get("paths").binPath,
-            self.store.cache.get("fileMap", {}),
-            fullVerify = True
-        )
+        paths = self.store.settings.get("paths")
 
-        self.runInBackground(self.downloader.verify)
-        self.show()
+        if paths:
+            self.downloader = HTTPDownloader(
+                self.containers,
+                path.binPath,
+                self.store.cache.get("fileMap", {}),
+                fullVerify = True
+            )
+
+            self.runInBackground(self.downloader.verify)
+            self.show()
 
     def startDownload(self):
         log.debug("Triggered download for %s", self.containers)
@@ -126,14 +132,17 @@ class DownloadUI(QObject):
         # threads have been cleaned up
         self.shutdown()
 
-        self.downloader = HTTPDownloader(
-            self.containers,
-            self.store.settings.get("paths").binPath,
-            self.store.cache.get("fileMap", {})
-        )
+        paths = self.store.settings.get("paths")
 
-        self.runInBackground(self.downloader.download)
-        self.show()
+        if paths:
+            self.downloader = HTTPDownloader(
+                self.containers,
+                paths.binPath,
+                self.store.cache.get("fileMap", {})
+            )
+
+            self.runInBackground(self.downloader.download)
+            self.show()
 
     # TODO: Startup on this feels slow (due to thread spawn maybe?). Can we
     #       reuse the thread / downloader and instead use a custom slot + signal
