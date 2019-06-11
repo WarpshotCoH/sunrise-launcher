@@ -7,7 +7,7 @@ from PySide2.QtGui import QImage, QPixmap
 from PySide2.QtWidgets import QListWidgetItem, QLabel, QToolButton, QMenu, QAction
 
 from downloadui import DownloadUI
-from helpers import createWidget, logger
+from helpers import createWidget, logger, isInstalled, InstallState
 from manifest import Server, Application, Runtime
 from widgets.rightalignqmenu import RightAlignQMenu
 
@@ -58,6 +58,8 @@ class ListViewUI(QObject):
 
         parent.addWidget(self.ui)
 
+        self.store.cache.connectKey("containerChecks", self.updateIndicators)
+
         # Refresh the server manager list when manifests update
         self.store.updated.connect(self.reload)
 
@@ -91,8 +93,10 @@ class ListViewUI(QObject):
             # We do not need to load here as the icon is either in the cache
             # from being loaded by the item list or it failed to load in the
             # item list and we are just going to ignore it
-            if server.icon and self.store.cache.get(server.icon):
-                self.ui.icon.setPixmap(self.store.cache.get(server.icon))
+
+            # TODO: Impl icon handling
+            # if server.icon and self.store.cache.get(server.icon):
+            #     self.ui.icon.setPixmap(self.store.cache.get(server.icon))
         elif application:
             if application:
                 self.ui.detailsName.setText(application.name)
@@ -104,8 +108,10 @@ class ListViewUI(QObject):
                 # We do not need to load here as the icon is either in the cache
                 # from being loaded by the item list or it failed to load in the
                 # item list and we are just going to ignore it
-                if application.icon and self.store.cache.get(application.icon):
-                    self.ui.icon.setPixmap(self.store.cache.get(application.icon))
+
+                # TODO: Impl icon handling
+                # if application.icon and self.store.cache.get(application.icon):
+                #     self.ui.icon.setPixmap(self.store.cache.get(application.icon))
         elif runtime:
             if runtime:
                 self.ui.detailsName.setText(runtime.name)
@@ -115,8 +121,10 @@ class ListViewUI(QObject):
                 # We do not need to load here as the icon is either in the cache
                 # from being loaded by the item list or it failed to load in the
                 # item list and we are just going to ignore it
-                if runtime.icon and self.store.cache.get(runtime.icon):
-                    self.ui.icon.setPixmap(self.store.cache.get(runtime.icon))
+
+                # TODO: Impl icon handling
+                # if runtime.icon and self.store.cache.get(runtime.icon):
+                #     self.ui.icon.setPixmap(self.store.cache.get(runtime.icon))
 
         self.configureDetailButtons(application, runtime, server)
 
@@ -170,11 +178,19 @@ class ListViewUI(QObject):
 
         self.ui.detailSettings.setToolTip(self.store.s("GAMES_DETAILS_SETTINGS_BUTTON"))
 
+    def getHeaderSize(self):
+        w = createWidget("ui/listview-item-header.ui")
+        return w.sizeHint()
+
+    def getItemSize(self):
+        w = createWidget("ui/listview-item.ui")
+        return w.sizeHint()
+
     def addHeader(self, label):
-        header = QLabel()
-        header.setText(label)
-        header.setProperty("ListSubhead", True)
-        header.setAlignment(Qt.AlignVCenter)
+        w = createWidget("ui/listview-item-header.ui")
+        w.listHeader.setText(label)
+        w.listHeader.setProperty("ListSubhead", True)
+        w.listHeader.setAlignment(Qt.AlignVCenter)
 
         listItem = QListWidgetItem()
         listItem.setFlags(listItem.flags() & ~Qt.ItemIsSelectable)
@@ -183,25 +199,36 @@ class ListViewUI(QObject):
         # TODO: Supposed to be able to get the size hint from the custom
         #       widget and assign it here, but I can not seem to figure
         #       it out
-        listItem.setSizeHint(QSize(-1, 24))
+        listItem.setSizeHint(w.sizeHint())
 
-        self.list.setItemWidget(listItem, header)
+        self.list.setItemWidget(listItem, w)
 
-    def addListItem(self, name, label, icon = None):
+        return listItem
+
+    def addListItem(self, id, name, label, icon = None):
         w = createWidget("ui/listview-item.ui")
         w.findChild(QLabel, "name").setText(name)
         w.findChild(QLabel, "label").setText(label)
 
+        if not isInstalled(self.store, id) == InstallState.UPDATEAVAILABLE:
+            w.updateIndicator.hide()
+
         # TODO: Move off-thread for slow loading. Maybe an image loading pool?
         if icon:
-            if not self.store.cache.get(icon):
-                data = requests.get(icon, stream=True, allow_redirects=True).content # TODO: handle 404/missing icon?
-                qImage = QImage.fromData(data)
-                self.store.cache[icon] = QPixmap.fromImage(qImage)
+            # TODO: Impl icon handling
+            # if not self.store.cache.get(icon):
+            #     data = requests.get(icon, stream=True, allow_redirects=True).content # TODO: handle 404/missing icon?
+            #     qImage = QImage.fromData(data)
+            #     self.store.cache[icon] = QPixmap.fromImage(qImage)
 
-            w.findChild(QLabel, "icon").setPixmap(self.store.cache.get(icon))
+            # w.findChild(QLabel, "icon").setPixmap(self.store.cache.get(icon))
+            True
 
         listItem = QListWidgetItem()
+        w.setProperty("containerId", id)
+        w.setProperty("containerName", name)
+        w.setProperty("containerLabel", label)
+
         self.list.addItem(listItem)
 
         listItem.setSizeHint(w.sizeHint())

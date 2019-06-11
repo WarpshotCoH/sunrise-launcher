@@ -3,10 +3,9 @@ import os
 from PySide2.QtCore import QObject, QThread, Slot, Signal
 
 from downloader import DownloaderState
-from fdbdownloader import FDBDownloader
 from httpdownloader import HTTPDownloader
 from manifest import Application, Runtime, Server
-from helpers import createWidget, logger
+from helpers import createWidget, logger, uList, isInstalled, InstallState, disconnect
 
 log = logger("main.ui.download")
 
@@ -47,9 +46,13 @@ class DownloadUI(QObject):
 
     @Slot(Application, Runtime, Server)
     def load(self, application = None, runtime = None, server = None):
+        log.info("Loading %s %s %s", application, runtime, server)
+
         if application == None and runtime == None and server == None:
             self.shutdown()
             self.hide()
+        else:
+            self.show()
 
         self.min = self.max = self.cur = 0
         self.containers = []
@@ -69,50 +72,77 @@ class DownloadUI(QObject):
             self.containers.append(application)
 
         if len(self.containers) > 0:
-            if not self.store.settings.get("containerSettings").get(self.containers[-1].id).autoPatch:
-                if os.path.isdir(self.store.settings.get("paths").binPath):
-                    self.verifyDownload()
-            else:
+            log.debug("Found containers %s to handle", self.containers)
+
+            cSettings = self.store.settings.get("containerSettings", {}).get(self.containers[-1].id);
+
+            if cSettings and cSettings.autoPatch:
                 self.startDownload()
+            else:
+                if not isInstalled(self.store, self.containers[-1].id) == InstallState.NOTINSTALLED:
+                    self.verifyDownload()
+                else:
+                    disconnect(self.button.clicked)
+                    self.button.setText(self.getButtonLabel(DownloaderState.NEW))
+                    self.button.clicked.connect(self.getButtonAction(DownloaderState.NEW))
 
     def run(self):
         if self.launchId:
             self.launch.emit(self.launchId)
 
     def verifyDownload(self):
+        log.debug("Triggered verification for %s", self.containers)
+
         self.shutdown()
 
-        if self.store.f("file_db"):
-            self.downloader = FDBDownloader([self.containers[-1]], self.store.settings.get("paths").fdbPath)
-        else:
-            self.downloader = HTTPDownloader([self.containers[-1]], self.store.settings.get("paths").binPath)
+        paths = self.store.settings.get("paths")
 
-        self.runInBackground(self.downloader.verify)
-        self.show()
+        if paths:
+            self.downloader = HTTPDownloader(
+                self.containers,
+                paths.binPath,
+                self.store.cache.get("fileMap", {})
+            )
+
+            self.runInBackground(self.downloader.verify)
+            self.show()
 
     def fullVerifyDownload(self):
+        log.debug("Triggered full verification for %s", self.containers)
+
         self.shutdown()
 
-        if self.store.f("file_db"):
-            self.downloader = FDBDownloader(self.containers, self.store.settings.get("paths").fdbPath)
-        else:
-            self.downloader = HTTPDownloader(self.containers, self.store.settings.get("paths").binPath)
+        paths = self.store.settings.get("paths")
 
-        self.runInBackground(self.downloader.verify)
-        self.show()
+        if paths:
+            self.downloader = HTTPDownloader(
+                self.containers,
+                path.binPath,
+                self.store.cache.get("fileMap", {}),
+                fullVerify = True
+            )
+
+            self.runInBackground(self.downloader.verify)
+            self.show()
 
     def startDownload(self):
+        log.debug("Triggered download for %s", self.containers)
+
         # Before verifying or downloading, make sure existing downloaders and
         # threads have been cleaned up
         self.shutdown()
 
-        if self.store.f("file_db"):
-            self.downloader = FDBDownloader(self.containers, self.store.settings.get("paths").fdbPath)
-        else:
-            self.downloader = HTTPDownloader(self.containers, self.store.settings.get("paths").binPath)
+        paths = self.store.settings.get("paths")
 
-        self.runInBackground(self.downloader.download)
-        self.show()
+        if paths:
+            self.downloader = HTTPDownloader(
+                self.containers,
+                paths.binPath,
+                self.store.cache.get("fileMap", {})
+            )
+
+            self.runInBackground(self.downloader.download)
+            self.show()
 
     # TODO: Startup on this feels slow (due to thread spawn maybe?). Can we
     #       reuse the thread / downloader and instead use a custom slot + signal
@@ -134,12 +164,16 @@ class DownloadUI(QObject):
         # Connect up to the files progress events
         self.downloader.start.connect(self.onStart)
         self.downloader.progress.connect(self.onProgress)
-        self.downloader.stateChange.connect(self.onDownloaderStateChange)
+        self.downloader.stateChanged.connect(self.onDownloaderStateChange)
 
         # Connect up to the file progress events
-        self.downloader.fileStart.connect(self.onFileStart)
+        self.downloader.fileStarted.connect(self.onFileStart)
         self.downloader.fileProgress.connect(self.onFileProgress)
-        self.downloader.fileVerify.connect(self.onFileStart)
+        self.downloader.fileCompleted.connect(self.onFileComplete)
+        self.downloader.invalidMapFileFound.connect(self.onInvalidMapFile)
+
+        # Connect up to the container progress event
+        self.downloader.containerCompleted.connect(self.onContainerComplete)
 
         # Move the download manager to the background thread
         self.downloader.moveToThread(self.downloadThread)
@@ -167,16 +201,50 @@ class DownloadUI(QObject):
 
     def shutdown(self):
         if self.downloader:
+            log.debug("Shutting down downloader")
             self.downloader.shutdown()
 
         if self.downloadThread:
+            log.debug("Shutting down download thread")
             self.downloadThread.quit()
             self.downloadThread.wait()
 
+    def getButtonLabel(self, state):
+
+        # TODO: Button/label for non-runnable targets
+        buttonLabel = {
+            DownloaderState.NEW: self.store.s("DOWNLOAD_INSTALL"),
+            DownloaderState.DOWNLOADING: self.store.s("DOWNLOAD_PAUSE"),
+            DownloaderState.VERIFYING: self.store.s("DOWNLOAD_PLAY"),
+            DownloaderState.PAUSED: self.store.s("DOWNLOAD_RESUME"),
+            DownloaderState.COMPLETE: self.store.s("DOWNLOAD_PLAY"),
+            DownloaderState.DOWNLOAD_FAILED: self.store.s("DOWNLOAD_DOWNLOAD"),
+            DownloaderState.VERIFICATION_FAILED: self.store.s("DOWNLOAD_REPAIR"),
+            DownloaderState.MISSING: self.store.s("DOWNLOAD_INSTALL"),
+        }
+
+        return buttonLabel[state]
+
+    def getButtonAction(self, state):
+
+        # TODO: Button/label for non-runnable targets
+        buttonAction = {
+            DownloaderState.NEW: self.startDownload,
+            DownloaderState.DOWNLOADING: self.pauseDownload,
+            DownloaderState.VERIFYING: self.pauseDownload,
+            DownloaderState.PAUSED: self.startDownload,
+            DownloaderState.COMPLETE: self.run,
+            DownloaderState.DOWNLOAD_FAILED: self.startDownload,
+            DownloaderState.VERIFICATION_FAILED: self.startDownload,
+            DownloaderState.MISSING: self.startDownload,
+        }
+
+        return buttonAction[state]
+
     @Slot(str, int, int, int)
     def onStart(self, name, pMin, pStart, pMax):
-        log.info("Downloader Start")
-        log.info("%s %s %s %s", name, pMin, pStart, pMax)
+        log.info("Continer download started for %s", name)
+        log.info("Min: %s Start: %s Max: %s", pMin, pStart, pMax)
         self.min = pMin
         self.max = pMax
         self.progressBar.setFormat("({}) %p%".format(name))
@@ -190,42 +258,18 @@ class DownloadUI(QObject):
         self.cur = i
         self.progressBar.setValue(i)
 
-    @Slot(DownloaderState, str)
-    def onDownloaderStateChange(self, state, filename = None):
-        log.debug("Change state %s", state)
+    @Slot(DownloaderState, tuple)
+    def onDownloaderStateChange(self, state, file):
+        log.debug("Change state %s : %s", state, file)
         self.disableButton()
-
-        # TODO: Button/label for non-runnable targets
-
-        buttonLabel = {
-            DownloaderState.NEW: self.store.s("DOWNLOAD_INSTALL"),
-            DownloaderState.DOWNLOADING: self.store.s("DOWNLOAD_PAUSE"),
-            DownloaderState.VERIFYING: self.store.s("DOWNLOAD_PLAY"),
-            DownloaderState.PAUSED: self.store.s("DOWNLOAD_RESUME"),
-            DownloaderState.COMPLETE: self.store.s("DOWNLOAD_PLAY"),
-            DownloaderState.DOWNLOAD_FAILED: self.store.s("DOWNLOAD_DOWNLOAD"),
-            DownloaderState.VERIFICATION_FAILED: self.store.s("DOWNLOAD_REPAIR"),
-            DownloaderState.MISSING: self.store.s("DOWNLOAD_INSTALL"),
-        }
-
-        buttonAction = {
-            DownloaderState.NEW: self.startDownload,
-            DownloaderState.DOWNLOADING: self.pauseDownload,
-            DownloaderState.VERIFYING: self.pauseDownload,
-            DownloaderState.PAUSED: self.startDownload,
-            DownloaderState.COMPLETE: self.run,
-            DownloaderState.DOWNLOAD_FAILED: self.startDownload,
-            DownloaderState.VERIFICATION_FAILED: self.startDownload,
-            DownloaderState.MISSING: self.startDownload,
-        }
 
         # Ignore the shutdown state. Currently it means the application is
         # shutting down or we are transitioning to another list item
         if not state == DownloaderState.SHUTDOWN:
-            log.debug("Setting button label to %s", buttonLabel[state])
-            self.button.setText(buttonLabel[state])
+            log.debug("Setting button label to %s", self.getButtonLabel(state))
+            self.button.setText(self.getButtonLabel(state))
             self.button.clicked.disconnect()
-            self.button.clicked.connect(buttonAction[state])
+            self.button.clicked.connect(self.getButtonAction(state))
 
             if state == DownloaderState.DOWNLOADING or state == DownloaderState.VERIFYING:
                 self.progressBar.show()
@@ -245,16 +289,16 @@ class DownloadUI(QObject):
                 if not state == DownloaderState.VERIFYING:
                     self.enableButton()
 
-            if state == DownloaderState.DOWNLOAD_FAILED and filename:
-                self.progressBar.setFormat("Failed to download {}".format(filename))
+            if state == DownloaderState.DOWNLOAD_FAILED and file[1]:
+                log.info("Failed to download %s", file[1])
+                self.progressBar.setFormat("Failed to download {}".format(file[1]))
                 self.fileBar.hide()
 
-            if state == DownloaderState.VERIFICATION_FAILED and filename:
-                self.progressBar.setFormat("Failed to verify {}".format(filename))
-                self.fileBar.hide()
+            if state == DownloaderState.VERIFICATION_FAILED and file[1]:
+                log.info("Failed to verify %s", file[1])
 
             # On a pause, complete, or missing we clear out any progress text
-            if state == DownloaderState.PAUSED or state == DownloaderState.COMPLETE or state == DownloaderState.MISSING:
+            if state == DownloaderState.PAUSED or state == DownloaderState.COMPLETE or state == DownloaderState.MISSING or state == DownloaderState.VERIFICATION_FAILED:
                 self.progressBar.hide()
                 self.fileBar.hide()
 
@@ -266,6 +310,53 @@ class DownloadUI(QObject):
         self.fileBar.setFormat("{}/{} - {}".format(self.cur, self.max, filename))
         self.fileBar.show()
 
+    @Slot(str, str)
+    def onInvalidMapFile(check, file):
+        fMap = self.store.cache.get("fileMap", {})
+
+        if check in fMap:
+            files = fMap.get(check)
+
+            if file in files:
+                files.remove(file)
+
+                self.store.cache.set("fileMap", fMap)
+                self.store.cache.commit()
+
     @Slot(int)
     def onFileProgress(self, i):
         self.fileBar.setValue(i)
+
+    @Slot(list)
+    def onFileComplete(self, file):
+        fMap = self.store.cache.get("fileMap", {})
+
+        if not fMap.get(file[0]):
+            fMap[file[0]] = uList()
+
+        if not [file[1], file[2]] in fMap[file[0]]:
+            fMap[file[0]].push([file[1], file[2]])
+
+            self.store.cache.set("fileMap", fMap)
+            self.store.cache.commit()
+
+        log.debug("File completed %s", file)
+
+    @Slot(tuple)
+    def onContainerComplete(self, info):
+        checks = self.store.cache.get("containerChecks", {})
+
+        log.debug("Checks available for %s", checks.keys())
+
+        if not info[0] in checks.keys():
+            checks[info[0]] = {}
+        else:
+            log.debug("Existing check for %s: %s", info[0], checks[info[0]])
+
+        if not ("local" in checks[info[0]] and checks[info[0]]["local"] == info[1]):
+            checks[info[0]]["local"] = info[1]
+
+            self.store.cache.set("containerChecks", checks)
+            self.store.cache.commit()
+
+            log.debug("Local check for %s set to %s", info[0], info[1])

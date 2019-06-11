@@ -16,7 +16,7 @@ class ManifestPool(WatcherPool):
     @Slot(str)
     def update(self, key):
         urlList = self.watchers.keys()
-        newList = self.store.settings.get(key)
+        newList = self.store.settings.get(key, [])
 
         for url in list(set(urlList) - set(newList)):
             self.remove(url)

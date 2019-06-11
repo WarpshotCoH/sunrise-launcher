@@ -3,6 +3,7 @@ import math
 import os
 import posixpath
 import random
+from shutil import copyfile
 import sys
 import time
 import urllib.request as request
@@ -34,7 +35,7 @@ class FileDownload():
 
         # First try downloading from the designated mirror
         if self.mirror:
-            log.debug("%s mirror selected. Attempting to download from mirror first", self.mi)
+            log.debug("%s mirror selected. Attempting to download from mirror first", self.mirror)
             if self.downloadUrl(self.mirror + self.file.name, init, progress):
                 return True
 
@@ -106,6 +107,21 @@ class FileDownload():
 
         return complete
 
+    def copyFrom(self, path, started, progress):
+        started.emit(0, 0, 1, os.path.basename(path))
+
+        log.debug("Copying from %s to %s", path, self.path)
+
+        try:
+            copyfile(os.path.abspath(path), os.path.abspath(self.path))
+            return True
+        except:
+            log.error(sys.exc_info())
+            return False
+
+    def check(self, modifiedTimestamp):
+        log.debug("File timestamp check for %s is %s", self.path, os.path.getmtime(self.path) == modifiedTimestamp)
+        return os.path.getmtime(self.path) == modifiedTimestamp
 
     def verify(self, verify, progress):
         multiplier = 128
@@ -137,7 +153,7 @@ class FileDownload():
                         progress.emit(hashProgress)
                     check = hasher.hexdigest()
 
-                if (check == self.file.check):
+                if (check.lower() == self.file.check.lower()):
                     verified = True
                 else:
                     log.warning("Hash mismatch")

@@ -1,17 +1,26 @@
+from enum import Enum
 import logging
 import os
+import shutil
 import sys
 
-from appdirs import user_data_dir, user_log_dir
+from appdirs import user_cache_dir, user_data_dir, user_log_dir
 from PySide2.QtCore import QFile
 from PySide2.QtUiTools import QUiLoader
 
 APP_NAME = "Sunrise"
 APP_AUTHOR = "Sunrise"
 
+class InstallState(Enum):
+    NOTINSTALLED = 1
+    INSTALLED = 2
+    UPDATEAVAILABLE = 3
+    UPDATING = 4
+
 class SunriseSettings:
-    settingsPath = user_data_dir(APP_NAME, APP_AUTHOR)
+    cachePath = user_cache_dir(APP_NAME, APP_AUTHOR)
     logsPath = user_log_dir(APP_NAME, APP_AUTHOR)
+    settingsPath = user_data_dir(APP_NAME, APP_AUTHOR)
 
 def logger(name):
     l = logging.getLogger(name)
@@ -37,11 +46,69 @@ def logger(name):
 
     return l
 
-def isInstalled(store, id):
-    installPath = store.settings.get("paths").binPath
-    path = os.path.normpath(os.path.join(installPath, id))
+log = logger("main.helpers")
 
-    return os.path.isdir(path)
+class Serde:
+    reg = {}
+
+    @staticmethod
+    def register(tag, c):
+        Serde.reg[tag] = c
+
+def serialize(obj):
+    if hasattr(obj, "serialize"):
+        return obj.serialize()
+
+    if type(obj) is dict:
+        newObj = {}
+
+        for k, v in obj.items():
+            newObj[k] = serialize(v)
+
+        return newObj
+
+    if type(obj) is list:
+        return list(map(serialize, obj))
+
+    return obj
+
+def unserialize(obj):
+    if type(obj) is dict and "type" in obj:
+        for t, c in Serde.reg.items():
+            o = c.unserialize(obj)
+
+            if not o == None:
+                return o
+
+    if type(obj) is dict:
+        newObj = {}
+
+        for k, v in obj.items():
+            newObj[k] = unserialize(v)
+
+        return newObj
+
+    if type(obj) is list:
+        return list(map(unserialize, obj))
+
+    return obj
+
+def isInstalled(store, id):
+    checks = store.cache.get("containerChecks", {})
+
+    if id in checks:
+        log.debug("Checking install state of %s", id)
+        log.debug("%s local check: %s", id, "local" in checks[id])
+        log.debug("%s remote check: %s", id, "remote" in checks[id])
+        if "local" in checks[id] and "remote" in checks[id]:
+            log.debug("%s : %s", checks[id]["local"], checks[id]["remote"])
+
+            if checks[id]["local"] == checks[id]["remote"]:
+                return InstallState.INSTALLED
+            else:
+                return InstallState.UPDATEAVAILABLE
+
+    return InstallState.NOTINSTALLED
 
 def createWidget(ui_file):
     ui_file = QFile(ui_file)
@@ -53,12 +120,26 @@ def createWidget(ui_file):
 
     return widget
 
+def copyDir(src, dst):
+    if not os.path.exists(dst):
+        os.makedirs(dst)
+
+    for item in os.listdir(src):
+        srcItem = os.path.join(src, item)
+        dstItem = os.path.join(dst, item)
+
+        if os.path.isdir(s):
+            copytree(srcItem, dstItem)
+        else:
+            shutil.copy2(srcItem, dstItem)
+
 class uList:
-    def __init__(self):
-        self.list = []
+    def __init__(self, data = None):
+        self.list = data if data else []
 
     def push(self, item):
         if not item in self.list:
+            log.debug("%s is not in list %s", item, self.list)
             self.list.insert(0, item)
 
     def swap(self, index1, index2):
@@ -68,7 +149,30 @@ class uList:
         if item in self.list:
             self.list.remove(item)
 
+    def __len__(self):
+        return len(self.list)
+
     def __iter__(self):
         return iter(self.list)
 
+    def serialize(self):
+        rep = {}
+        rep["type"] = "uList"
+        rep["data"] = self.list
 
+        return rep
+
+    @staticmethod
+    def unserialize(obj):
+        if type(obj) is dict and "type" in obj and obj["type"] == "uList" and "data" in obj and type(obj["data"]) is list:
+            return uList(list(map(unserialize, obj["data"])))
+
+        return None
+
+Serde.register("uList", uList)
+
+def disconnect(signal):
+    try:
+        signal.disconnect()
+    except Exception:
+        pass

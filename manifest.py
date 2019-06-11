@@ -11,6 +11,22 @@ algoMap = {
     Algos.SHA512: hashlib.sha512
 }
 
+class Exclusion:
+    def __init__(self, name):
+        self.name = name
+
+    @staticmethod
+    def fromXML(exclusion):
+        return Exclusion(
+            exclusion.attrib["name"]
+        )
+
+    def toXML(self):
+        exclusion = ET.Element("exclude")
+        exclusion.attrib["name"] = self.name
+
+        return exclusion
+
 class File:
     def __init__(self, name, size, check, algo, urls):
         self.name = name
@@ -60,7 +76,7 @@ class Source:
         if tag == "torrent":
             tag.attrib["magnet"] = self.src
         else:
-            tag.attrib["url"] = self.url
+            tag.attrib["url"] = self.src
 
         return tag
 
@@ -151,9 +167,10 @@ class News:
         return news
 
 class Application:
-    def __init__(self, id, type, version, runtime, custom, name, publisher, icon, websites, launcher, news, files, sources):
+    def __init__(self, id, type, version, runtime, custom, name, publisher, icon, websites, launcher, news, files, sources, standalone, exclusions):
         self.id = id
         self.type = type
+        self.ctype = "application"
         self.version = version
         self.runtime = runtime
         self.custom = custom
@@ -165,6 +182,11 @@ class Application:
         self.news = news
         self.files = files
         self.sources = sources
+        self.standalone = standalone
+        self.exclusions = exclusions
+
+    def getExcludedFileNames(self):
+        return list(map(lambda e: e.name, self.exclusions))
 
     @staticmethod
     def fromXML(app):
@@ -182,7 +204,9 @@ class Application:
             None if app.find("launcher") == None else Launcher.fromXML(app.find("launcher")),
             None if app.find("news") == None else News.fromXML(app.find("news")),
             list(map(File.fromXML, app.findall(".//files/file"))),
-            list(map(Source.fromXML, app.find("sources").getChildren() if app.find("sources") else [])),
+            list(map(Source.fromXML, app.findall(".//sources/*") if app.find("sources") else [])),
+            app.attrib.get("standalone", False) == "true",
+            list(map(Exclusion.fromXML, app.findall(".//files/exclude")))
         )
 
     def toXML(self):
@@ -191,6 +215,7 @@ class Application:
         application.attrib["id"] = self.id
         application.attrib["type"] = self.type
         application.attrib["runtime"] = self.runtime
+        application.attrib["standalone"] = "true" if self.standalone else "false"
 
         if self.custom:
             application.attrib["custom-server"] = "true"
@@ -219,6 +244,8 @@ class Application:
         files = ET.Element("files")
         for f in map(lambda f: f.toXML(), self.files):
             files.append(f)
+        for e in map(lambda e: e.toXML(), self.exclusions):
+            files.append(e)
 
         application.append(files)
 
@@ -233,6 +260,7 @@ class Application:
 class Server:
     def __init__(self, id, application, name, publisher, icon, websites, launcher):
         self.id = id
+        self.ctype = "Server"
         self.application = application
         self.name = name
         self.publisher = publisher
@@ -281,11 +309,14 @@ class Server:
 class Runtime:
     def __init__(self, id, name, publisher, icon, files, sources):
         self.id = id
+        self.ctype = "runtime"
         self.name = name
         self.publisher = publisher
         self.icon = icon
         self.files = files
         self.sources = sources
+        # TODO: Should this be implemented? Technically files blocks allows exclude, but we ignore them
+        self.exclusions = []
 
     @staticmethod
     def fromXML(runtime):
@@ -295,7 +326,7 @@ class Runtime:
             "" if runtime.find("publisher") == None else runtime.find("publisher").text,
             None if runtime.find("icon") == None else runtime.find("icon").text,
             list(map(File.fromXML, runtime.findall(".//files/file"))),
-            list(map(Source.fromXML, runtime.find("sources").getChildren() if runtime.find("sources") else [])),
+            list(map(Source.fromXML, runtime.findall(".//sources/*") if runtime.find("sources") else [])),
         )
 
     def toXML(self):

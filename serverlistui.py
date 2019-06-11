@@ -3,7 +3,8 @@ from PySide2.QtCore import Slot
 from listviewui import ListViewUI
 from manifest import Server, Application, Runtime
 
-from helpers import logger
+from helpers import logger, isInstalled, InstallState
+from settings import RecentServers
 
 log = logger("main.ui.serverlist")
 
@@ -18,7 +19,7 @@ class ServerListUI(ListViewUI):
         self.store.settings.connectKey("hiddenServers", self.reload)
 
     def computeServerOrder(self):
-        recentSettings = self.store.settings.get("recentServers")
+        recentSettings = self.store.settings.get("recentServers", RecentServers())
 
         if recentSettings:
             order = recentSettings.recent
@@ -52,6 +53,12 @@ class ServerListUI(ListViewUI):
     @Slot(str)
     def reload(self, key = None):
         log.debug("Reload server list")
+
+        try:
+            self.list.currentRowChanged.disconnect()
+        except Exception:
+            pass
+
         order = self.computeServerOrder()
         servers = sorted(self.store.servers.values(), key = lambda s: order.index(s.id))
 
@@ -60,15 +67,15 @@ class ServerListUI(ListViewUI):
         else:
             selectedServer = None
 
-        hidden = self.store.settings.get("hiddenServers")
+        hidden = self.store.settings.get("hiddenServers", [])
 
         self.list.clear()
+
+        newIndex = -1
 
         # Now we sync the new order up to the actual displayed UI
         if len(servers) > 0:
             self.addHeader(self.store.s("SERVERS_LIST_SERVERS"))
-
-            newIndex = -1
 
             for i, server in enumerate(servers):
                 if selectedServer and selectedServer.id == server.id and not server.id in hidden:
@@ -76,9 +83,28 @@ class ServerListUI(ListViewUI):
 
                 application = self.store.applications.get(server.application)
 
-                self.addListItem(server.name, application.name, application.icon)
+                self.addListItem(application.id, server.name, application.name, application.icon)
 
                 if server.id in hidden:
                     item.hide()
 
+        self.list.currentRowChanged.connect(self.selectServer)
+
+        if newIndex > 0:
             self.list.setCurrentRow(newIndex)
+
+    @Slot(str)
+    def updateIndicators(self, key = None):
+        for i in range(self.list.count()):
+            item = self.list.item(i)
+            widget = self.list.itemWidget(item)
+
+            containerId = widget.property("containerId")
+
+            if containerId:
+                installState = isInstalled(self.store, containerId)
+
+                if isInstalled(self.store, containerId) == InstallState.UPDATEAVAILABLE:
+                    widget.updateIndicator.show()
+                else:
+                    widget.updateIndicator.hide()

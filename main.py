@@ -96,9 +96,14 @@ if __name__ == "__main__":
 
     application.aboutToQuit.connect(pool.shutdown)
 
+    # Save application data on quit
+    application.aboutToQuit.connect(pool.store.saveCache)
+    application.aboutToQuit.connect(pool.store.saveSettings)
+    application.aboutToQuit.connect(pool.store.saveManifests)
+
     # Connect to theme selection
     # TODO: This requires a key existance check. User may have deleted the theme between runs
-    store.settings.connectKey("theme", lambda _: store.themes[store.settings.get("theme")].activate(application))
+    store.settings.connectKey("theme", lambda _: store.settings.get("theme") and store.themes[store.settings.get("theme")].activate(application))
 
     # Load any settings store for the user
     store.load()
