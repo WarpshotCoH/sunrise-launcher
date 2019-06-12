@@ -63,8 +63,6 @@ QListView::item:hover,
 QListWidget::item:hover {
     background: #444;
     border: none;
-    border-left: 1px solid rgba(0, 0, 0, 0.4);
-    border-right: 1px solid rgba(0, 0, 0, 0.4);
 }
 
 QMenu::item:selected,
@@ -72,11 +70,9 @@ QListView::item:selected,
 QListWidget::item:selected {
     background: #666;
     border: none;
-    border-left: 1px solid rgba(0, 0, 0, 0.4);
-    border-right: 1px solid rgba(0, 0, 0, 0.4);
 }
 
-/* Controls. */
+/* Other controls. */
 QLineEdit {
     padding: 4px 6px;
     background: #222;
@@ -146,6 +142,14 @@ QScrollBar:horizontal::handle {
     min-width: 12px;
 }
 
+/* Anywhere that needs "muted" text. */
+#listList #label,
+#detailsSubname1,
+#detailsSubname2,
+#manifestItemUrl {
+    color: rgba(255, 255, 255, 0.6);
+}
+
 /* Header. */
 #header {
     background: rgba(0, 0, 0, 0.4);
@@ -159,7 +163,7 @@ QScrollBar:horizontal::handle {
 }
 
 #header QPushButton {
-    padding: 18px 6px;
+    padding: 6px 0;
     background: transparent;
     color: rgba(255, 255, 255, 0.6);
     font-size: 20px;
@@ -195,6 +199,16 @@ QScrollBar:horizontal::handle {
     text-transform: uppercase;
 }
 
+#listBackground QListWidget::item:hover {
+    border-left: 1px solid rgba(0, 0, 0, 0.4);
+    border-right: 1px solid rgba(0, 0, 0, 0.4);
+}
+
+#listBackground QListWidget::item:selected {
+    border-left: 1px solid rgba(0, 0, 0, 0.4);
+    border-right: 1px solid rgba(0, 0, 0, 0.4);
+}
+
 #updateIndicator {
     border-radius: 6px;
 }
@@ -202,12 +216,6 @@ QScrollBar:horizontal::handle {
 /* Info section. */
 #detailsName {
     font-size: 20px;
-}
-
-#label,
-#detailsSubname1,
-#detailsSubname2 {
-    color: rgba(255, 255, 255, 0.6);
 }
 
 /* Download section. */
@@ -219,7 +227,7 @@ QScrollBar:horizontal::handle {
 
 #downloadPanel #play {
     padding: 6px;
-    font-size: 28px;
+    font-size: 26px;
     text-transform: uppercase;
     border-radius: 6px;
 }
