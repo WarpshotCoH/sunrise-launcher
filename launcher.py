@@ -1,6 +1,7 @@
 from os import makedirs, symlink, link
 from os.path import join, abspath, normpath, basename, dirname, isdir, isfile
 from shutil import rmtree
+import platform
 import subprocess
 import sys
 import threading
@@ -168,6 +169,10 @@ class Launcher(QObject):
 
         return (None, None)
 
+    def addWineArgs(self, cmd):
+        cmd.insert(0, "wine")
+        return cmd
+
     @Slot(str)
     def launch(self, id):
         log.info("Launching application %s", id)
@@ -175,6 +180,12 @@ class Launcher(QObject):
         (cmd, path) = self.launchCmd(id)
 
         if cmd:
+            # TODO: Replace this with proper app-wide platform detection.
+            # This is more just a quick hack so we can test launching functions without booting into a different OS.
+            if (platform.system != "Windows"):
+                log.info("Running with Wine")
+                cmd = self.addWineArgs(cmd)
+
             server = self.store.servers.get(id)
 
             if server:
