@@ -1,19 +1,18 @@
 {
     "MAIN_MENU_SERVERS": "Servers",
-    "MAIN_MENU_GAMES": "Games",
+    "MAIN_MENU_GAMES": "Downloads",
     "MAIN_MENU_SETTINGS": "Settings",
 
 
-    "SERVERS_LIST_SERVERS": "Servers",
-
+    "SERVERS_LIST_SERVERS": "All Servers",
 
     "SERVERS_DETAILS_SETTINGS_BUTTON": "Settings",
     "SERVERS_DETAILS_WEBSITE_BUTTON": "Website",
 
 
     "GAMES_LIST_MODS_TOOLS": "Mods / Tools",
-    "GAMES_LIST_CLIENTS": "Clients",
-    "GAMES_LIST_RUNTIMES": "Runtimes",
+    "GAMES_LIST_CLIENTS": "Game Clients",
+    "GAMES_LIST_RUNTIMES": "Game Runtimes",
 
     "GAMES_LIST_INSTALLED": "Installed",
     "GAMES_LIST_NOT_INSTALLED": "Not Installed",
@@ -44,7 +43,7 @@
 
 
     "GENERAL_LAUNCH_PARAMS": "Launch parameters",
-    "GENERAL_CLOSE_ON_START": "Close launcher on game start",
+    "GENERAL_AUTO_CLOSE": "Close launcher on game start",
     "GENERAL_AUTO_PATCH": "Auto-patch",
     "GENERAL_THEME": "Theme",
     "GENERAL_THEME_ADD": "Add Theme",
