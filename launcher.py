@@ -13,8 +13,10 @@ log = logger("main.launcher")
 
 class ServerArgs:
     def __init__(self, store, server):
-        binPath = self.store.settings.get("paths").binPath
-        absBin = abspath(binPath)
+        self.store = store
+
+        binPath = ".."
+        absBin = abspath(self.store.settings.get("paths").binPath)
 
         application = self.store.applications.get(server.application)
 
@@ -23,8 +25,8 @@ class ServerArgs:
         else:
             runtime = None
 
-        self.APP_ID = application.id if application else None
-        self.APP_VERSION = application.version if application else None
+        self.APP_ID = application.id if application else ""
+        self.APP_VERSION = application.version if application and application.version else ""
         self.RT_ID = runtime.id if runtime else ""
         self.APP_PATH = join(binPath, application.id) if application else ""
         self.RT_PATH = join(binPath, runtime.id) if runtime else ""
@@ -33,21 +35,23 @@ class ServerArgs:
 
 class ApplicationArgs:
     def __init__(self, store, application):
-        binPath = self.store.settings.get("paths").binPath
-        absBin = abspath(binPath)
+        self.store = store
+
+        binPath = ".."
+        absBin = abspath(self.store.settings.get("paths").binPath)
 
         if application and application.runtime:
             runtime = self.store.runtimes.get(application.runtime)
         else:
             runtime = None
 
-        self.APP_ID = application.id if application else None
-        self.APP_VERSION = application.id if application else None
-        self.RT_ID = application.id if application else None
-        self.APP_PATH = join(binPath, application.id) if application else None
-        self.RT_PATH = join(binPath, runtime.id) if runtime else None
+        self.APP_ID = application.id if application else ""
+        self.APP_VERSION = application.version if application and application.version else ""
+        self.RT_ID = application.id if application else ""
+        self.APP_PATH = join(binPath, application.id) if application else ""
+        self.RT_PATH = join(binPath, runtime.id) if runtime else ""
         self.APP_ABSPATH = join(absBin, application.id) if application else ""
-        self.RT_ABSPATH = join(absBin, runtim.id) if runtim else ""
+        self.RT_ABSPATH = join(absBin, runtime.id) if runtime else ""
 
 class Link:
     def __init__(self, store):
@@ -95,12 +99,14 @@ class Launcher(QObject):
         if self.store.f("use_symlinks"):
             runPath = abspath(paths.runPath)
         else:
-            runPath = abspath(join(paths.binPath, application.runtime if application.runtime else application.id))
+            runPath = abspath(join(paths.binPath, application.id if application.standalone else application.runtime))
 
-        cmd = join(runPath, application.launcher.exec)
+        cmd = []
+        cmd.append(join(runPath, application.launcher.exec))
 
         if application.launcher.params:
-            cmd = cmd + " " + application.launcher.params
+            args = ApplicationArgs(self.store, application)
+            cmd.append(self.parseParams(application.launcher.params, args))
 
         return (cmd, runPath)
 
@@ -113,24 +119,41 @@ class Launcher(QObject):
         else:
             ex = application.launcher.exec
 
-        ex = "homecoming.exe"
-
         paths = self.store.settings.get("paths")
 
         if self.store.f("use_symlinks"):
             runPath = abspath(paths.runPath)
         else:
-            runPath = abspath(join(paths.binPath, application.runtime if application.runtime else application.id))
+            runPath = abspath(join(paths.binPath, application.id if application.standalone else application.runtime))
 
-        cmd = join(runPath, ex)
+        cmd = []
+        cmd.append(join(runPath, ex))
 
         if application.launcher.params:
-            cmd = cmd + " " + application.launcher.params
+            args = ApplicationArgs(self.store, application)
+            cmd.append(self.parseParams(application.launcher.params, args))
 
         if server and server.launcher and server.launcher.params:
-            cmd = cmd + " " + server.launcher.params + " -console"
+            args = ServerArgs(self.store, server)
+            cmd.append(self.parseParams(server.launcher.params, args))
 
         return (cmd, runPath)
+
+    def parseParams(self, params, args):
+        log.debug("Parsing/replacing parameters")
+        log.debug("Old params: %s", params)
+
+        params = params.replace("$APP_ID", args.APP_ID)
+        params = params.replace("$APP_VERSION", args.APP_VERSION)
+        params = params.replace("$RT_ID", args.RT_ID)
+        params = params.replace("$APP_PATH", args.APP_PATH)
+        params = params.replace("$RT_PATH", args.RT_PATH)
+        params = params.replace("$APP_ABSPATH", args.APP_ABSPATH)
+        params = params.replace("$RT_ABSPATH", args.RT_ABSPATH)
+
+        log.debug("New params: %s", params)
+
+        return params
 
     def launchCmd(self, id):
         server = self.store.servers.get(id)
@@ -165,8 +188,9 @@ class Launcher(QObject):
                     link = Link(self.store)
                     link.link(self.store.applications.get(server.application))
 
-                log.debug("Run command: %s %s", cmd, path)
-                popenAndCall(lambda: self.started.emit(id), lambda: self.exited.emit(id), cmd.split(" "), cwd=path)
+            log.info("Using base path: %s", path)
+            log.info("Running command: %s", cmd)
+            popenAndCall(lambda: self.started.emit(id), lambda: self.exited.emit(id), cmd, cwd=path)
 
 # https://stackoverflow.com/questions/2581817/python-subprocess-callback-when-cmd-exits
 def popenAndCall(onStart, onExit, *popenArgs, **popenKWArgs):
