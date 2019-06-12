@@ -193,7 +193,7 @@ class Application:
         return Application(
             app.attrib["id"],
             app.attrib["type"],
-            None,
+            "" if app.find("version") == None else app.find("version").text,
             app.attrib["runtime"],
             app.attrib.get("custom-server", False) == "true",
             "" if app.find("name") == None else app.find("name").text,
