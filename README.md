@@ -36,7 +36,7 @@ You need to edit `config.json` with values relating to your target game.
     "about": {
         "about_button_1_url": "",
         "about_button_2_url": "",
-        "source_url": ""
+        "source_url": "https://github.com/sunrise-launcher/sunrise-launcher"
     },
 
     "flags": {
