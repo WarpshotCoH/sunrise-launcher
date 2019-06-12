@@ -311,7 +311,7 @@ class DownloadUI(QObject):
         self.fileBar.show()
 
     @Slot(str, str)
-    def onInvalidMapFile(check, file):
+    def onInvalidMapFile(self, check, file):
         fMap = self.store.cache.get("fileMap", {})
 
         if check in fMap:
