@@ -109,6 +109,43 @@ QProgressBar::chunk {
     border-radius: 2px;
 }
 
+/* Scroll bars. */
+QScrollBar {
+    background: transparent;
+    border: none;
+}
+
+QScrollBar::handle {
+    background: #222;
+    border: none;
+    border-radius: 6px;
+}
+
+QScrollBar::add-line,
+QScrollBar::sub-line {
+    margin: 0;
+    padding: 0;
+    width: 0;
+    height: 0;
+    border: 0;
+}
+
+QScrollBar:vertical {
+    width: 12px;
+}
+
+QScrollBar:vertical::handle {
+    min-height: 12px;
+}
+
+QScrollBar:horizontal {
+    height: 12px;
+}
+
+QScrollBar:horizontal::handle {
+    min-width: 12px;
+}
+
 /* Header. */
 #header {
     background: rgba(0, 0, 0, 0.4);
