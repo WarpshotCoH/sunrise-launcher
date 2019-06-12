@@ -21,7 +21,7 @@ from detailsui import DetailsUI
 from downloadui import DownloadUI
 from gamelistui import GameListUI
 from headerui import HeaderUI
-from helpers import createWidget
+from helpers import createWidget, logger
 from serverlistui import ServerListUI
 from settingsui import SettingsUI
 
@@ -33,6 +33,8 @@ from watcher import WatcherPool
 
 from manifest import fromXML
 
+log = logger("main")
+
 @Slot(int)
 def selectPage(index):
     for page in pages:
@@ -41,6 +43,8 @@ def selectPage(index):
     pages[index].show()
 
 if __name__ == "__main__":
+    log.info("Launching with %s", sys.argv)
+
     QThread.currentThread().setObjectName("Main")
 
     QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)

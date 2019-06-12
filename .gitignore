@@ -7,6 +7,10 @@ runtimes
 store
 themes
 
+# Build dirs
+build
+dist
+
 # Python
 __pycache__
 venv

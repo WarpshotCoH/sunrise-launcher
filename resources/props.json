@@ -1,0 +1,8 @@
+{
+    "fonts": [
+        "$PATH/fonts/Lato.ttf",
+        "$PATH/fonts/Lato-Italic.ttf",
+        "$PATH/fonts/Lato-Bold.ttf",
+        "$PATH/fonts/Lato-BoldItalic.ttf"
+    ]
+}

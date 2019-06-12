@@ -4,7 +4,9 @@ from zipfile import ZipFile
 
 from PySide2.QtGui import QFontDatabase
 
-from helpers import SunriseSettings
+from helpers import SunriseSettings, pi, logger
+
+log = logger("main.theme")
 
 class Theme:
     def __init__(self, props = None, css = None):
@@ -15,38 +17,39 @@ class Theme:
     def fromPath(path):
         theme = Theme()
 
+        log.info("Loading theme from %s", path)
+
         propsPath = os.path.join(path, "props.json")
+        log.info("Loading props form %s", propsPath)
+
         stylePath = os.path.join(path, "styles.css")
+        log.info("Loading styles form %s", stylePath)
 
         with open(propsPath, "r") as props:
-            theme.props = json.loads(props.read())
+            theme.props = json.loads(props.read().replace("$PATH", path))
 
         with open(stylePath, "r") as styles:
-            theme.css = styles.read()
+            theme.css = styles.read().replace("$PATH", path)
+
+        log.info("Loaded theme %s", theme)
 
         return theme
 
-    def activate(target, application):
-        defaultStylePath = os.path.join("resources", "default.css")
-        defaultPropsPath = os.path.join("resources", "default.json")
-        defaultCss = ""
-        defaultProps = {}
+    def activate(self, application):
+        try:
+            default = Theme.fromPath(pi("resources"))
 
-        with open(defaultPropsPath, "r") as props:
-            defaultProps = json.loads(props.read())
+            if default.props and "fonts" in default.props:
+                for font in default.props["fonts"]:
+                    QFontDatabase.addApplicationFont(font)
 
-        with open(defaultStylePath, "r") as styles:
-            defaultCss = styles.read()
+            if self.props and "fonts" in self.props:
+                for font in self.props["fonts"]:
+                    QFontDatabase.addApplicationFont(font)
 
-        if defaultProps and "fonts" in defaultProps:
-            for font in defaultProps["fonts"]:
-                QFontDatabase.addApplicationFont(font)
-
-        if target.props and "fonts" in target.props:
-            for font in target.props["fonts"]:
-                QFontDatabase.addApplicationFont(font)
-
-        application.setStyleSheet(defaultCss + target.css)
+            application.setStyleSheet(default.css + self.css)
+        except Exception as e:
+            log.error("Theme activation failure: %s", e)
 
 class Loader:
     @staticmethod

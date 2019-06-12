@@ -6,7 +6,7 @@ import xml.etree.ElementTree as ET
 
 from PySide2.QtCore import QObject, Slot, Signal
 
-from helpers import serialize, unserialize, uList, SunriseSettings
+from helpers import serialize, unserialize, uList, SunriseSettings, pi
 from manifest import fromXML, fromXMLString, Manifest
 from settings import Settings, PathSettings, ContainerSettings, RecentServers
 from theme import Loader, Theme
@@ -36,23 +36,23 @@ class Store(QObject):
         self.strings = {}
 
         try:
-            config = open("config.json", "r").read()
+            config = open(pi("config.json"), "r").read()
 
             if config:
                 self.config = json.loads(config)
 
         except Exception:
             log.error("App config initialization failure")
+            log.error(pi("config.json"))
             log.error(sys.exc_info())
-            pass
 
         try:
-            dirs = list(os.walk(os.path.abspath("themes")))
+            dirs = list(os.walk(pi("themes")))
 
             if len(dirs) > 0:
                 for themeId in dirs[0][1]:
                     log.info("Adding theme from %s", themeId)
-                    theme = Theme.fromPath(os.path.join("themes", themeId))
+                    theme = Theme.fromPath(os.path.join(pi("themes"), themeId))
 
                     if theme.props and "name" in theme.props:
                         self.themes[theme.props["name"]] = theme
@@ -63,7 +63,7 @@ class Store(QObject):
             pass
 
         try:
-            stringConfig = open("twine/app.en.json", "r").read()
+            stringConfig = open(pi("twine/app.en.json"), "r").read()
 
             if stringConfig:
                 self.strings = json.loads(stringConfig)

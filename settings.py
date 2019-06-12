@@ -1,15 +1,16 @@
 from copy import deepcopy
+import os
 
 from PySide2.QtCore import QObject, QThread, Slot, Signal
 
-from helpers import Serde, logger, serialize, unserialize
+from helpers import Serde, logger, serialize, unserialize, SunriseSettings
 
 log = logger("main.state.settings")
 
 class PathSettings:
     def __init__(self, binPath, runPath):
-        self.binPath = binPath
-        self.runPath = runPath
+        self.binPath = os.path.join(SunriseSettings.dataPath, binPath)
+        self.runPath = os.path.join(SunriseSettings.dataPath, runPath)
 
     def serialize(self):
         return {

@@ -116,7 +116,7 @@ QProgressBar::chunk {
 }
 
 #header #headerLogo {
-    background: url("resources/logo.png");
+    background: url("$PATH/logo.png");
     background-position: center;
     background-repeat: no-repeat;
 }

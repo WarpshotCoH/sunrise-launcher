@@ -9,7 +9,7 @@ from PySide2.QtCore import QFile
 from PySide2.QtUiTools import QUiLoader
 
 APP_NAME = "Sunrise"
-APP_AUTHOR = "Sunrise"
+APP_AUTHOR = "SCOTS"
 
 class InstallState(Enum):
     NOTINSTALLED = 1
@@ -19,6 +19,7 @@ class InstallState(Enum):
 
 class SunriseSettings:
     cachePath = user_cache_dir(APP_NAME, APP_AUTHOR)
+    dataPath = user_data_dir(APP_NAME, APP_AUTHOR)
     logsPath = user_log_dir(APP_NAME, APP_AUTHOR)
     settingsPath = user_data_dir(APP_NAME, APP_AUTHOR)
 
@@ -110,11 +111,21 @@ def isInstalled(store, id):
 
     return InstallState.NOTINSTALLED
 
+def pi(file):
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base = sys._MEIPASS
+    except Exception:
+        base = os.path.abspath(".")
+
+    return os.path.join(base, file)
+
 def createWidget(ui_file):
-    ui_file = QFile(ui_file)
+    ui_file = QFile(pi(ui_file))
     ui_file.open(QFile.ReadOnly)
 
     loader = QUiLoader()
+    loader.setWorkingDirectory(pi(""))
     widget = loader.load(ui_file)
     ui_file.close()
 
