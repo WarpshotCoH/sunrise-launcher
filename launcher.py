@@ -155,11 +155,11 @@ class Launcher(QObject):
             server = self.store.servers.get(id)
 
             if server:
-                recentList = self.store.settings.get("recentServers")
-                recentList.push(id)
-                log.info("New recent list %s", recentList.recent)
-                self.store.settings.set("recentServers", recentList)
-                self.store.settings.commit()
+                # recentList = self.store.settings.get("recentServers")
+                # recentList.push(id)
+                # log.info("New recent list %s", recentList.recent)
+                # self.store.settings.set("recentServers", recentList)
+                # self.store.settings.commit()
 
                 if self.store.f("use_symlinks"):
                     link = Link(self.store)
