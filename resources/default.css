@@ -63,8 +63,6 @@ QListView::item:hover,
 QListWidget::item:hover {
     background: #444;
     border: none;
-    border-left: 1px solid rgba(0, 0, 0, 0.4);
-    border-right: 1px solid rgba(0, 0, 0, 0.4);
 }
 
 QMenu::item:selected,
@@ -72,11 +70,9 @@ QListView::item:selected,
 QListWidget::item:selected {
     background: #666;
     border: none;
-    border-left: 1px solid rgba(0, 0, 0, 0.4);
-    border-right: 1px solid rgba(0, 0, 0, 0.4);
 }
 
-/* Controls. */
+/* Other controls. */
 QLineEdit {
     padding: 4px 6px;
     background: #222;
@@ -109,6 +105,51 @@ QProgressBar::chunk {
     border-radius: 2px;
 }
 
+/* Scroll bars. */
+QScrollBar {
+    background: transparent;
+    border: none;
+}
+
+QScrollBar::handle {
+    background: #222;
+    border: none;
+    border-radius: 6px;
+}
+
+QScrollBar::add-line,
+QScrollBar::sub-line {
+    margin: 0;
+    padding: 0;
+    width: 0;
+    height: 0;
+    border: 0;
+}
+
+QScrollBar:vertical {
+    width: 12px;
+}
+
+QScrollBar:vertical::handle {
+    min-height: 12px;
+}
+
+QScrollBar:horizontal {
+    height: 12px;
+}
+
+QScrollBar:horizontal::handle {
+    min-width: 12px;
+}
+
+/* Anywhere that needs "muted" text. */
+#listList #label,
+#detailsSubname1,
+#detailsSubname2,
+#manifestItemUrl {
+    color: rgba(255, 255, 255, 0.6);
+}
+
 /* Header. */
 #header {
     background: rgba(0, 0, 0, 0.4);
@@ -122,12 +163,14 @@ QProgressBar::chunk {
 }
 
 #header QPushButton {
-    padding: 18px 6px;
+    padding: 6px 0;
     background: transparent;
     color: rgba(255, 255, 255, 0.6);
     font-size: 20px;
     text-transform: uppercase;
     border: none;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
 }
 
 #header QPushButton:hover {
@@ -136,6 +179,7 @@ QProgressBar::chunk {
 
 #header QPushButton[Active=true] {
     color: rgba(255, 255, 255, 1);
+    border-bottom-color: #fff;
 }
 
 /* Sidebar. */
@@ -158,6 +202,16 @@ QProgressBar::chunk {
     text-transform: uppercase;
 }
 
+#listBackground QListWidget::item:hover {
+    border-left: 1px solid rgba(0, 0, 0, 0.4);
+    border-right: 1px solid rgba(0, 0, 0, 0.4);
+}
+
+#listBackground QListWidget::item:selected {
+    border-left: 1px solid rgba(0, 0, 0, 0.4);
+    border-right: 1px solid rgba(0, 0, 0, 0.4);
+}
+
 #updateIndicator {
     border-radius: 6px;
 }
@@ -165,12 +219,6 @@ QProgressBar::chunk {
 /* Info section. */
 #detailsName {
     font-size: 20px;
-}
-
-#label,
-#detailsSubname1,
-#detailsSubname2 {
-    color: rgba(255, 255, 255, 0.6);
 }
 
 /* Download section. */
@@ -182,7 +230,7 @@ QProgressBar::chunk {
 
 #downloadPanel #play {
     padding: 6px;
-    font-size: 28px;
+    font-size: 26px;
     text-transform: uppercase;
     border-radius: 6px;
 }
