@@ -179,21 +179,21 @@
            <item>
             <widget class="QLabel" name="detailsName">
              <property name="text">
-              <string>TextLabel</string>
+              <string>Title</string>
              </property>
             </widget>
            </item>
            <item>
             <widget class="QLabel" name="detailsSubname1">
              <property name="text">
-              <string>TextLabel</string>
+              <string>Subtitle</string>
              </property>
             </widget>
            </item>
            <item>
             <widget class="QLabel" name="detailsSubname2">
              <property name="text">
-              <string>TextLabel</string>
+              <string>Subtitle</string>
              </property>
             </widget>
            </item>
