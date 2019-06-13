@@ -6,6 +6,7 @@ run
 runtimes
 store
 themes
+wineprefix
 
 # Python
 __pycache__

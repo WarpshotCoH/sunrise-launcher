@@ -1,4 +1,4 @@
-from os import makedirs, symlink, link
+from os import environ, getcwd, makedirs, symlink, link
 from os.path import join, abspath, normpath, basename, dirname, isdir, isfile
 from shutil import rmtree
 import platform
@@ -111,7 +111,6 @@ class Launcher(QObject):
 
         return (cmd, runPath)
 
-
     def getServerCmd(self, server):
         application = self.store.applications.get(server.application)
 
@@ -169,9 +168,28 @@ class Launcher(QObject):
 
         return (None, None)
 
-    def addWineArgs(self, cmd):
+    # TODO: Allow winearch and prefix to be user-set (for version 2)
+    def addWineArgs(self, cmd, env):
+        # If given a winearch via command-line, use that instead
+        if "WINEARCH" in env:
+            log.info("Using environment winearch")
+        else:
+            arch = "win32"
+            log.info("Setting winearch to %s", arch)
+            env["WINEARCH"] = arch
+
+        # If given a prefix via command-line, use that instead
+        if "WINEPREFIX" in env:
+            log.info("Using environment wineprefix")
+        else:
+            prefix = join(getcwd(), "wineprefix")
+            log.info("Setting wineprefix to %s", prefix)
+            env["WINEPREFIX"] = prefix
+
+        # Add Wine to command arguments.
         cmd.insert(0, "wine")
-        return cmd
+
+        return (cmd, env)
 
     @Slot(str)
     def launch(self, id):
@@ -180,11 +198,13 @@ class Launcher(QObject):
         (cmd, path) = self.launchCmd(id)
 
         if cmd:
+            my_env = environ.copy()
+
             # TODO: Replace this with proper app-wide platform detection.
             # This is more just a quick hack so we can test launching functions without booting into a different OS.
             if (platform.system != "Windows"):
                 log.info("Running with Wine")
-                cmd = self.addWineArgs(cmd)
+                (cmd, my_env) = self.addWineArgs(cmd, my_env)
 
             server = self.store.servers.get(id)
 
@@ -201,7 +221,7 @@ class Launcher(QObject):
 
             log.info("Using base path: %s", path)
             log.info("Running command: %s", cmd)
-            popenAndCall(lambda: self.started.emit(id), lambda: self.exited.emit(id), cmd, cwd=path)
+            popenAndCall(lambda: self.started.emit(id), lambda: self.exited.emit(id), cmd, env=my_env, cwd=path)
 
 # https://stackoverflow.com/questions/2581817/python-subprocess-callback-when-cmd-exits
 def popenAndCall(onStart, onExit, *popenArgs, **popenKWArgs):
