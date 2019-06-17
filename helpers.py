@@ -120,13 +120,13 @@ def pi(file):
 
     return os.path.join(base, file)
 
-def createWidget(ui_file):
+def createWidget(ui_file, parent = None):
     ui_file = QFile(pi(ui_file))
     ui_file.open(QFile.ReadOnly)
 
     loader = QUiLoader()
     loader.setWorkingDirectory(pi(""))
-    widget = loader.load(ui_file)
+    widget = loader.load(ui_file, parent)
     ui_file.close()
 
     return widget

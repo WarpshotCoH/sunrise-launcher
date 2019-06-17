@@ -11,7 +11,7 @@ import urllib.request as request
 import urllib.parse
 import webbrowser
 import xml.etree.ElementTree as ET
-from PySide2.QtCore import QByteArray, QFile, QObject, QUrl, QThread, Signal, Slot, Qt, QCoreApplication
+from PySide2.QtCore import QByteArray, QFile, QObject, QUrl, QThread, Signal, Slot, Qt, QCoreApplication, QEvent
 from PySide2.QtGui import QImage, QPixmap
 from PySide2.QtUiTools import QUiLoader
 from PySide2.QtWebEngineWidgets import QWebEngineView
@@ -22,6 +22,7 @@ from downloadui import DownloadUI
 from gamelistui import GameListUI
 from headerui import HeaderUI
 from helpers import createWidget, logger
+from importui import ImportUI
 from serverlistui import ServerListUI
 from settingsui import SettingsUI
 
@@ -42,6 +43,18 @@ def selectPage(index):
 
     pages[index].show()
 
+class SunriseApp(QApplication):
+    def event(self, event):
+        if event.type() == QEvent.FileOpen:
+            log.info("Requested to open %s", event.url())
+
+            try:
+                importUI.display(event.url().toString())
+            except Exception as e:
+                log.error(e)
+
+        return QApplication.event(self, event)
+
 if __name__ == "__main__":
     log.info("Launching with %s", sys.argv)
 
@@ -50,7 +63,7 @@ if __name__ == "__main__":
     QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
     QCoreApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)
 
-    application = QApplication(sys.argv)
+    application = SunriseApp(sys.argv)
 
     # Construct the main ui window
     window = createWidget("ui/sunrise-v3.ui")
@@ -125,5 +138,14 @@ if __name__ == "__main__":
 
     # Show the application
     window.show()
+
+    try:
+        importUI = ImportUI(store, window)
+        importUI.resize(window.width(), window.height());
+
+        if len(sys.argv) == 2:
+            importUI.display(sys.argv[1])
+    except Exception as e:
+        log.error(e)
 
     sys.exit(application.exec_())

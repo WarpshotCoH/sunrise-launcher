@@ -203,3 +203,11 @@ QProgressBar::chunk {
     font-family: monospace;
     font-size: 12px;
 }
+
+#urlModalContainer {
+    background: rgba(0, 0, 0, 0.4);
+}
+
+#urlModal {
+    background: rgba(255, 255, 255, 1.0);
+}

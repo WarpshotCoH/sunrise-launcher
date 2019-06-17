@@ -1,10 +1,16 @@
 # -*- mode: python -*-
 
+import json
+import os
+
+config = json.loads(open("config.json", "r").read())
+dir_path = os.path.dirname(os.path.realpath('.'))
+
 block_cipher = None
 
 
 a = Analysis(['main.py'],
-             pathex=['/Users/amayo/Documents/workarea/self/sunrise-launcher'],
+             pathex=[dir_path],
              binaries=[],
              datas=[('resources/', 'resources'), ('twine/', 'twine'), ('ui/', 'ui'), ('themes/', 'themes'), ('widgets/', 'widgets'), ('config.json', '.')],
              hiddenimports=['PySide2.QtXml', 'PySide2.QtPrintSupport', 'PySide2.QtUiTools'],
@@ -23,7 +29,7 @@ exe = EXE(pyz,
           a.zipfiles,
           a.datas,
           [],
-          name='Sunrise',
+          name=config['name'],
           debug=False,
           bootloader_ignore_signals=False,
           strip=False,
@@ -31,7 +37,7 @@ exe = EXE(pyz,
           runtime_tmpdir=None,
           console=False )
 app = BUNDLE(exe,
-             name='Sunrise.app',
+             name=config['exec'] + '.app',
              icon='resources/icon.icns',
              bundle_identifier='com.scots.sunrise',
              info_plist={
@@ -40,8 +46,8 @@ app = BUNDLE(exe,
                 'NSAppleScriptEnabled': False,
                 'CFBundleURLTypes': [
                     {
-                        'CFBundleURLName': 'Sunrise Manifest',
-                        'CFBundleURLSchemes': ['sunrise'],
+                        'CFBundleURLName': config['name'] + ' Manifest',
+                        'CFBundleURLSchemes': [config['protocol']],
                         'CFBundleURLIconFile': 'icon'
                     }
                 ]
